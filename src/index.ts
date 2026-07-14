@@ -1,8 +1,12 @@
 import type { AstroIntegration } from "astro";
+import { execFile } from "child_process";
+import { promisify } from "util";
 import { remarkLilypondPlugin } from "./remark-plugin.js";
 import { rehypeLilypondPlugin } from "./rehype-plugin.js";
 import { satteriLilypondPlugin } from "./satteri-plugin.js";
 import type { OutputFormat } from "./util.js";
+
+const execFileAsync = promisify(execFile);
 
 export type { OutputFormat };
 
@@ -29,6 +33,14 @@ export default function lilypond(options: LilypondOptions = {}): AstroIntegratio
 		name: "astro-lilypond",
 		hooks: {
 			"astro:config:setup": async ({ config, updateConfig, logger }) => {
+				await execFileAsync("lilypond", ["--version"]).catch((err: NodeJS.ErrnoException) => {
+					if (err.code === "ENOENT") {
+						logger?.warn(
+							"astro-lilypond: `lilypond` binary not found — LilyPond blocks will render as errors. Install LilyPond and ensure it is on PATH.",
+						);
+					}
+				});
+
 				const existingProcessor = config.markdown?.processor;
 
 				if (existingProcessor?.name === "satteri") {
