@@ -1,0 +1,17 @@
+{
+	"name": "docs",
+	"version": "0.0.1",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"dev": "astro dev",
+		"build": "astro build",
+		"preview": "astro preview"
+	},
+	"dependencies": {
+		"@astrojs/starlight": "^0.41.3",
+		"astro": "^7.0.8",
+		"astro-lilypond": "workspace:*",
+		"starlight-theme-flexoki": "^0.2.2"
+	}
+}

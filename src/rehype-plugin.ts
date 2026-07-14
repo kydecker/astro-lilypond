@@ -1,0 +1,73 @@
+import { visit } from "unist-util-visit";
+import { render } from "./render.js";
+import { errorHtml, isLilypondLang, prependVersion, renderToHtml, resolveFormat } from "./util.js";
+import type { OutputFormat } from "./util.js";
+
+// Raw node type — an Astro/rehype extension not in the standard @types/hast
+interface RawNode {
+	type: "raw";
+	value: string;
+}
+
+export interface RehypePluginOptions {
+	version?: string;
+	format?: OutputFormat;
+}
+
+// Typed loosely so it's assignable to both RehypePlugin and the unified
+// Plugin generic regardless of which @types/hast version the host project pins.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function rehypeLilypondPlugin(
+	options: RehypePluginOptions = {},
+): (tree: any) => Promise<void> {
+	return async (tree) => {
+		const promises: Promise<void>[] = [];
+
+		visit(tree, "element", (node, index, parent) => {
+			if (
+				node.tagName !== "pre" ||
+				node.children?.length !== 1 ||
+				node.children[0].type !== "element" ||
+				node.children[0].tagName !== "code" ||
+				index === undefined ||
+				!parent
+			)
+				return;
+
+			const codeNode = node.children[0];
+			const cls = codeNode.properties?.className as unknown;
+			if (!Array.isArray(cls)) return;
+			const lang = (cls as string[]).find((c) => c.startsWith("language-"))?.slice("language-".length);
+			if (!isLilypondLang(lang)) return;
+
+			const raw: string = (
+				codeNode.children as Array<{ type: string; value: string }>
+			)
+				.filter((c) => c.type === "text")
+				.map((c) => c.value)
+				.join("");
+
+			const source = options.version
+				? prependVersion(raw, options.version)
+				: raw;
+			const { format, resolution } = resolveFormat(options.format ?? "svg");
+
+			const promise = render(source, { format, resolution })
+				.then((buf): void => {
+					const rawNode: RawNode = {
+						type: "raw",
+						value: renderToHtml(buf, format),
+					};
+					parent.children[index] = rawNode;
+				})
+				.catch((err): void => {
+					const rawNode: RawNode = { type: "raw", value: errorHtml(err) };
+					parent.children[index] = rawNode;
+				});
+
+			promises.push(promise);
+		});
+
+		await Promise.all(promises);
+	};
+}

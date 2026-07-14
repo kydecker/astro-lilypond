@@ -1,0 +1,30 @@
+---
+title: Astro + LilyPond
+description: Install astro-lilypond and render LilyPond music notation as inline SVG in your Astro site.
+---
+
+import { LinkButton } from "@astrojs/starlight/components";
+
+`astro-lilypond` is an [Astro](https://astro.build) integration that lets you write [LilyPond](https://lilypond.org) markup...
+
+````md
+```lilypond
+\relative c' {
+  \clef treble
+  c4 d e f | g a b c | c b a g | f e d c \bar "|."
+}
+```
+````
+
+...and render it as music notation. ♫꒰･‿･๑꒱
+
+```lilypond
+\relative c' {
+  \clef treble
+  c4 d e f | g a b c | c b a g | f e d c \bar "|."
+}
+```
+
+Music can be rendered as an `.svg` or `.png`.
+
+<LinkButton href="/getting-started" icon="rocket">Get Started</LinkButton>

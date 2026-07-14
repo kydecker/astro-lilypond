@@ -1,0 +1,103 @@
+import type { AstroIntegration } from "astro";
+import { remarkLilypondPlugin } from "./remark-plugin.js";
+import { rehypeLilypondPlugin } from "./rehype-plugin.js";
+import { satteriLilypondPlugin } from "./satteri-plugin.js";
+import type { OutputFormat } from "./util.js";
+
+export type { OutputFormat };
+
+export interface LilypondOptions {
+	/**
+	 * LilyPond version string to prepend automatically to every block that
+	 * doesn't already declare `\version`. Example: `"2.24.0"`.
+	 *
+	 * When omitted, blocks must include `\version` themselves.
+	 */
+	version?: string;
+	/**
+	 * Output format. Defaults to `"svg"`.
+	 *
+	 * - `"svg"` — inline SVG embedded directly in the HTML (default)
+	 * - `"png"` — `<img>` element with a base64 data URI, at the default resolution
+	 * - `{ type: "png", resolution: number }` — PNG at a specific DPI
+	 */
+	format?: OutputFormat;
+}
+
+export default function lilypond(options: LilypondOptions = {}): AstroIntegration {
+	return {
+		name: "astro-lilypond",
+		hooks: {
+			"astro:config:setup": async ({ config, updateConfig, logger }) => {
+				const existingProcessor = config.markdown?.processor;
+
+				if (existingProcessor?.name === "satteri") {
+					const { satteri, isSatteriProcessor } = await import(
+						"@astrojs/markdown-satteri"
+					);
+
+					if (!isSatteriProcessor(existingProcessor)) {
+						throw new Error(
+							"astro-lilypond: the active markdown processor reports the name " +
+								'"satteri" but failed the isSatteriProcessor check.',
+						);
+					}
+
+					const existingOptions = existingProcessor.options ?? {};
+					updateConfig({
+						markdown: {
+							processor: satteri({
+								...existingOptions,
+								mdastPlugins: [
+									...(existingOptions.mdastPlugins ?? []),
+									satteriLilypondPlugin({ version: options.version, format: options.format }),
+								],
+							}),
+						},
+					});
+					logger?.info("astro-lilypond: registered Sätteri mdast plugin");
+					return;
+				}
+
+				if (existingProcessor?.name === "unified") {
+					const { unified, isUnifiedProcessor } = await import(
+						"@astrojs/markdown-remark"
+					);
+
+					if (!isUnifiedProcessor(existingProcessor)) {
+						throw new Error(
+							"astro-lilypond: the active markdown processor reports the name " +
+								'"unified" but failed the isUnifiedProcessor check.',
+						);
+					}
+
+					const existingOptions = existingProcessor.options ?? {};
+					updateConfig({
+						markdown: {
+							processor: unified({
+								...existingOptions,
+								remarkPlugins: [
+									...(existingOptions.remarkPlugins ?? []),
+									[remarkLilypondPlugin, { version: options.version, format: options.format }],
+								],
+								rehypePlugins: [
+									...(existingOptions.rehypePlugins ?? []),
+									[rehypeLilypondPlugin, { version: options.version, format: options.format }],
+								],
+							}),
+						},
+					});
+					logger?.info("astro-lilypond: registered unified remark/rehype plugins");
+					return;
+				}
+
+				throw new Error(
+					"astro-lilypond requires a processor-based Astro markdown config. " +
+						"Set `markdown.processor` to `satteri(…)` (Astro 7 default) or " +
+						"`unified(…)` from `@astrojs/markdown-remark`, then add this integration. " +
+						`Detected processor: ${existingProcessor?.name ?? "none"}.`,
+				);
+			},
+		},
+	};
+}

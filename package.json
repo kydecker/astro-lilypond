@@ -1,0 +1,68 @@
+{
+  "name": "astro-lilypond",
+  "version": "0.0.1",
+  "description": "An Astro integration for rendering Lilypond scores to images in Markdown.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "check": "biome check",
+    "check:fix": "biome check --write",
+    "test": "vitest"
+  },
+  "keywords": [
+    "astro",
+    "astro-integration",
+    "lilypond",
+    "music",
+    "markdown",
+    "score",
+    "engraving"
+  ],
+  "author": "Ky Decker",
+  "license": "MIT",
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "^11.0.3",
+      "onFail": "download"
+    }
+  },
+  "devDependencies": {
+    "@astrojs/markdown-satteri": "^0.3.4",
+    "@types/mdast": "^4.0.4",
+    "@types/node": "^26.1.1",
+    "astro": "^7.0.8",
+    "biome": "^0.3.3",
+    "nano-staged": "^1.0.2",
+    "satteri": "^0.9.5",
+    "simple-git-hooks": "^2.13.1",
+    "typescript": "^7.0.2",
+    "unified": "^11.0.5",
+    "vitest": "^4.1.10"
+  },
+  "peerDependencies": {
+    "astro": ">=7.0.0"
+  },
+  "dependencies": {
+    "unist-util-visit": "^5.1.0"
+  },
+  "simple-git-hooks": {
+    "pre-commit": "./node_modules/.bin/nano-staged"
+  },
+  "nano-staged": {
+    "*.{js,mjs,cjs,jsx,ts,mts,cts,tsx,json,jsonc,css,astro}": [
+      "biome check --write"
+    ]
+  }
+}

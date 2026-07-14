@@ -1,0 +1,83 @@
+---
+title: Getting Started
+description: Install astro-lilypond and render LilyPond music notation as inline SVG in your Astro site.
+---
+
+import { Steps, Tabs, TabItem } from "@astrojs/starlight/components";
+
+## Prerequisites
+
+The LilyPond binary must be available on `$PATH`.
+
+<Steps>
+
+1. Install the LilyPond binary directly from [lilypond.org](https://lilypond.org/download.html) or with a package manager like [Homebrew](https://formulae.brew.sh/formula/lilypond):
+
+    ```sh
+    brew install lilypond
+    ```
+
+2. Verify the install.
+
+   ```sh
+   lilypond --version
+   ```
+
+   You should see `GNU LilyPond` and the version number you have installed.
+
+</Steps>
+
+## Installation
+
+<Steps>
+
+1. Install `astro-lilypond`.
+
+   <Tabs>
+     <TabItem label="pnpm">
+       ```sh
+       pnpm add astro-lilypond
+       ```
+     </TabItem>
+     <TabItem label="npm">
+       ```sh
+       npm install astro-lilypond
+       ```
+     </TabItem>
+     <TabItem label="yarn">
+       ```sh
+       yarn add astro-lilypond
+       ```
+     </TabItem>
+   </Tabs>
+
+2. Add the integration to your Astro config.
+
+   ```diff lang="js"
+     // astro.config.mjs
+     import { defineConfig } from 'astro/config';
+   + import lilypond from 'astro-lilypond';
+
+     export default defineConfig({
+   +   integrations: [lilypond()],
+     });
+   ```
+
+   See [Configuration](/configuration/) for available options.
+
+3. Write LilyPond in Markdown.
+
+   Use a fenced code block with the `lilypond` (or `ly`) language tag:
+
+   ````md
+   ```lilypond
+   \version "2.24.0"
+   \relative c' {
+     c4 d e f | g2 e2 |
+   }
+   ```
+   ````
+
+   The block is replaced with an inline SVG at build time. See [LilyPond Syntax](/lilypond-syntax/) for common patterns.
+
+</Steps>
