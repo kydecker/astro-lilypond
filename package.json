@@ -31,13 +31,7 @@
   ],
   "author": "Ky Decker",
   "license": "MIT",
-  "devEngines": {
-    "packageManager": {
-      "name": "pnpm",
-      "version": "11.13.0",
-      "onFail": "download"
-    }
-  },
+  "packageManager": "pnpm@11.13.0",
   "devDependencies": {
     "@astrojs/markdown-remark": "^7.2.1",
     "@astrojs/markdown-satteri": "^0.3.4",
