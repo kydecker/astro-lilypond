@@ -30,8 +30,4 @@ export default defineConfig({
 ```
 ````
 
-Learn more about [LilyPond syntax](https://lilypond.org/doc/v2.24/Documentation/web/text-input).
-
-## Configuration
-
-There are no configuration options for the `lilypond` integration currently.
+Learn more at the [`astro-lilypond` docs](https://lilypond.ky.fyi)!
