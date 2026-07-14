@@ -25,7 +25,9 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Install LilyPond
-        run: sudo apt-get install -y lilypond
+        uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: lilypond
 
       - name: Build library
         run: pnpm build
