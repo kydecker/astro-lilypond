@@ -4,15 +4,25 @@ An [Astro](https://astro.build) integration for rendering [LilyPond](https://lil
 
 ## Quick Start
 
-### 1. Installation
+### Prerequisites
+
+Install the LilyPond binary directly from [lilypond.org](https://lilypond.org/download.html) or with a package manager like [Homebrew](https://formulae.brew.sh/formula/lilypond).
+
+```sh
+brew install lilypond
+```
+
+### Installation
+
+#### 1. Install `astro-lilypond`:
 
 ```sh
 pnpm add astro-lilypond
 ```
 
-### 2. Add to Astro Config
+#### 2. Add the integration to your Astro config:
 
-```sh
+```js
 // astro.config.mjs
 import { defineConfig } from 'astro/config';
 import lilypond from 'astro-lilypond';
@@ -22,12 +32,14 @@ export default defineConfig({
 });
 ```
 
-### 3. Use in Markdown
+#### 3. Use in Markdown:
 
-````markdown
+````md
 ```lilypond
   \\score ...
 ```
 ````
 
-Learn more at the [`astro-lilypond` docs](https://lilypond.ky.fyi)!
+## Docs
+
+Learn more at the [`astro-lilypond` docs](https://lilypond.ky.fyi).

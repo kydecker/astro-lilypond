@@ -16,7 +16,6 @@
   ],
   "scripts": {
     "build": "tsc --project tsconfig.json",
-    "build:docs": "cd docs && pnpm build",
     "check": "biome check",
     "check:fix": "biome check --write",
     "test": "vitest"
