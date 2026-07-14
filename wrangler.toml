@@ -1,2 +1,5 @@
 name = "astro-lilypond"
 compatibility_date = "2026-07-14"
+
+[assets]
+directory = "docs/dist"
