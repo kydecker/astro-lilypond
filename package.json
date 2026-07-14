@@ -44,7 +44,8 @@
     "simple-git-hooks": "^2.13.1",
     "typescript": "^7.0.2",
     "unified": "^11.0.5",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.10",
+    "wrangler": "^4.110.0"
   },
   "peerDependencies": {
     "astro": ">=7.0.0"

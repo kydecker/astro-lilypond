@@ -1,6 +1,16 @@
 import { describe, it, expect, vi } from "vitest";
 import lilypond from "../src/index.js";
 
+interface SetupHookArgs {
+	config: {
+		markdown?: {
+			processor?: { name: string; options?: Record<string, unknown> };
+		};
+	};
+	updateConfig: ReturnType<typeof vi.fn>;
+	logger: { info: ReturnType<typeof vi.fn>; warn: ReturnType<typeof vi.fn> };
+}
+
 describe("lilypond integration", () => {
 	it("exports a function", () => {
 		expect(typeof lilypond).toBe("function");
@@ -17,23 +27,33 @@ describe("lilypond integration", () => {
 	});
 
 	it("registers the Sätteri mdast plugin when processor is satteri", async () => {
-		const updateConfig = vi.fn();
-		const logger = { info: vi.fn(), warn: vi.fn() };
+		const { updateConfig, logger }: SetupHookArgs = {
+			config: {},
+			updateConfig: vi.fn(),
+			logger: { info: vi.fn(), warn: vi.fn() },
+		};
 
 		vi.doMock("@astrojs/markdown-satteri", () => ({
-			satteri: vi.fn((opts) => ({ name: "satteri", options: opts })),
+			satteri: vi.fn((opts: unknown) => ({ name: "satteri", options: opts })),
 			isSatteriProcessor: vi.fn(() => true),
 		}));
 
-		const config = {
+		const config: SetupHookArgs["config"] = {
 			markdown: { processor: { name: "satteri", options: {} } },
 		};
 
 		const integration = lilypond();
-		await integration.hooks["astro:config:setup"]({ config, updateConfig, logger });
+		await integration.hooks["astro:config:setup"]!({
+			config,
+			updateConfig,
+			logger,
+		} as never);
 
 		expect(updateConfig).toHaveBeenCalledOnce();
-		expect(updateConfig.mock.calls[0][0].markdown?.processor).toBeDefined();
+		expect(
+			(updateConfig.mock.calls[0][0] as { markdown?: { processor?: unknown } })
+				.markdown?.processor,
+		).toBeDefined();
 
 		vi.doUnmock("@astrojs/markdown-satteri");
 	});
@@ -43,20 +63,27 @@ describe("lilypond integration", () => {
 		const logger = { info: vi.fn(), warn: vi.fn() };
 
 		vi.doMock("@astrojs/markdown-remark", () => ({
-			unified: vi.fn((opts) => ({ name: "unified", options: opts })),
+			unified: vi.fn((opts: unknown) => ({ name: "unified", options: opts })),
 			isUnifiedProcessor: vi.fn(() => true),
 		}));
 
-		const config = {
+		const config: SetupHookArgs["config"] = {
 			markdown: { processor: { name: "unified", options: {} } },
 		};
 
 		const integration = lilypond();
-		await integration.hooks["astro:config:setup"]({ config, updateConfig, logger });
+		await integration.hooks["astro:config:setup"]!({
+			config,
+			updateConfig,
+			logger,
+		} as never);
 
 		expect(updateConfig).toHaveBeenCalledOnce();
-		const { remarkPlugins, rehypePlugins } =
-			updateConfig.mock.calls[0][0].markdown.processor.options;
+		const { remarkPlugins, rehypePlugins } = (
+			updateConfig.mock.calls[0][0] as {
+				markdown: { processor: { options: { remarkPlugins: unknown[]; rehypePlugins: unknown[] } } };
+			}
+		).markdown.processor.options;
 		expect(remarkPlugins.length).toBeGreaterThan(0);
 		expect(rehypePlugins.length).toBeGreaterThan(0);
 
@@ -69,11 +96,11 @@ describe("lilypond integration", () => {
 
 		const integration = lilypond();
 		await expect(
-			integration.hooks["astro:config:setup"]({
+			integration.hooks["astro:config:setup"]!({
 				config: { markdown: {} },
 				updateConfig,
 				logger,
-			}),
+			} as never),
 		).rejects.toThrow("processor-based");
 	});
 
@@ -83,11 +110,11 @@ describe("lilypond integration", () => {
 
 		const integration = lilypond();
 		await expect(
-			integration.hooks["astro:config:setup"]({
+			integration.hooks["astro:config:setup"]!({
 				config: { markdown: { processor: { name: "custom-proc" } } },
 				updateConfig,
 				logger,
-			}),
+			} as never),
 		).rejects.toThrow("custom-proc");
 	});
 });

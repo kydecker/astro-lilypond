@@ -4,4 +4,6 @@ packages:
 allowBuilds:
   core-js: false
   esbuild: true
+  sharp: true
   simple-git-hooks: true
+  workerd: true
