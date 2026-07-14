@@ -211,6 +211,9 @@ importers:
         specifier: ^5.1.0
         version: 5.1.0
     devDependencies:
+      '@astrojs/markdown-remark':
+        specifier: ^7.2.1
+        version: 7.2.1
       '@astrojs/markdown-satteri':
         specifier: ^0.3.4
         version: 0.3.4
