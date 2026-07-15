@@ -10,7 +10,7 @@ export default defineConfig({
       version: "2.24.0",
     }),
 		starlight({
-			title: "astro-lilypond",
+			title: "Astro LilyPond",
 			description:
         "Render LilyPond music notation to images with Astro.",
       plugins: [starlightThemeFlexoki({
