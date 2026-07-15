@@ -1,23 +1,23 @@
 ---
 title: Astro + LilyPond
-description: Install astro-lilypond and render LilyPond music notation as inline SVG in your Astro site.
+description: Render LilyPond music notation to images with Astro.
+head:
+  - tag: title
+    content: astro-lilypond
 ---
 
 import { LinkCard, Code } from "@astrojs/starlight/components";
 import BachInvention from "../../components/BachInvention.astro";
 import BachInventionRaw from "../../components/BachInvention.astro?raw";
 
-`astro-lilypond` is an [Astro](https://astro.build) integration that lets you write [LilyPond](https://lilypond.org) markup in your Markdown files...
+`astro-lilypond` is an [Astro](https://astro.build) integration that lets you write [LilyPond](https://lilypond.org) inside Markdown...
 
 ````md
 ```lilypond
-\relative c' {
-  \clef treble
-  c4 d e f |
-  g a b c  |
-  c b a g  |
-  f e d c \bar "|."
-}
+  \relative c' {
+    c4 d e f |
+    g a b c  \bar "|."
+  }
 ```
 ````
 
@@ -25,22 +25,17 @@ import BachInventionRaw from "../../components/BachInvention.astro?raw";
 
 ```lilypond
 \relative c' {
-  \clef treble
   c4 d e f |
-  g a b c  |
-  c b a g  |
-  f e d c \bar "|."
+  g a b c  \bar "|."
 }
 ```
 
 Music can be rendered as an `.svg` or `.png`.
 
-In addition to rendering in Markdown, the [`<LilyPond>` component](/usage/#component) lets you import `.ly` files..
+<LinkCard href="/getting-started" icon="rocket" title="Get Started" description="Install astro-lilypond and render music notation on your site." />
+
+In addition to rendering in Markdown, the [`<LilyPond>` component](/usage/#component) lets you import `.ly` files and render them anywhere you use Astro.
 
 <Code code={BachInventionRaw} lang="astro" />
 
-...and render them anywhere you use Astro. ♪~
-
 <BachInvention />
-
-<LinkCard href="/getting-started" icon="rocket" title="Get Started" description="Install astro-lilypond and render music notation on your site." />

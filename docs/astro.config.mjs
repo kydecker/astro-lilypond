@@ -2,6 +2,7 @@ import { defineConfig } from "astro/config";
 import starlight from "@astrojs/starlight";
 import lilypond from "astro-lilypond";
 import starlightThemeFlexoki from 'starlight-theme-flexoki'
+import lilypondGrammar from "./src/lilypond.tmLanguage.mjs"
 
 export default defineConfig({
   integrations: [
@@ -11,10 +12,26 @@ export default defineConfig({
 		starlight({
 			title: "astro-lilypond",
 			description:
-        "Render LilyPond music notation to inline SVG in your Astro site.",
+        "Render LilyPond music notation to images with Astro.",
       plugins: [starlightThemeFlexoki({
         accentColor: "green"
       })],
+      expressiveCode: {
+        shiki: {
+          langs: [lilypondGrammar],
+          injectLangsIntoNestedCodeBlocks: true,
+        },
+      },
+      favicon: '/favicon.svg',
+      head: [
+        {
+          tag: 'meta',
+          attrs: {
+            property: 'og:image',
+            content: '/preview.png'
+          }
+        }
+      ],
 			social: [
 				{
 					icon: "github",
@@ -38,8 +55,10 @@ export default defineConfig({
         "styling",
         "lilypond-syntax",
       ],
+      editLink: {
+        baseUrl: 'https://github.com/kydecker/astro-lilypond/edit/main/docs/'
+      }
 		}),
-
   ],
   devToolbar: {
     enabled: false

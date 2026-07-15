@@ -23,11 +23,13 @@
   "keywords": [
     "astro",
     "astro-integration",
+    "engraving",
+    "image",
+    "images",
     "lilypond",
-    "music",
     "markdown",
-    "score",
-    "engraving"
+    "music",
+    "score"
   ],
   "repository": {
     "type": "git",

@@ -64,6 +64,20 @@ describe("satteriLilypondPlugin", () => {
 		expect(result).toEqual({ type: "html", value: RENDERED_SVG });
 	});
 
+	it("accepts 'ily' as an alternative language marker", async () => {
+		const plugin = satteriLilypondPlugin();
+		const node: Code = { type: "code", lang: "ily", value: "\\score { }" };
+
+		const result = await plugin.code!(node, {} as never);
+
+		expect(mockRender).toHaveBeenCalledWith("\\score { }", {
+			format: "svg",
+			resolution: undefined,
+			crop: undefined,
+		});
+		expect(result).toEqual({ type: "html", value: RENDERED_SVG });
+	});
+
 	it("returns an error html node when render throws", async () => {
 		mockRender.mockRejectedValue(new Error("bad syntax"));
 		const plugin = satteriLilypondPlugin();

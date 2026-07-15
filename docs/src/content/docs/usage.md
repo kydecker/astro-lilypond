@@ -5,14 +5,14 @@ description: Render LilyPond notation in Markdown or directly in Astro component
 
 ## Markdown
 
-Use a fenced code block with the `lilypond` (or `ly`) language tag:
+Use a fenced code block with the `lilypond` (or `ly` / `ily`) language tag:
 
 ````md
 ```lilypond
-\version "2.24.0"
-\relative c' {
-  c4 d e f | g2 e2 |
-}
+  \version "2.24.0"
+  \relative c' {
+    c4 d e f | g2 e2 |
+  }
 ```
 ````
 

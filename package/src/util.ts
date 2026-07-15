@@ -6,9 +6,9 @@ export interface LilypondPluginOptions {
 	crop?: boolean;
 }
 
-/** Returns true for both accepted fenced-block language identifiers: `lilypond` and `ly`. */
+/** Returns true for the fenced-block language identifiers that trigger SVG rendering. */
 export function isLilypondLang(lang: string | null | undefined): boolean {
-	return lang === "lilypond" || lang === "ly";
+	return lang === "lilypond" || lang === "ly" || lang === "ily";
 }
 
 /** Normalises an OutputFormat value into a plain format string and optional resolution (DPI). */

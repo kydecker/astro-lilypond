@@ -5,7 +5,7 @@ description: Options available when calling lilypond() in your Astro config.
 
 Pass options to the integration when registering it in `astro.config.mjs`:
 
-```js
+```js {7-9}
 // astro.config.mjs
 import { defineConfig } from 'astro/config';
 import lilypond from 'astro-lilypond';
@@ -13,7 +13,7 @@ import lilypond from 'astro-lilypond';
 export default defineConfig({
   integrations: [
     lilypond({
-      // options go here
+      // config
     }),
   ],
 });
@@ -30,26 +30,34 @@ All LilyPond content must specify `\version` at the start so that the compiler k
 
 ````md
 ```lilypond
-\version "2.24.0"
-\relative c' { c4 d e f }
+  \version "2.24.0"
+  \relative c' { c4 d e f }
 ```
 ````
 
-If you specify a `version` in the LilyPond config, it will apply to all LilyPond code blocks:
+Specify a `version` in the LilyPond config to apply it to all LilyPond blocks by default:
 
-```js
-lilypond({ version: '2.24.0' })
+```diff lang="js"
+// astro.config.mjs  
+export default defineConfig({
+   integrations: [
+    lilypond({
++     version: "2.24.0"
+    }),
+  ],
+});
 ```
 
-With `version` set, the declaration is inserted for you, so blocks can omit it:
+With `version` set in the config, blocks can omit it:
 
-````md
+````diff lang="md"
 ```lilypond
-\relative c' { c4 d e f }
+-  \version "2.24.0"
+  \relative c' { c4 d e f }
 ```
 ````
 
-If a block already contains a `\version` declaration it is left untouched, regardless of this option. This lets you override the version for a single block while using the global default everywhere else.
+Blocks with an explicit `\version` declaration will always be used, regardless of this config.
 
 ### `format`
 
