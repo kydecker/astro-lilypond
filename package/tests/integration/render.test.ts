@@ -50,13 +50,13 @@ function pngDimensions(buf: Buffer): { width: number; height: number } {
 describe.skipIf(!lilypondAvailable()).concurrent(
 	"render() against the real lilypond binary",
 	() => {
-		let voyager: string;
-		let aria: string;
+		let multiPagePng: string;
+		let multiPageSvg: string;
 
 		beforeAll(async () => {
-			[voyager, aria] = await Promise.all([
-				readFile(join(SCORES_DIR, "voyager.ly"), "utf8"),
-				readFile(join(SCORES_DIR, "aria-of-the-soul.ly"), "utf8"),
+			[multiPagePng, multiPageSvg] = await Promise.all([
+				readFile(join(SCORES_DIR, "multi-page-png.ly"), "utf8"),
+				readFile(join(SCORES_DIR, "multi-page-svg.ly"), "utf8"),
 			]);
 		});
 
@@ -70,7 +70,7 @@ describe.skipIf(!lilypondAvailable()).concurrent(
 				try {
 					const inputPath = join(dir, "input.ly");
 					const outputBase = join(dir, "output");
-					await writeFile(inputPath, aria, "utf8");
+					await writeFile(inputPath, multiPageSvg, "utf8");
 					await execFileAsync("lilypond", [
 						"--svg",
 						"--define-default=no-point-and-click",
@@ -93,7 +93,7 @@ describe.skipIf(!lilypondAvailable()).concurrent(
 				try {
 					const inputPath = join(dir, "input.ly");
 					const outputBase = join(dir, "output");
-					await writeFile(inputPath, voyager, "utf8");
+					await writeFile(inputPath, multiPagePng, "utf8");
 					await execFileAsync("lilypond", [
 						"--png",
 						"--define-default=no-point-and-click",
@@ -113,20 +113,20 @@ describe.skipIf(!lilypondAvailable()).concurrent(
 
 		describe("multi-page scores", () => {
 			it("renders the first page's SVG without throwing when crop is false", async () => {
-				const result = await render(aria, { format: "svg", crop: false });
+				const result = await render(multiPageSvg, { format: "svg", crop: false });
 				const svg = result.toString("utf-8");
 				expect(svg).toContain("<svg");
 				const { width, height } = svgDimensions(svg);
 				// A single uncropped US-letter page, not the tall merged image
-				// crop:true would produce for a 3-page score.
+				// crop:true would produce for a 2-page score.
 				expect(height / width).toBeLessThan(2);
 			});
 
 			it("merges all pages into one tall image when crop is true", async () => {
-				const result = await render(aria, { format: "svg", crop: true });
+				const result = await render(multiPageSvg, { format: "svg", crop: true });
 				const svg = result.toString("utf-8");
 				const { width, height } = svgDimensions(svg);
-				// aria-of-the-soul is a 3-page score; the cropped merge stacks
+				// multi-page-svg.ly is a 2-page score; the cropped merge stacks
 				// systems from all pages into a single much-taller-than-wide image.
 				expect(height / width).toBeGreaterThan(2);
 			});
@@ -134,14 +134,14 @@ describe.skipIf(!lilypondAvailable()).concurrent(
 
 		describe("png format", () => {
 			it("renders valid PNG bytes", async () => {
-				const result = await render(voyager, { format: "png", crop: true });
+				const result = await render(multiPagePng, { format: "png", crop: true });
 				const { width, height } = pngDimensions(result);
 				expect(width).toBeGreaterThan(0);
 				expect(height).toBeGreaterThan(0);
 			});
 
 			it("renders a multi-page score to PNG when crop is false", async () => {
-				const result = await render(voyager, { format: "png", crop: false });
+				const result = await render(multiPagePng, { format: "png", crop: false });
 				const { width, height } = pngDimensions(result);
 				expect(width).toBeGreaterThan(0);
 				expect(height).toBeGreaterThan(0);
@@ -151,8 +151,8 @@ describe.skipIf(!lilypondAvailable()).concurrent(
 		describe("resolution", () => {
 			it("increases PNG pixel dimensions roughly proportionally to resolution", async () => {
 				const [low, high] = await Promise.all([
-					render(voyager, { format: "png", crop: true, resolution: 72 }),
-					render(voyager, { format: "png", crop: true, resolution: 288 }),
+					render(multiPagePng, { format: "png", crop: true, resolution: 72 }),
+					render(multiPagePng, { format: "png", crop: true, resolution: 288 }),
 				]);
 				const lowDim = pngDimensions(low);
 				const highDim = pngDimensions(high);
