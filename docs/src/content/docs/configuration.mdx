@@ -3,6 +3,9 @@ title: Configuration
 description: Options available when calling lilypond() in your Astro config.
 ---
 
+import FencedLilypond from "../../components/FencedLilypond.astro";
+import versionExample from "../../scores/version-example.ly?raw";
+
 Pass options to the integration when registering it in `astro.config.mjs`:
 
 ```js {7-9}
@@ -28,12 +31,7 @@ export default defineConfig({
 
 All LilyPond content must specify `\version` at the start so that the compiler knows how to output the score.
 
-````md
-```lilypond
-  \version "2.24.0"
-  \relative c' { c4 d e f }
-```
-````
+<FencedLilypond code={versionExample} />
 
 Specify a `version` in the LilyPond config to apply it to all LilyPond blocks by default:
 
