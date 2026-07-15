@@ -73,3 +73,22 @@ SVG is the best choice for most web use — it scales to any size and stays shar
 ```js
 lilypond({ format: { type: 'png', resolution: 300 } })
 ```
+
+### `crop`
+
+**Type:** `boolean`  
+**Default:** `true`
+
+When `true`, the margins are removed and the page is cropped to fit the rendered staves.
+
+Set to `false` to preserve full page dimensions:
+
+```js
+lilypond({ crop: false })
+```
+
+This setting can be overridden at the component level when using the `<LilyPond>` component:
+
+```astro
+<LilyPond crop={false} />
+```

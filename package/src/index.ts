@@ -7,13 +7,14 @@ import { rehypeLilypondPlugin } from "./rehype-plugin.js";
 import { satteriLilypondPlugin } from "./satteri-plugin.js";
 import { render } from "./render.js";
 import { prependVersion, renderToHtml, resolveFormat } from "./util.js";
-import type { OutputFormat } from "./util.js";
+import type { LilypondPluginOptions, OutputFormat } from "./util.js";
 
 const execFileAsync = promisify(execFile);
 
 export type { OutputFormat };
+export type { LilypondPluginOptions };
 
-export interface LilypondOptions {
+export interface LilypondOptions extends LilypondPluginOptions {
 	/**
 	 * LilyPond version string to prepend automatically to every block that
 	 * doesn't already declare `\version`. Example: `"2.24.0"`.
@@ -29,6 +30,13 @@ export interface LilypondOptions {
 	 * - `{ type: "png", resolution: number }` — PNG at a specific DPI
 	 */
 	format?: OutputFormat;
+	/**
+	 * Crop the output tightly to the content bounding box. Defaults to `true`.
+	 *
+	 * Can be overridden per `<LilyPond crop={false} />` when using `.ly` file imports.
+	 * Fenced code blocks in Markdown always use the global setting.
+	 */
+	crop?: boolean;
 }
 
 function lyFilePlugin(options: LilypondOptions): Plugin {
@@ -39,9 +47,15 @@ function lyFilePlugin(options: LilypondOptions): Plugin {
 			if (!id.endsWith(".ly") && !id.endsWith(".lilypond")) return;
 			const src = options.version ? prependVersion(source, options.version) : source;
 			const { format, resolution } = resolveFormat(options.format ?? "svg");
-			const buf = await render(src, { format, resolution });
-			const html = renderToHtml(buf, format);
-			return { code: `export default ${JSON.stringify(html)}` };
+			const [croppedBuf, uncroppedBuf] = await Promise.all([
+				render(src, { format, resolution, crop: true }),
+				render(src, { format, resolution, crop: false }),
+			]);
+			const result = {
+				cropped: renderToHtml(croppedBuf, format),
+				uncropped: renderToHtml(uncroppedBuf, format),
+			};
+			return { code: `export default ${JSON.stringify(result)}` };
 		},
 	};
 }
@@ -84,7 +98,7 @@ export default function lilypond(options: LilypondOptions = {}): AstroIntegratio
 								...existingOptions,
 								mdastPlugins: [
 									...(existingOptions.mdastPlugins ?? []),
-									satteriLilypondPlugin({ version: options.version, format: options.format }),
+									satteriLilypondPlugin({ version: options.version, format: options.format, crop: options.crop }),
 								],
 							}),
 						},
@@ -112,11 +126,11 @@ export default function lilypond(options: LilypondOptions = {}): AstroIntegratio
 								...existingOptions,
 								remarkPlugins: [
 									...(existingOptions.remarkPlugins ?? []),
-									[remarkLilypondPlugin, { version: options.version, format: options.format }],
+									[remarkLilypondPlugin, { version: options.version, format: options.format, crop: options.crop }],
 								],
 								rehypePlugins: [
 									...(existingOptions.rehypePlugins ?? []),
-									[rehypeLilypondPlugin, { version: options.version, format: options.format }],
+									[rehypeLilypondPlugin, { version: options.version, format: options.format, crop: options.crop }],
 								],
 							}),
 						},

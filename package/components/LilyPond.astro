@@ -3,14 +3,15 @@
 import { escapeHtml } from "../src/util.js";
 
 interface Props {
-	content: string;
+	content: string | { cropped: string; uncropped: string };
+	crop?: boolean;
 	class?: string;
 	style?: string;
 }
 
-const { content, class: className, style } = Astro.props;
+const { content, crop = true, class: className, style } = Astro.props;
 
-let html = content;
+let html = typeof content === "string" ? content : (crop ? content.cropped : content.uncropped);
 if (className) html = html.replace('class="lilypond"', `class="lilypond ${className}"`);
 if (style) html = html.replace(/<(svg|img)\b/, `<$1 style="${escapeHtml(style)}"`);
 ---

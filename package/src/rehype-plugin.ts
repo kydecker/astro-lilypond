@@ -1,7 +1,7 @@
 import { visit } from "unist-util-visit";
 import { render } from "./render.js";
 import { errorHtml, isLilypondLang, prependVersion, renderToHtml, resolveFormat } from "./util.js";
-import type { OutputFormat } from "./util.js";
+import type { LilypondPluginOptions } from "./util.js";
 
 // Raw node type — an Astro/rehype extension not in the standard @types/hast
 interface RawNode {
@@ -9,10 +9,7 @@ interface RawNode {
 	value: string;
 }
 
-export interface RehypePluginOptions {
-	version?: string;
-	format?: OutputFormat;
-}
+export type RehypePluginOptions = LilypondPluginOptions;
 
 // Typed loosely so it's assignable to both RehypePlugin and the unified
 // Plugin generic regardless of which @types/hast version the host project pins.
@@ -52,7 +49,7 @@ export function rehypeLilypondPlugin(
 				: raw;
 			const { format, resolution } = resolveFormat(options.format ?? "svg");
 
-			const promise = render(source, { format, resolution })
+			const promise = render(source, { format, resolution, crop: options.crop })
 				.then((buf): void => {
 					const rawNode: RawNode = {
 						type: "raw",

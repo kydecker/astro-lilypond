@@ -35,6 +35,7 @@ describe("satteriLilypondPlugin", () => {
 		expect(mockRender).toHaveBeenCalledWith("\\score { }", {
 			format: "svg",
 			resolution: undefined,
+			crop: undefined,
 		});
 		expect(result).toEqual({ type: "html", value: RENDERED_SVG });
 	});
@@ -58,6 +59,7 @@ describe("satteriLilypondPlugin", () => {
 		expect(mockRender).toHaveBeenCalledWith("\\score { }", {
 			format: "svg",
 			resolution: undefined,
+			crop: undefined,
 		});
 		expect(result).toEqual({ type: "html", value: RENDERED_SVG });
 	});
@@ -83,6 +85,7 @@ describe("satteriLilypondPlugin", () => {
 		expect(mockRender).toHaveBeenCalledWith('\\version "2.24.0"\n\\score { }', {
 			format: "svg",
 			resolution: undefined,
+			crop: undefined,
 		});
 	});
 
@@ -96,6 +99,7 @@ describe("satteriLilypondPlugin", () => {
 		expect(mockRender).toHaveBeenCalledWith(value, {
 			format: "svg",
 			resolution: undefined,
+			crop: undefined,
 		});
 	});
 
@@ -108,6 +112,7 @@ describe("satteriLilypondPlugin", () => {
 		expect(mockRender).toHaveBeenCalledWith("\\score { }", {
 			format: "svg",
 			resolution: undefined,
+			crop: undefined,
 		});
 		expect((result as Html).value).toBe(RENDERED_SVG);
 	});
@@ -123,6 +128,7 @@ describe("satteriLilypondPlugin", () => {
 		expect(mockRender).toHaveBeenCalledWith("\\score { }", {
 			format: "png",
 			resolution: undefined,
+			crop: undefined,
 		});
 		expect((result as Html).value).toContain(
 			'<img class="lilypond" src="data:image/png;base64,',
@@ -141,6 +147,7 @@ describe("satteriLilypondPlugin", () => {
 		expect(mockRender).toHaveBeenCalledWith("\\score { }", {
 			format: "png",
 			resolution: 300,
+			crop: undefined,
 		});
 		expect((result as Html).value).toContain(
 			'<img class="lilypond" src="data:image/png;base64,',
@@ -156,5 +163,18 @@ describe("satteriLilypondPlugin", () => {
 
 		expect((result as Html).value).not.toContain("<script>");
 		expect((result as Html).value).toContain("&lt;script&gt;");
+	});
+
+	it("passes crop: false to render when the crop option is set to false", async () => {
+		const plugin = satteriLilypondPlugin({ crop: false });
+		const node: Code = { type: "code", lang: "lilypond", value: "\\score { }" };
+
+		await plugin.code!(node, {} as never);
+
+		expect(mockRender).toHaveBeenCalledWith("\\score { }", {
+			format: "svg",
+			resolution: undefined,
+			crop: false,
+		});
 	});
 });

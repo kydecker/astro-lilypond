@@ -52,6 +52,7 @@ describe("remarkLilypondPlugin", () => {
 		expect(mockRender).toHaveBeenCalledWith("\\score { }", {
 			format: "svg",
 			resolution: undefined,
+			crop: undefined,
 		});
 		expect(tree.children[0]).toEqual({ type: "html", value: RENDERED_SVG });
 	});
@@ -76,6 +77,7 @@ describe("remarkLilypondPlugin", () => {
 		expect(mockRender).toHaveBeenCalledWith("\\score { }", {
 			format: "svg",
 			resolution: undefined,
+			crop: undefined,
 		});
 		expect(tree.children[0]).toEqual({ type: "html", value: RENDERED_SVG });
 	});
@@ -136,6 +138,7 @@ describe("remarkLilypondPlugin", () => {
 		expect(mockRender).toHaveBeenCalledWith('\\version "2.24.0"\n\\score { }', {
 			format: "svg",
 			resolution: undefined,
+			crop: undefined,
 		});
 	});
 
@@ -149,6 +152,7 @@ describe("remarkLilypondPlugin", () => {
 		expect(mockRender).toHaveBeenCalledWith(value, {
 			format: "svg",
 			resolution: undefined,
+			crop: undefined,
 		});
 	});
 
@@ -162,6 +166,7 @@ describe("remarkLilypondPlugin", () => {
 		expect(mockRender).toHaveBeenCalledWith("\\score { }", {
 			format: "svg",
 			resolution: undefined,
+			crop: undefined,
 		});
 		expect((tree.children[0] as Html).value).toBe(RENDERED_SVG);
 	});
@@ -179,6 +184,7 @@ describe("remarkLilypondPlugin", () => {
 		expect(mockRender).toHaveBeenCalledWith("\\score { }", {
 			format: "png",
 			resolution: undefined,
+			crop: undefined,
 		});
 		expect((tree.children[0] as Html).value).toContain(
 			'<img class="lilypond" src="data:image/png;base64,',
@@ -200,9 +206,25 @@ describe("remarkLilypondPlugin", () => {
 		expect(mockRender).toHaveBeenCalledWith("\\score { }", {
 			format: "png",
 			resolution: 300,
+			crop: undefined,
 		});
 		expect((tree.children[0] as Html).value).toContain(
 			'<img class="lilypond" src="data:image/png;base64,',
 		);
+	});
+
+	it("passes crop: false to render when the crop option is set to false", async () => {
+		const plugin = remarkLilypondPlugin({ crop: false }) as unknown as SimpleTransformer;
+		const tree = makeTree([
+			{ type: "code", lang: "lilypond", value: "\\score { }" } as Code,
+		]);
+
+		await plugin(tree, { path: "test.md" });
+
+		expect(mockRender).toHaveBeenCalledWith("\\score { }", {
+			format: "svg",
+			resolution: undefined,
+			crop: false,
+		});
 	});
 });

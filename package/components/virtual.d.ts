@@ -1,9 +1,9 @@
 declare module "*.ly" {
-	const html: string;
-	export default html;
+	const exports: { cropped: string; uncropped: string };
+	export default exports;
 }
 
 declare module "*.lilypond" {
-	const html: string;
-	export default html;
+	const exports: { cropped: string; uncropped: string };
+	export default exports;
 }

@@ -97,6 +97,7 @@ describe("rehypeLilypondPlugin", () => {
 		expect(mockRender).toHaveBeenCalledWith("\\score { }", {
 			format: "svg",
 			resolution: undefined,
+			crop: undefined,
 		});
 		expect(tree.children[0]).toEqual({ type: "raw", value: RENDERED_SVG });
 	});
@@ -109,6 +110,7 @@ describe("rehypeLilypondPlugin", () => {
 		expect(mockRender).toHaveBeenCalledWith("\\score { }", {
 			format: "svg",
 			resolution: undefined,
+			crop: undefined,
 		});
 		expect(tree.children[0]).toEqual({ type: "raw", value: RENDERED_SVG });
 	});
@@ -155,6 +157,7 @@ describe("rehypeLilypondPlugin", () => {
 		expect(mockRender).toHaveBeenCalledWith('\\version "2.24.0"\n\\score { }', {
 			format: "svg",
 			resolution: undefined,
+			crop: undefined,
 		});
 	});
 
@@ -168,6 +171,7 @@ describe("rehypeLilypondPlugin", () => {
 		expect(mockRender).toHaveBeenCalledWith(value, {
 			format: "svg",
 			resolution: undefined,
+			crop: undefined,
 		});
 	});
 
@@ -179,6 +183,7 @@ describe("rehypeLilypondPlugin", () => {
 		expect(mockRender).toHaveBeenCalledWith("\\score { }", {
 			format: "svg",
 			resolution: undefined,
+			crop: undefined,
 		});
 		expect((tree.children[0] as HastRaw).value).toBe(RENDERED_SVG);
 	});
@@ -194,6 +199,7 @@ describe("rehypeLilypondPlugin", () => {
 		expect(mockRender).toHaveBeenCalledWith("\\score { }", {
 			format: "png",
 			resolution: undefined,
+			crop: undefined,
 		});
 		expect((tree.children[0] as HastRaw).value).toContain(
 			'<img class="lilypond" src="data:image/png;base64,',
@@ -213,9 +219,23 @@ describe("rehypeLilypondPlugin", () => {
 		expect(mockRender).toHaveBeenCalledWith("\\score { }", {
 			format: "png",
 			resolution: 300,
+			crop: undefined,
 		});
 		expect((tree.children[0] as HastRaw).value).toContain(
 			'<img class="lilypond" src="data:image/png;base64,',
 		);
+	});
+
+	it("passes crop: false to render when the crop option is set to false", async () => {
+		const transformer = rehypeLilypondPlugin({ crop: false });
+		const tree = makeTree([makeLilypondPre("\\score { }")]);
+
+		await transformer(tree);
+
+		expect(mockRender).toHaveBeenCalledWith("\\score { }", {
+			format: "svg",
+			resolution: undefined,
+			crop: false,
+		});
 	});
 });

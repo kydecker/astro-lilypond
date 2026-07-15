@@ -1,5 +1,11 @@
 export type OutputFormat = "svg" | "png" | { type: "png"; resolution: number };
 
+export interface LilypondPluginOptions {
+	version?: string;
+	format?: OutputFormat;
+	crop?: boolean;
+}
+
 /** Returns true for both accepted fenced-block language identifiers: `lilypond` and `ly`. */
 export function isLilypondLang(lang: string | null | undefined): boolean {
 	return lang === "lilypond" || lang === "ly";

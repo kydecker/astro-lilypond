@@ -3,12 +3,9 @@ import type { Plugin } from "unified";
 import { visit } from "unist-util-visit";
 import { render } from "./render.js";
 import { errorHtml, isLilypondLang, prependVersion, renderToHtml, resolveFormat } from "./util.js";
-import type { OutputFormat } from "./util.js";
+import type { LilypondPluginOptions } from "./util.js";
 
-export interface RemarkPluginOptions {
-	version?: string;
-	format?: OutputFormat;
-}
+export type RemarkPluginOptions = LilypondPluginOptions;
 
 export const remarkLilypondPlugin: Plugin<[RemarkPluginOptions?], Root> = (
 	options = {},
@@ -24,7 +21,7 @@ export const remarkLilypondPlugin: Plugin<[RemarkPluginOptions?], Root> = (
 				: node.value;
 			const { format, resolution } = resolveFormat(options.format ?? "svg");
 
-			const promise = render(source, { format, resolution })
+			const promise = render(source, { format, resolution, crop: options.crop })
 				.then((buf): void => {
 					const htmlNode: Html = {
 						type: "html",
