@@ -1,3 +1,5 @@
+![Astro LilyPond. Text to SVG music notation for Astro.](docs/public/preview.png)
+
 # astro-lilypond
 
 An [Astro](https://astro.build) integration for rendering [LilyPond](https://lilypond.org) music notation to images.
