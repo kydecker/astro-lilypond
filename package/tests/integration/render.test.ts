@@ -14,7 +14,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
-import { afterEach, beforeAll, describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 import { render } from "../../src/render.js";
 
 const execFileAsync = promisify(execFile);
@@ -43,7 +43,11 @@ function pngDimensions(buf: Buffer): { width: number; height: number } {
 	return { width: buf.readUInt32BE(16), height: buf.readUInt32BE(20) };
 }
 
-describe.skipIf(!lilypondAvailable())(
+// Each test shells out to the real `lilypond` binary and just awaits the
+// child process, so the Node event loop is free the whole time — running
+// them concurrently lets CI overlap multiple lilypond processes instead of
+// paying their compile time one at a time.
+describe.concurrent.skipIf(!lilypondAvailable())(
 	"render() against the real lilypond binary",
 	() => {
 		let voyager: string;
@@ -61,47 +65,49 @@ describe.skipIf(!lilypondAvailable())(
 		// about that naming). If these fail, LilyPond's conventions changed
 		// and render()'s readOutputFile() fallback logic needs updating.
 		describe("LilyPond output-file naming (pinned via direct invocation)", () => {
-			let dir: string;
-
-			afterEach(async () => {
-				if (dir) await rm(dir, { recursive: true, force: true });
-			});
-
 			it("names uncropped multi-page SVG output <base>-N.svg", async () => {
-				dir = await mkdtemp(join(tmpdir(), "lilypond-naming-"));
-				const inputPath = join(dir, "input.ly");
-				const outputBase = join(dir, "output");
-				await writeFile(inputPath, aria, "utf8");
-				await execFileAsync("lilypond", [
-					"--svg",
-					"--define-default=no-point-and-click",
-					"--silent",
-					"--output",
-					outputBase,
-					inputPath,
-				]);
-				const files = (await readdir(dir)).filter((f) => f.endsWith(".svg"));
-				expect(files.sort()).toEqual(
-					expect.arrayContaining(["output-1.svg", "output-2.svg"]),
-				);
+				const dir = await mkdtemp(join(tmpdir(), "lilypond-naming-"));
+				try {
+					const inputPath = join(dir, "input.ly");
+					const outputBase = join(dir, "output");
+					await writeFile(inputPath, aria, "utf8");
+					await execFileAsync("lilypond", [
+						"--svg",
+						"--define-default=no-point-and-click",
+						"--silent",
+						"--output",
+						outputBase,
+						inputPath,
+					]);
+					const files = (await readdir(dir)).filter((f) => f.endsWith(".svg"));
+					expect(files.sort()).toEqual(
+						expect.arrayContaining(["output-1.svg", "output-2.svg"]),
+					);
+				} finally {
+					await rm(dir, { recursive: true, force: true });
+				}
 			});
 
 			it("names uncropped multi-page PNG output <base>-pageN.png", async () => {
-				dir = await mkdtemp(join(tmpdir(), "lilypond-naming-"));
-				const inputPath = join(dir, "input.ly");
-				const outputBase = join(dir, "output");
-				await writeFile(inputPath, voyager, "utf8");
-				await execFileAsync("lilypond", [
-					"--png",
-					"--define-default=no-point-and-click",
-					"--output",
-					outputBase,
-					inputPath,
-				]);
-				const files = (await readdir(dir)).filter((f) => f.endsWith(".png"));
-				expect(files.sort()).toEqual(
-					expect.arrayContaining(["output-page1.png", "output-page2.png"]),
-				);
+				const dir = await mkdtemp(join(tmpdir(), "lilypond-naming-"));
+				try {
+					const inputPath = join(dir, "input.ly");
+					const outputBase = join(dir, "output");
+					await writeFile(inputPath, voyager, "utf8");
+					await execFileAsync("lilypond", [
+						"--png",
+						"--define-default=no-point-and-click",
+						"--output",
+						outputBase,
+						inputPath,
+					]);
+					const files = (await readdir(dir)).filter((f) => f.endsWith(".png"));
+					expect(files.sort()).toEqual(
+						expect.arrayContaining(["output-page1.png", "output-page2.png"]),
+					);
+				} finally {
+					await rm(dir, { recursive: true, force: true });
+				}
 			});
 		});
 
