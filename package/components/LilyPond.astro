@@ -15,7 +15,7 @@ const { content, class: className, style } = Astro.props;
 
 let html = content;
 if (className) html = html.replace('class="lilypond"', `class="lilypond ${className}"`);
-if (style) html = html.replace(/^<(svg|img)\b/, `<$1 style="${escapeHtml(style)}"`);
+if (style) html = html.replace(/<(svg|img)\b/, `<$1 style="${escapeHtml(style)}"`);
 ---
 
 <Fragment set:html={html} />
