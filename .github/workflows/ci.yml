@@ -25,11 +25,19 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Install LilyPond
+        uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: lilypond
+
       - name: Build
         run: pnpm --filter astro-lilypond build
 
       - name: Test
         run: pnpm --filter astro-lilypond test --run
+
+      - name: Integration test
+        run: pnpm --filter astro-lilypond test:integration
 
       - name: Lint
         run: pnpm check
