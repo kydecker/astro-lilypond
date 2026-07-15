@@ -6,9 +6,7 @@ head:
     content: astro-lilypond
 ---
 
-import { LinkCard, Code } from "@astrojs/starlight/components";
-import BachInvention from "../../components/BachInvention.astro";
-import BachInventionRaw from "../../components/BachInvention.astro?raw";
+import { LinkCard, CardGrid, Card } from "@astrojs/starlight/components";
 
 `astro-lilypond` is an [Astro](https://astro.build) integration that lets you write [LilyPond](https://lilypond.org) inside Markdown...
 
@@ -30,12 +28,21 @@ import BachInventionRaw from "../../components/BachInvention.astro?raw";
 }
 ```
 
-Music can be rendered as an `.svg` or `.png`.
+## Features
+
+<CardGrid stagger>
+  <Card title="Text to SVG or PNG">
+    Render LilyPond via [Markdown](/usage/#markdown) or with a `<LilyPond>` [component](/usage/#component).
+  </Card>
+  <Card title="Easy setup">
+    Works with both `unified()` and `satteri()` Markdown processors out-of-the-box.
+  </Card>
+  <Card title="Zero JS required">
+    Images are compiled at build time, keeping your site fast.
+  </Card>
+  <Card title="Full LilyPond support">
+    Works with all LilyPond musical and layout syntax.
+  </Card>
+</CardGrid>
 
 <LinkCard href="/getting-started" icon="rocket" title="Get Started" description="Install astro-lilypond and render music notation on your site." />
-
-In addition to rendering in Markdown, the [`<LilyPond>` component](/usage/#component) lets you import `.ly` files and render them anywhere you use Astro.
-
-<Code code={BachInventionRaw} lang="astro" />
-
-<BachInvention />

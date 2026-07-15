@@ -1,7 +1,7 @@
 export default {
   "name": "lilypond",
   "displayName": "LilyPond",
-  "aliases": ["lilypondtext"],
+  "aliases": ["lilypondtext", "ly", "ily"],
   "scopeName": "source.lilypond",
   "fileTypes": ["ly", "lily", "ily"],
   "patterns": [

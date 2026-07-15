@@ -3,6 +3,10 @@ title: Usage
 description: Render LilyPond notation in Markdown or directly in Astro components.
 ---
 
+import { Code } from "@astrojs/starlight/components";
+import BachInvention from "../../components/BachInvention.astro";
+import BachInventionRaw from "../../components/BachInvention.astro?raw";
+
 ## Markdown
 
 Use a fenced code block with the `lilypond` (or `ly` / `ily`) language tag:
@@ -22,14 +26,9 @@ The block is replaced with an inline SVG at build time. See [LilyPond Syntax](/l
 
 The `<LilyPond>` component renders notation in any `.astro` file. Import a `.ly` file and pass it to the `content` prop.
 
-```astro
----
-import LilyPond from 'astro-lilypond/component';
-import prelude from './scores/prelude.ly';
----
+<Code code={BachInventionRaw} lang="astro" />
 
-<LilyPond content={prelude} />
-```
+<BachInvention />
 
 The `version`, `format`, and `crop` configured in your integration options apply automatically.
 
