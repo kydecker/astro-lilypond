@@ -3,20 +3,7 @@ title: LilyPond Syntax
 description: A quick reference for LilyPond notation inside astro-lilypond code blocks.
 ---
 
-Each fenced code block is a self-contained LilyPond file. You can use any valid LilyPond syntax. This page covers the most common patterns.
-
-LilyPond code blocks are wrapped by triple-backticks ` ``` `
-plus the language marker `lilypond` or `ly`.
-
-## Version declaration
-
-Always start with a version declaration so LilyPond can apply the right compatibility rules. If you set the [`version` option](/configuration/#version) in your Astro config, this is inserted automatically.
-
-````md
-```lilypond
-\version "2.24.0"
-```
-````
+You can use any valid LilyPond syntax with `astro-lilypond`. This page covers the most common patterns.
 
 ## Pitches and octave markers
 

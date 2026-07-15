@@ -1,0 +1,31 @@
+---
+title: Styling
+description: Style LilyPond SVG output using the .lilypond CSS class.
+---
+
+import { Code } from "@astrojs/starlight/components";
+import StyledMusic from "../../components/StyledMusic.astro";
+import StyledMusicRaw from "../../components/StyledMusic.astro?raw";
+
+Every rendered LilyPond block receives a `lilypond` class on its root element — an `<svg>` for SVG output or an `<img>` for PNG output. Use this class as your CSS hook.
+
+## Global styles
+
+Target `.lilypond` in any global stylesheet:
+
+```css
+.lilypond {
+  color: navy;
+  background: ivory;
+}
+```
+
+By default, LilyPond SVGs use `currentColor`, so the `color` property controls the notation colour and inherits from the surrounding text if unset.
+
+## Scoped styles
+
+Pass a `class` prop to `<LilyPond>` to get a scoped handle.
+
+<Code code={StyledMusicRaw} lang="astro" />
+
+<StyledMusic />

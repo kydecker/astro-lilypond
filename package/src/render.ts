@@ -1,5 +1,5 @@
 import { execFile } from "child_process";
-import { mkdtemp, rm, writeFile } from "fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
 import { promisify } from "util";
@@ -86,8 +86,6 @@ async function readOutputFile(
 	format: Format,
 	crop: boolean,
 ): Promise<Buffer> {
-	const { readFile } = await import("fs/promises");
-
 	// --define-default crop writes <base>.cropped.<format> alongside <base>.<format>
 	if (crop) {
 		try {

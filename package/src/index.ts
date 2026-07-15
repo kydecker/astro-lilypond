@@ -1,9 +1,12 @@
 import type { AstroIntegration } from "astro";
 import { execFile } from "child_process";
 import { promisify } from "util";
+import type { Plugin } from "vite";
 import { remarkLilypondPlugin } from "./remark-plugin.js";
 import { rehypeLilypondPlugin } from "./rehype-plugin.js";
 import { satteriLilypondPlugin } from "./satteri-plugin.js";
+import { render } from "./render.js";
+import { prependVersion, renderToHtml, resolveFormat } from "./util.js";
 import type { OutputFormat } from "./util.js";
 
 const execFileAsync = promisify(execFile);
@@ -28,6 +31,21 @@ export interface LilypondOptions {
 	format?: OutputFormat;
 }
 
+function lyFilePlugin(options: LilypondOptions): Plugin {
+	return {
+		name: "vite-plugin-astro-lilypond-ly",
+		enforce: "pre",
+		async transform(source, id) {
+			if (!id.endsWith(".ly") && !id.endsWith(".lilypond")) return;
+			const src = options.version ? prependVersion(source, options.version) : source;
+			const { format, resolution } = resolveFormat(options.format ?? "svg");
+			const buf = await render(src, { format, resolution });
+			const html = renderToHtml(buf, format);
+			return { code: `export default ${JSON.stringify(html)}` };
+		},
+	};
+}
+
 export default function lilypond(options: LilypondOptions = {}): AstroIntegration {
 	return {
 		name: "astro-lilypond",
@@ -39,6 +57,10 @@ export default function lilypond(options: LilypondOptions = {}): AstroIntegratio
 							"astro-lilypond: `lilypond` binary not found — LilyPond blocks will render as errors. Install LilyPond and ensure it is on PATH.",
 						);
 					}
+				});
+
+				updateConfig({
+					vite: { plugins: [lyFilePlugin(options)] },
 				});
 
 				const existingProcessor = config.markdown?.processor;

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import lilypond from "../src/index.js";
+import lilypond from "../src/";
 
 interface SetupHookArgs {
 	config: {
@@ -49,9 +49,10 @@ describe("lilypond integration", () => {
 			logger,
 		} as never);
 
-		expect(updateConfig).toHaveBeenCalledOnce();
+		expect(updateConfig).toHaveBeenCalledTimes(2);
+		// First call registers Vite plugins; second call sets the markdown processor.
 		expect(
-			(updateConfig.mock.calls[0][0] as { markdown?: { processor?: unknown } })
+			(updateConfig.mock.calls[1][0] as { markdown?: { processor?: unknown } })
 				.markdown?.processor,
 		).toBeDefined();
 
@@ -78,9 +79,10 @@ describe("lilypond integration", () => {
 			logger,
 		} as never);
 
-		expect(updateConfig).toHaveBeenCalledOnce();
+		expect(updateConfig).toHaveBeenCalledTimes(2);
+		// First call registers Vite plugins; second call sets the markdown processor.
 		const { remarkPlugins, rehypePlugins } = (
-			updateConfig.mock.calls[0][0] as {
+			updateConfig.mock.calls[1][0] as {
 				markdown: { processor: { options: { remarkPlugins: unknown[]; rehypePlugins: unknown[] } } };
 			}
 		).markdown.processor.options;
