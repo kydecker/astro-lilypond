@@ -11,6 +11,8 @@ import type { LilypondPluginOptions, OutputFormat } from "./util.js";
 
 const execFileAsync = promisify(execFile);
 
+const LY_EXTENSIONS = [".ly", ".lilypond", ".ily"] as const;
+
 export type { OutputFormat };
 export type { LilypondPluginOptions };
 
@@ -41,7 +43,7 @@ function lyFilePlugin(options: LilypondOptions): Plugin {
 		name: "vite-plugin-astro-lilypond-ly",
 		enforce: "pre",
 		async transform(source, id) {
-			if (!id.endsWith(".ly") && !id.endsWith(".lilypond")) return;
+			if (!LY_EXTENSIONS.some(ext => id.endsWith(ext))) return;
 			const src = options.version ? prependVersion(source, options.version) : source;
 			const { format, resolution } = resolveFormat(options.format ?? "svg");
 				const buf = await render(src, { format, resolution, crop: options.crop ?? true });
@@ -135,6 +137,15 @@ export default function lilypond(options: LilypondOptions = {}): AstroIntegratio
 						"`unified(…)` from `@astrojs/markdown-remark`, then add this integration. " +
 						`Detected processor: ${existingProcessor?.name ?? "none"}.`,
 				);
+			},
+
+			"astro:config:done": ({ injectTypes }) => {
+				injectTypes({
+					filename: "ly-types.d.ts",
+					content: LY_EXTENSIONS
+						.map(ext => `declare module "*${ext}" {\n  const html: string;\n  export default html;\n}`)
+						.join("\n"),
+				});
 			},
 		},
 	};
