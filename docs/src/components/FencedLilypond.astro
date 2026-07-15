@@ -1,0 +1,11 @@
+---
+import { Code } from "@astrojs/starlight/components";
+interface Props {
+  code: string;
+}
+const { code } = Astro.props;
+const fenced = (c: string) =>
+  "```lilypond\n" + c.replace(/^(?=.)/gm, "  ").trimEnd() + "\n```";
+---
+
+<Code code={fenced(code)} lang="lilypondtext" />

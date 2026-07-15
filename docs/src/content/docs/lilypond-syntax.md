@@ -16,14 +16,12 @@ Note names run from `a` to `g`. Inside `\relative`, each pitch is chosen to be a
 }
 ```
 
-````md
-```lilypond
+```lilypondtext
 \relative c' {
   c4 d e f | g a b c |
   c' b a g | f e d c |
 }
 ```
-````
 
 ## Rhythms and durations
 
@@ -44,13 +42,11 @@ Notes inherit the previous note's duration by default. A new duration can be set
 }
 ```
 
-````md
-```lilypond
+```lilypondtext
 \relative c' {
   c4 c8 c c16 c c c c32 c c c c c c c
 }
 ```
-````
 
 Append dots to extend by half the note's value. Double-dotting adds three-quarters:
 
@@ -67,15 +63,13 @@ Append dots to extend by half the note's value. Double-dotting adds three-quarte
 }
 ```
 
-````md
-```lilypond
+```lilypondtext
 \relative c' {
   c4. c8 c4 r |
   c2. c4 |
   c4.. c16 c2 |
 }
 ```
-````
 
 ## Rests
 
@@ -89,15 +83,13 @@ Append dots to extend by half the note's value. Double-dotting adds three-quarte
 }
 ```
 
-````md
-```lilypond
+```lilypondtext
 \relative c' {
   c4 r4 c4 r4 |
   r2 c2 |
   R1 |
 }
 ```
-````
 
 ## Accidentals
 
@@ -117,14 +109,12 @@ Accidentals are written as `is` and `es` suffixes appended to the note name.
 }
 ```
 
-````md
-```lilypond
+```lilypondtext
 \relative c' {
   c4 cis d dis | e f fis g |
   g4 ges f fes | e es d des |
 }
 ```
-````
 
 ## Key and time signatures
 
@@ -138,15 +128,13 @@ Set the key with `\key` and the time signature with `\time`. Both take effect fr
 }
 ```
 
-````md
-```lilypond
+```lilypondtext
 \relative c' {
   \key g \major
   \time 3/4
   g4 a b | c b a | g2. |
 }
 ```
-````
 
 ## Barlines
 
@@ -168,8 +156,7 @@ LilyPond inserts single barlines automatically. Use `\bar` to override:
 }
 ```
 
-````md
-```lilypond
+```lilypondtext
 \relative c' {
   c1 \bar "||"
   c1 \bar ".|:"
@@ -177,7 +164,6 @@ LilyPond inserts single barlines automatically. Use `\bar` to override:
   c1 \bar "|."
 }
 ```
-````
 
 ## Chords
 
@@ -190,14 +176,12 @@ Write a chord by wrapping notes in angle brackets. All notes in the brackets sha
 }
 ```
 
-````md
-```lilypond
+```lilypondtext
 \relative c' {
   <c e g>4 <d f a> <e g b> <c e g> |
   <f a c>2 <g b d> |
 }
 ```
-````
 
 ## Articulations
 
@@ -219,14 +203,12 @@ Attach articulations after the note with a dash and a symbol:
 }
 ```
 
-````md
-```lilypond
+```lilypondtext
 \relative c'' {
   c4-. c-- c-> c-^ |
   c4-! c-_ c2 |
 }
 ```
-````
 
 ## Dynamics
 
@@ -253,8 +235,7 @@ Use `\<` to begin a crescendo hairpin and `\>` for a diminuendo; close either wi
 }
 ```
 
-````md
-```lilypond
+```lilypondtext
 \relative c'' {
   c4\pp c c c |
   c4\< c c c\! |
@@ -262,7 +243,6 @@ Use `\<` to begin a crescendo hairpin and `\>` for a diminuendo; close either wi
   c4\mp c\mf c c |
 }
 ```
-````
 
 ## Slurs and ties
 
@@ -276,15 +256,13 @@ A slur spans from `(` to `)`. A tie connects two notes of the same pitch with `~
 }
 ```
 
-````md
-```lilypond
+```lilypondtext
 \relative c'' {
   c4( d e f) |
   g2~ g4 f |
   e4( f~ f2) |
 }
 ```
-````
 
 ## Grace notes
 
@@ -297,14 +275,12 @@ A slur spans from `(` to `)`. A tie connects two notes of the same pitch with `~
 }
 ```
 
-````md
-```lilypond
+```lilypondtext
 \relative c'' {
   \grace e8 d4 c2. |
   \grace { d16 e } f4 e2. |
 }
 ```
-````
 
 ## Tuplets
 
@@ -317,14 +293,12 @@ A slur spans from `(` to `)`. A tie connects two notes of the same pitch with `~
 }
 ```
 
-````md
-```lilypond
+```lilypondtext
 \relative c'' {
   \tuplet 3/2 { c4 d e } f2 |
   \tuplet 3/2 { g8 f e } \tuplet 3/2 { d c b } c2 |
 }
 ```
-````
 
 ## Multiple voices
 
@@ -343,8 +317,7 @@ Use `<<` and `>>` to stack voices on the same staff. `\voiceOne` and `\voiceTwo`
 >>
 ```
 
-````md
-```lilypond
+```lilypondtext
 \new Staff <<
   \new Voice {
     \voiceOne
@@ -356,7 +329,6 @@ Use `<<` and `>>` to stack voices on the same staff. `\voiceOne` and `\voiceTwo`
   }
 >>
 ```
-````
 
 ## Further reading
 

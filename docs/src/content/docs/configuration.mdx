@@ -3,9 +3,12 @@ title: Configuration
 description: Options available when calling lilypond() in your Astro config.
 ---
 
+import FencedLilypond from "../../components/FencedLilypond.astro";
+import versionExample from "../../scores/version-example.ly?raw";
+
 Pass options to the integration when registering it in `astro.config.mjs`:
 
-```js
+```js {7-9}
 // astro.config.mjs
 import { defineConfig } from 'astro/config';
 import lilypond from 'astro-lilypond';
@@ -13,7 +16,7 @@ import lilypond from 'astro-lilypond';
 export default defineConfig({
   integrations: [
     lilypond({
-      // options go here
+      // config
     }),
   ],
 });
@@ -28,28 +31,24 @@ export default defineConfig({
 
 All LilyPond content must specify `\version` at the start so that the compiler knows how to output the score.
 
-````md
-```lilypond
-\version "2.24.0"
-\relative c' { c4 d e f }
+<FencedLilypond code={versionExample} />
+
+Specify a `version` in the LilyPond config to apply it to all LilyPond blocks by default:
+
+```diff lang="js"
+// astro.config.mjs  
+export default defineConfig({
+   integrations: [
+    lilypond({
++     version: "2.24.0"
+    }),
+  ],
+});
 ```
-````
 
-If you specify a `version` in the LilyPond config, it will apply to all LilyPond code blocks:
+With `version` set in the config, blocks can omit it.
 
-```js
-lilypond({ version: '2.24.0' })
-```
-
-With `version` set, the declaration is inserted for you, so blocks can omit it:
-
-````md
-```lilypond
-\relative c' { c4 d e f }
-```
-````
-
-If a block already contains a `\version` declaration it is left untouched, regardless of this option. This lets you override the version for a single block while using the global default everywhere else.
+Blocks with an explicit `\version` declaration will always use that version, regardless of the global config.
 
 ### `format`
 
@@ -58,8 +57,15 @@ If a block already contains a `\version` declaration it is left untouched, regar
 
 The output format passed to the LilyPond binary. Controls how the rendered output is embedded in the page.
 
-```js
-lilypond({ format: 'png' })
+```js {5}
+// astro.config.mjs
+export default defineConfig({
+   integrations: [
+    lilypond({
+      format: "png"
+    }),
+  ],
+});
 ```
 
 | Value | Embedded as |
@@ -68,10 +74,20 @@ lilypond({ format: 'png' })
 | `"png"` | `<img>` element with a base64 data URI, at the default resolution (144 DPI) |
 | `{ type: "png", resolution: number }` | `<img>` element with a base64 data URI, at the specified DPI |
 
-SVG is the best choice for most web use — it scales to any size and stays sharp on high-DPI screens. Use PNG when you need a specific pixel resolution:
+If you need higher quality PNGs, pass an object with `type: "png"` and `resolution`:
 
-```js
-lilypond({ format: { type: 'png', resolution: 300 } })
+```js {5-8}
+// astro.config.mjs
+export default defineConfig({
+   integrations: [
+    lilypond({
+      format: {
+        type: "png",
+        resolution: 300
+      }
+    }),
+  ],
+});
 ```
 
 ### `crop`
@@ -83,12 +99,13 @@ When `true`, the margins are removed and the page is cropped to fit the rendered
 
 Set to `false` to preserve full page dimensions:
 
-```js
-lilypond({ crop: false })
-```
-
-This setting can be overridden at the component level when using the `<LilyPond>` component:
-
-```astro
-<LilyPond crop={false} />
+```js {5}
+// astro.config.mjs
+export default defineConfig({
+   integrations: [
+    lilypond({
+      crop: false
+    }),
+  ],
+});
 ```

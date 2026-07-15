@@ -82,6 +82,21 @@ describe("remarkLilypondPlugin", () => {
 		expect(tree.children[0]).toEqual({ type: "html", value: RENDERED_SVG });
 	});
 
+	it("accepts 'ily' as an alternative language marker", async () => {
+		const tree = makeTree([
+			{ type: "code", lang: "ily", value: "\\score { }" } as Code,
+		]);
+
+		await runPlugin(tree);
+
+		expect(mockRender).toHaveBeenCalledWith("\\score { }", {
+			format: "svg",
+			resolution: undefined,
+			crop: undefined,
+		});
+		expect(tree.children[0]).toEqual({ type: "html", value: RENDERED_SVG });
+	});
+
 	it("handles multiple lilypond blocks in one document", async () => {
 		const tree = makeTree([
 			{ type: "code", lang: "lilypond", value: "\\score { c }" } as Code,

@@ -115,6 +115,19 @@ describe("rehypeLilypondPlugin", () => {
 		expect(tree.children[0]).toEqual({ type: "raw", value: RENDERED_SVG });
 	});
 
+	it("accepts 'ily' as an alternative language marker", async () => {
+		const tree = makeTree([makeOtherPre("ily", "\\score { }")]);
+
+		await runPlugin(tree);
+
+		expect(mockRender).toHaveBeenCalledWith("\\score { }", {
+			format: "svg",
+			resolution: undefined,
+			crop: undefined,
+		});
+		expect(tree.children[0]).toEqual({ type: "raw", value: RENDERED_SVG });
+	});
+
 	it("leaves non-lilypond <pre><code> untouched", async () => {
 		const pre = makeOtherPre("js", "const x = 1");
 		const tree = makeTree([pre]);
