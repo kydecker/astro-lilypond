@@ -82,17 +82,41 @@ describe("render", () => {
 		await expect(render("bad")).rejects.toThrow("fatal error: bad input");
 	});
 
-	it("throws when lilypond writes to stderr even though it exits zero", async () => {
+	it("throws when lilypond writes an unrecognized warning to stderr even though it exits zero", async () => {
 		mockExecFile.mockImplementation(
 			((_bin: string, _args: string[], cb: (err: null, res: { stdout: string; stderr: string }) => void) =>
 				cb(null, {
 					stdout: "",
-					stderr: "programming error: cyclic dependency\ncontinuing, cross fingers",
+					stderr: "warning: some other unexpected warning",
 				})) as typeof execFile,
 		);
 		await expect(render("\\score { }")).rejects.toThrow(
-			"programming error: cyclic dependency",
+			"warning: some other unexpected warning",
 		);
+	});
+
+	it("does not throw for the known-benign 'programming error ... continuing, cross fingers' recovery warning", async () => {
+		mockExecFile.mockImplementation(
+			((_bin: string, _args: string[], cb: (err: null, res: { stdout: string; stderr: string }) => void) =>
+				cb(null, {
+					stdout: "",
+					stderr:
+						"programming error: cyclic dependency: calculation-in-progress encountered for VerticalAxisGroup.adjacent-pure-heights\ncontinuing, cross fingers\nprogramming error: cyclic dependency: calculation-in-progress encountered for VerticalAxisGroup.adjacent-pure-heights\ncontinuing, cross fingers",
+				})) as typeof execFile,
+		);
+		await expect(render("\\score { }")).resolves.toBeInstanceOf(Buffer);
+	});
+
+	it("still throws if real stderr content is mixed in with the benign recovery warning", async () => {
+		mockExecFile.mockImplementation(
+			((_bin: string, _args: string[], cb: (err: null, res: { stdout: string; stderr: string }) => void) =>
+				cb(null, {
+					stdout: "",
+					stderr:
+						"programming error: cyclic dependency: calculation-in-progress encountered for VerticalAxisGroup.adjacent-pure-heights\ncontinuing, cross fingers\nwarning: something actually wrong",
+				})) as typeof execFile,
+		);
+		await expect(render("\\score { }")).rejects.toThrow("something actually wrong");
 	});
 
 	it("passes --include for each includePaths entry so \\include can find sibling files", async () => {

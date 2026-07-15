@@ -6,6 +6,16 @@ import { promisify } from "util";
 
 const execFileAsync = promisify(execFile);
 
+// LilyPond sometimes hits an internal programming error but recovers and
+// still produces valid output (it logs "continuing, cross fingers" and exits
+// zero). Complex real-world scores with cross-staff spacing can legitimately
+// trigger this, so it shouldn't fail the build on its own.
+const BENIGN_STDERR_RE = /^programming error:.*\n^continuing, cross fingers$/gm;
+
+function isBenignStderr(stderr: string): boolean {
+	return stderr.replace(BENIGN_STDERR_RE, "").trim() === "";
+}
+
 export type Format = "midi" | "pdf" | "ps" | "png" | "svg" | "eps";
 
 const FORMAT_FLAGS: Record<Format, string | null> = {
@@ -92,7 +102,7 @@ export async function render(
 					: undefined;
 			throw new Error(errStderr || (err instanceof Error ? err.message : String(err)));
 		}
-		if (stderr) throw new Error(stderr);
+		if (stderr && !isBenignStderr(stderr)) throw new Error(stderr);
 
 		return await readOutputFile(outputBase, opts.format, opts.crop);
 	} finally {
