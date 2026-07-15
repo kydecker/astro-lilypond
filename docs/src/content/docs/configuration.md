@@ -26,13 +26,7 @@ export default defineConfig({
 **Type:** `string`  
 **Default:** `undefined`
 
-The LilyPond version string to prepend automatically to every code block that doesn't already declare `\version`.
-
-```js
-lilypond({ version: '2.24.0' })
-```
-
-Without this option every block must open with `\version "…"` itself:
+All LilyPond content must specify `\version` at the start so that the compiler knows how to output the score.
 
 ````md
 ```lilypond
@@ -40,6 +34,12 @@ Without this option every block must open with `\version "…"` itself:
 \relative c' { c4 d e f }
 ```
 ````
+
+If you specify a `version` in the LilyPond config, it will apply to all LilyPond code blocks:
+
+```js
+lilypond({ version: '2.24.0' })
+```
 
 With `version` set, the declaration is inserted for you, so blocks can omit it:
 

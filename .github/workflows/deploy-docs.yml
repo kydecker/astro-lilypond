@@ -30,7 +30,7 @@ jobs:
           packages: lilypond
 
       - name: Build library
-        run: pnpm build
+        run: pnpm --filter astro-lilypond build
 
       - name: Build docs
         run: pnpm --filter docs build

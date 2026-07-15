@@ -32,7 +32,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build
-        run: pnpm build
+        run: pnpm --filter astro-lilypond build
 
       - name: Create version PR or publish
         uses: changesets/action@v1
