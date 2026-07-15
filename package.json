@@ -16,7 +16,7 @@
   ],
   "scripts": {
     "build": "tsc --project tsconfig.json",
-    "release": "changeset publish --provenance",
+    "release": "changeset publish",
     "check": "biome check",
     "check:fix": "biome check --write",
     "test": "vitest"
