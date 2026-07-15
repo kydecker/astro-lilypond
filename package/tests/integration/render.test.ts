@@ -47,7 +47,7 @@ function pngDimensions(buf: Buffer): { width: number; height: number } {
 // child process, so the Node event loop is free the whole time — running
 // them concurrently lets CI overlap multiple lilypond processes instead of
 // paying their compile time one at a time.
-describe.concurrent.skipIf(!lilypondAvailable())(
+describe.skipIf(!lilypondAvailable()).concurrent(
 	"render() against the real lilypond binary",
 	() => {
 		let voyager: string;

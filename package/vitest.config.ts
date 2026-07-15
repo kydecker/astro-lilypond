@@ -1,10 +1,5 @@
 import { getViteConfig } from "astro/config";
 
-// "unit": fast, fully mocked, no external binaries — this is what `vitest`/
-// `npm test` runs by default.
-// "integration": exercises the real `lilypond` binary against fixtures in
-// tests/integration/scores; slower, so it's opt-in via
-// `npm run test:integration` (`vitest run --project integration`).
 export default getViteConfig({
 	test: {
 		projects: [
