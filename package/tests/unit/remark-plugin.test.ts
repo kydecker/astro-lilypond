@@ -1,15 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { Code, Html, Paragraph, Root, Text } from "mdast";
 
-vi.mock("../src/render", () => ({
+vi.mock("../../src/render", () => ({
 	render: vi.fn(),
 }));
 
-import { render } from "../src/render";
+import { render } from "../../src/render";
 import {
 	remarkLilypondPlugin as _remarkLilypondPlugin,
 	type RemarkPluginOptions,
-} from "../src/remark-plugin.js";
+} from "../../src/remark-plugin.js";
 
 const mockRender = vi.mocked(render);
 
@@ -53,6 +53,7 @@ describe("remarkLilypondPlugin", () => {
 			format: "svg",
 			resolution: undefined,
 			crop: undefined,
+			includePaths: ["."],
 		});
 		expect(tree.children[0]).toEqual({ type: "html", value: RENDERED_SVG });
 	});
@@ -78,6 +79,7 @@ describe("remarkLilypondPlugin", () => {
 			format: "svg",
 			resolution: undefined,
 			crop: undefined,
+			includePaths: ["."],
 		});
 		expect(tree.children[0]).toEqual({ type: "html", value: RENDERED_SVG });
 	});
@@ -93,6 +95,7 @@ describe("remarkLilypondPlugin", () => {
 			format: "svg",
 			resolution: undefined,
 			crop: undefined,
+			includePaths: ["."],
 		});
 		expect(tree.children[0]).toEqual({ type: "html", value: RENDERED_SVG });
 	});
@@ -136,6 +139,7 @@ describe("remarkLilypondPlugin", () => {
 			format: "svg",
 			resolution: undefined,
 			crop: undefined,
+			includePaths: ["."],
 		});
 	});
 
@@ -150,6 +154,7 @@ describe("remarkLilypondPlugin", () => {
 			format: "svg",
 			resolution: undefined,
 			crop: undefined,
+			includePaths: ["."],
 		});
 	});
 
@@ -164,6 +169,7 @@ describe("remarkLilypondPlugin", () => {
 			format: "svg",
 			resolution: undefined,
 			crop: undefined,
+			includePaths: ["."],
 		});
 		expect((tree.children[0] as Html).value).toBe(RENDERED_SVG);
 	});
@@ -182,6 +188,7 @@ describe("remarkLilypondPlugin", () => {
 			format: "png",
 			resolution: undefined,
 			crop: undefined,
+			includePaths: ["."],
 		});
 		expect((tree.children[0] as Html).value).toContain(
 			'<img class="lilypond" src="data:image/png;base64,',
@@ -204,6 +211,7 @@ describe("remarkLilypondPlugin", () => {
 			format: "png",
 			resolution: 300,
 			crop: undefined,
+			includePaths: ["."],
 		});
 		expect((tree.children[0] as Html).value).toContain(
 			'<img class="lilypond" src="data:image/png;base64,',
@@ -222,6 +230,7 @@ describe("remarkLilypondPlugin", () => {
 			format: "svg",
 			resolution: undefined,
 			crop: false,
+			includePaths: ["."],
 		});
 	});
 });

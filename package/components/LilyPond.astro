@@ -13,8 +13,12 @@ function escapeHtml(text: unknown): string {
 
 interface Props {
 	content: string;
-	class?: string;
-	style?: string;
+	// Explicitly includes `| undefined` (rather than relying on `?`) so
+	// callers with `exactOptionalPropertyTypes` can forward an
+	// already-optional value (e.g. `class={maybeUndefinedString}`) without
+	// having to filter it out first.
+	class?: string | undefined;
+	style?: string | undefined;
 }
 
 const { content, class: className, style } = Astro.props;

@@ -1,0 +1,37 @@
+---
+import { Code } from "@astrojs/starlight/components";
+import LilyPond from "astro-lilypond/component";
+
+interface Props {
+  content: string;
+  code: string;
+  /** `<Code>` frame title, e.g. the source filename. */
+  title: string;
+  class?: string | undefined;
+  style?: string | undefined;
+  summary?: string;
+}
+
+const {
+  content,
+  code,
+  title,
+  class: className,
+  style,
+  summary = "View source",
+} = Astro.props;
+---
+
+<LilyPond content={content} class={className} style={style} />
+
+<details>
+  <summary>{summary}</summary>
+  <Code code={code} lang="lilypondtext" title={title} class="example" />
+</details>
+
+<style>
+  .example :global(.frame pre) {
+    max-height: min(68vh, 600px);
+    overflow: auto;
+  }
+</style>

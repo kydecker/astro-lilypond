@@ -1,6 +1,6 @@
 import { experimental_AstroContainer as AstroContainer } from "astro/container";
 import { describe, it, expect } from "vitest";
-import LilyPond from "../components/LilyPond.astro";
+import LilyPond from "../../components/LilyPond.astro";
 
 describe("LilyPond.astro", () => {
 	it("renders the given content", async () => {
