@@ -46,14 +46,7 @@ export default defineConfig({
 });
 ```
 
-With `version` set in the config, blocks can omit it:
-
-````diff lang="md"
-```lilypond
--  \version "2.24.0"
-  \relative c' { c4 d e f }
-```
-````
+With `version` set in the config, blocks can omit it.
 
 Blocks with an explicit `\version` declaration will always use that version, regardless of the global config.
 
