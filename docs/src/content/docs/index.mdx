@@ -1,5 +1,5 @@
 ---
-title: Astro + LilyPond
+title: Astro LilyPond
 description: Render LilyPond music notation to images with Astro.
 head:
   - tag: title
@@ -7,45 +7,11 @@ head:
 ---
 
 import { LinkCard, CardGrid, Card } from "@astrojs/starlight/components";
+import HowToUse from "../../components/HowToUse.astro";
 
-`astro-lilypond` is an [Astro](https://astro.build) integration for rendering musical scores on the web.
+`astro-lilypond` is an [Astro](https://astro.build) integration for displaying musical notation on the web.
 
-<CardGrid>
-
-<div>
-
-Write [LilyPond](https://lilypond.org) inside Markdown...
-
-````md
-```lilypond
-  \relative c' {
-    c4 d e f |
-    g a b c  \bar "|."
-  }
-```
-````
-
-</div>
-
-<div>
-
-...and it renders as music notation.
-
-```lilypond
-\relative c' {
-  c4 d e f |
-  g a b c  \bar "|."
-}
-```
-
-</div>
-
-</CardGrid>
-
-
-
-
-
+<HowToUse />
 
 ## Features
 

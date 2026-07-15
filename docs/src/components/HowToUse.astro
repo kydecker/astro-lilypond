@@ -1,0 +1,26 @@
+---
+import { CardGrid, Code } from "@astrojs/starlight/components";
+import LilyPond from "astro-lilypond/component";
+import example from "../scores/example.ly";
+import exampleRaw from "../scores/example.ly?raw";
+---
+
+<CardGrid>
+  <div>
+    <p>Write LilyPond inside Markdown&hellip;</p>
+
+    <Code code={exampleRaw} />
+  </div>
+
+  <div>
+    <p>&hellip;and it renders as music notation.</p>
+
+    <LilyPond content={example} class="responsive" />
+  </div>
+</CardGrid>
+
+<style>
+  .responsive {
+    width: 100%;
+  }
+</style>

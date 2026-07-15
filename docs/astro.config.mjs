@@ -19,7 +19,6 @@ export default defineConfig({
       expressiveCode: {
         shiki: {
           langs: [lilypondGrammar],
-          injectLangsIntoNestedCodeBlocks: true,
         },
       },
       favicon: '/favicon.svg',
