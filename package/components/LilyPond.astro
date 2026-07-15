@@ -3,11 +3,9 @@
 import { escapeHtml } from "../src/util.js";
 
 interface Props {
-	/** Pre-rendered HTML from an imported `.ly` file. */
+	/** Contents of an imported `.ly` file. */
 	content: string;
-	/** Additional class name(s) merged onto the rendered `<svg>` or `<img>` element. */
 	class?: string;
-	/** Inline styles applied to the rendered `<svg>` or `<img>` element. */
 	style?: string;
 }
 
