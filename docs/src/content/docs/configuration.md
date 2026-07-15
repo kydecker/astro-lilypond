@@ -57,7 +57,7 @@ With `version` set in the config, blocks can omit it:
 ```
 ````
 
-Blocks with an explicit `\version` declaration will always be used, regardless of this config.
+Blocks with an explicit `\version` declaration will always use that version, regardless of the global config.
 
 ### `format`
 

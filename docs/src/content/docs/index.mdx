@@ -8,7 +8,13 @@ head:
 
 import { LinkCard, CardGrid, Card } from "@astrojs/starlight/components";
 
-`astro-lilypond` is an [Astro](https://astro.build) integration that lets you write [LilyPond](https://lilypond.org) inside Markdown...
+`astro-lilypond` is an [Astro](https://astro.build) integration for rendering musical scores on the web.
+
+<CardGrid>
+
+<div>
+
+Write [LilyPond](https://lilypond.org) inside Markdown...
 
 ````md
 ```lilypond
@@ -19,7 +25,11 @@ import { LinkCard, CardGrid, Card } from "@astrojs/starlight/components";
 ```
 ````
 
-...and render it as music notation. ♫꒰･‿･๑꒱
+</div>
+
+<div>
+
+...and it renders as music notation.
 
 ```lilypond
 \relative c' {
@@ -28,20 +38,29 @@ import { LinkCard, CardGrid, Card } from "@astrojs/starlight/components";
 }
 ```
 
+</div>
+
+</CardGrid>
+
+
+
+
+
+
 ## Features
 
 <CardGrid stagger>
   <Card title="Text to SVG or PNG">
-    Render LilyPond via [Markdown](/usage/#markdown) or with a `<LilyPond>` [component](/usage/#component).
+    Render musical scores via [Markdown](/usage/#markdown) or with a `<LilyPond>` [component](/usage/#component).
   </Card>
   <Card title="Easy setup">
     Works with both `unified()` and `satteri()` Markdown processors out-of-the-box.
   </Card>
-  <Card title="Zero JS required">
+  <Card title="Ships zero JS">
     Images are compiled at build time, keeping your site fast.
   </Card>
   <Card title="Full LilyPond support">
-    Works with all LilyPond musical and layout syntax.
+    Works with all LilyPond display syntax.
   </Card>
 </CardGrid>
 
