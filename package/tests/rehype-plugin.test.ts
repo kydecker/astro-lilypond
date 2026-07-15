@@ -138,27 +138,11 @@ describe("rehypeLilypondPlugin", () => {
 		expect(tree.children[0]).toBe(pre);
 	});
 
-	it("replaces a failing block with a styled error node", async () => {
+	it("propagates the error when a block fails to render", async () => {
 		mockRender.mockRejectedValue(new Error("bad lilypond"));
 		const tree = makeTree([makeLilypondPre("invalid")]);
 
-		await runPlugin(tree);
-
-		const node = tree.children[0] as HastRaw;
-		expect(node.type).toBe("raw");
-		expect(node.value).toContain("lilypond-error");
-		expect(node.value).toContain("bad lilypond");
-	});
-
-	it("escapes error message HTML to prevent XSS", async () => {
-		mockRender.mockRejectedValue(new Error("<script>evil()</script>"));
-		const tree = makeTree([makeLilypondPre("invalid")]);
-
-		await runPlugin(tree);
-
-		const node = tree.children[0] as HastRaw;
-		expect(node.value).not.toContain("<script>");
-		expect(node.value).toContain("&lt;script&gt;");
+		await expect(runPlugin(tree)).rejects.toThrow("bad lilypond");
 	});
 
 	it("prepends \\version when the version option is set", async () => {

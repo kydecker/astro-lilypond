@@ -2,7 +2,7 @@ import type { Html, Root } from "mdast";
 import type { Plugin } from "unified";
 import { visit } from "unist-util-visit";
 import { render } from "./render.js";
-import { errorHtml, isLilypondLang, prependVersion, renderToHtml, resolveFormat } from "./util.js";
+import { isLilypondLang, prependVersion, renderToHtml, resolveFormat } from "./util.js";
 import type { LilypondPluginOptions } from "./util.js";
 
 export type RemarkPluginOptions = LilypondPluginOptions;
@@ -27,10 +27,6 @@ export const remarkLilypondPlugin: Plugin<[RemarkPluginOptions?], Root> = (
 						type: "html",
 						value: renderToHtml(buf, format),
 					};
-					parent.children[index] = htmlNode;
-				})
-				.catch((err): void => {
-					const htmlNode: Html = { type: "html", value: errorHtml(err) };
 					parent.children[index] = htmlNode;
 				});
 

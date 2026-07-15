@@ -1,6 +1,15 @@
 ---
-/// <reference path="./virtual.d.ts" />
-import { escapeHtml } from "../src/util.js";
+const HTML_ENTITIES: Record<string, string> = {
+	"&": "&amp;",
+	"<": "&lt;",
+	">": "&gt;",
+	'"': "&quot;",
+	"'": "&#39;",
+};
+
+function escapeHtml(text: unknown): string {
+	return String(text).replace(/[&<>"']/g, (c) => HTML_ENTITIES[c] ?? c);
+}
 
 interface Props {
 	content: string;

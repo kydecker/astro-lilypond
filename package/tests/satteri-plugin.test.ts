@@ -78,16 +78,12 @@ describe("satteriLilypondPlugin", () => {
 		expect(result).toEqual({ type: "html", value: RENDERED_SVG });
 	});
 
-	it("returns an error html node when render throws", async () => {
+	it("propagates the error when render throws", async () => {
 		mockRender.mockRejectedValue(new Error("bad syntax"));
 		const plugin = satteriLilypondPlugin();
 		const node: Code = { type: "code", lang: "lilypond", value: "invalid" };
 
-		const result = await plugin.code!(node, {} as never);
-
-		expect((result as Html).type).toBe("html");
-		expect((result as Html).value).toContain("lilypond-error");
-		expect((result as Html).value).toContain("bad syntax");
+		await expect(plugin.code!(node, {} as never)).rejects.toThrow("bad syntax");
 	});
 
 	it("prepends \\version when the version option is set", async () => {
@@ -168,18 +164,7 @@ describe("satteriLilypondPlugin", () => {
 		);
 	});
 
-	it("does not expose raw error message as HTML (XSS safe)", async () => {
-		mockRender.mockRejectedValue(new Error("<script>alert(1)</script>"));
-		const plugin = satteriLilypondPlugin();
-		const node: Code = { type: "code", lang: "lilypond", value: "invalid" };
-
-		const result = await plugin.code!(node, {} as never);
-
-		expect((result as Html).value).not.toContain("<script>");
-		expect((result as Html).value).toContain("&lt;script&gt;");
-	});
-
-	it("passes crop: false to render when the crop option is set to false", async () => {
+it("passes crop: false to render when the crop option is set to false", async () => {
 		const plugin = satteriLilypondPlugin({ crop: false });
 		const node: Code = { type: "code", lang: "lilypond", value: "\\score { }" };
 
