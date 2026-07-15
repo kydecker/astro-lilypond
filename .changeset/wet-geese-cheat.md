@@ -2,7 +2,7 @@
 "astro-lilypond": minor
 ---
 
-Enable setting global and per-component 'crop' settings.
+Enable setting global and per-component 'crop' config.
 
 Set to `false` for full-page scores where tight cropping is undesirable:
 
