@@ -4,8 +4,8 @@ description: Style LilyPond SVG output using the .lilypond CSS class.
 ---
 
 import { Code } from "@astrojs/starlight/components";
-import StyledMusic from "../../components/StyledMusic.astro";
-import StyledMusicRaw from "../../components/StyledMusic.astro?raw";
+import StyledMusicExample from "../../components/examples/StyledMusicExample.astro";
+import StyledMusicExampleRaw from "../../components/examples/StyledMusicExample.astro?raw";
 
 Every rendered LilyPond block receives a `lilypond` class on its root element — an `<svg>` for SVG output or an `<img>` for PNG output. Use this class as your CSS hook.
 
@@ -26,6 +26,6 @@ By default, LilyPond SVGs use `currentColor`, so the `color` property controls t
 
 Pass a `class` prop to `<LilyPond>` to get a scoped handle.
 
-<Code code={StyledMusicRaw} lang="astro" />
+<Code code={StyledMusicExampleRaw} lang="astro" />
 
-<StyledMusic />
+<StyledMusicExample />

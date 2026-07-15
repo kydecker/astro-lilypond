@@ -4,10 +4,10 @@ description: Render LilyPond notation in Markdown or directly in Astro component
 ---
 
 import { Code } from "@astrojs/starlight/components";
-import BachInvention from "../../components/BachInvention.astro";
-import BachInventionRaw from "../../components/BachInvention.astro?raw";
+import BachInventionExample from "../../components/examples/BachInventionExample.astro";
+import BachInventionExampleRaw from "../../components/examples/BachInventionExample.astro?raw";
 import FencedLilypond from "../../components/FencedLilypond.astro";
-import usageExample from "../../scores/usage-example.ly?raw";
+import usageExample from "../../examples/usage-example.ly?raw";
 
 ## Markdown
 
@@ -21,9 +21,9 @@ The block is replaced with an inline image at build time. See [LilyPond Syntax](
 
 The `<LilyPond>` component renders notation in any `.astro` file. Import a `.ly` or `.ily` file and pass it to the `content` prop.
 
-<Code code={BachInventionRaw} lang="astro" />
+<Code code={BachInventionExampleRaw} lang="astro" />
 
-<BachInvention />
+<BachInventionExample />
 
 The `version`, `format`, and `crop` configured in your integration options apply automatically.
 

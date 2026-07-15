@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import lilypond from "../src/";
+import lilypond from "../../src/";
 
 interface SetupHookArgs {
 	config: {

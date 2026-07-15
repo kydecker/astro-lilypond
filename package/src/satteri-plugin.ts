@@ -4,7 +4,7 @@ import type {
 	MdastVisitorContext,
 } from "satteri";
 import { render } from "./render.js";
-import { isLilypondLang, prependVersion, renderToHtml, resolveFormat } from "./util.js";
+import { includePathsFor, isLilypondLang, prependVersion, renderToHtml, resolveFormat } from "./util.js";
 import type { LilypondPluginOptions } from "./util.js";
 
 export type SatteriPluginOptions = LilypondPluginOptions;
@@ -19,14 +19,15 @@ export function satteriLilypondPlugin(
 		// would corrupt SVG content, so we use the plain html node form instead.
 		async code(
 			node: Readonly<Code>,
-			_ctx: MdastVisitorContext,
+			ctx: MdastVisitorContext,
 		): Promise<Html | undefined> {
 			if (!isLilypondLang(node.lang)) return undefined;
 			const source = options.version
 				? prependVersion(node.value, options.version)
 				: node.value;
 			const { format, resolution } = resolveFormat(options.format ?? "svg");
-			const buf = await render(source, { format, resolution, crop: options.crop });
+			const includePaths = includePathsFor(ctx.fileURL);
+			const buf = await render(source, { format, resolution, crop: options.crop, includePaths });
 			return { type: "html", value: renderToHtml(buf, format) };
 		},
 	};

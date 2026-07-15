@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-vi.mock("../src/render", () => ({
+vi.mock("../../src/render", () => ({
 	render: vi.fn(),
 }));
 
-import { render } from "../src/render";
-import { rehypeLilypondPlugin } from "../src/rehype-plugin";
+import { render } from "../../src/render";
+import { rehypeLilypondPlugin } from "../../src/rehype-plugin";
 
 const mockRender = vi.mocked(render);
 
@@ -98,6 +98,7 @@ describe("rehypeLilypondPlugin", () => {
 			format: "svg",
 			resolution: undefined,
 			crop: undefined,
+			includePaths: [],
 		});
 		expect(tree.children[0]).toEqual({ type: "raw", value: RENDERED_SVG });
 	});
@@ -111,6 +112,7 @@ describe("rehypeLilypondPlugin", () => {
 			format: "svg",
 			resolution: undefined,
 			crop: undefined,
+			includePaths: [],
 		});
 		expect(tree.children[0]).toEqual({ type: "raw", value: RENDERED_SVG });
 	});
@@ -124,6 +126,7 @@ describe("rehypeLilypondPlugin", () => {
 			format: "svg",
 			resolution: undefined,
 			crop: undefined,
+			includePaths: [],
 		});
 		expect(tree.children[0]).toEqual({ type: "raw", value: RENDERED_SVG });
 	});
@@ -155,6 +158,7 @@ describe("rehypeLilypondPlugin", () => {
 			format: "svg",
 			resolution: undefined,
 			crop: undefined,
+			includePaths: [],
 		});
 	});
 
@@ -169,6 +173,7 @@ describe("rehypeLilypondPlugin", () => {
 			format: "svg",
 			resolution: undefined,
 			crop: undefined,
+			includePaths: [],
 		});
 	});
 
@@ -181,6 +186,7 @@ describe("rehypeLilypondPlugin", () => {
 			format: "svg",
 			resolution: undefined,
 			crop: undefined,
+			includePaths: [],
 		});
 		expect((tree.children[0] as HastRaw).value).toBe(RENDERED_SVG);
 	});
@@ -197,6 +203,7 @@ describe("rehypeLilypondPlugin", () => {
 			format: "png",
 			resolution: undefined,
 			crop: undefined,
+			includePaths: [],
 		});
 		expect((tree.children[0] as HastRaw).value).toContain(
 			'<img class="lilypond" src="data:image/png;base64,',
@@ -217,6 +224,7 @@ describe("rehypeLilypondPlugin", () => {
 			format: "png",
 			resolution: 300,
 			crop: undefined,
+			includePaths: [],
 		});
 		expect((tree.children[0] as HastRaw).value).toContain(
 			'<img class="lilypond" src="data:image/png;base64,',
@@ -233,6 +241,7 @@ describe("rehypeLilypondPlugin", () => {
 			format: "svg",
 			resolution: undefined,
 			crop: false,
+			includePaths: [],
 		});
 	});
 });

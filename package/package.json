@@ -18,7 +18,8 @@
   ],
   "scripts": {
     "build": "tsc --project tsconfig.json",
-    "test": "vitest"
+    "test": "vitest --project unit",
+    "test:integration": "vitest run --project integration"
   },
   "keywords": [
     "astro",

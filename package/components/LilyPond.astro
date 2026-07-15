@@ -1,27 +1,29 @@
 ---
 const HTML_ENTITIES: Record<string, string> = {
-	"&": "&amp;",
-	"<": "&lt;",
-	">": "&gt;",
-	'"': "&quot;",
-	"'": "&#39;",
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  '"': "&quot;",
+  "'": "&#39;",
 };
 
 function escapeHtml(text: unknown): string {
-	return String(text).replace(/[&<>"']/g, (c) => HTML_ENTITIES[c] ?? c);
+  return String(text).replace(/[&<>"']/g, (c) => HTML_ENTITIES[c] ?? c);
 }
 
 interface Props {
-	content: string;
-	class?: string;
-	style?: string;
+  content: string;
+  class?: string | undefined;
+  style?: string | undefined;
 }
 
 const { content, class: className, style } = Astro.props;
 
 let html = content;
-if (className) html = html.replace('class="lilypond"', `class="lilypond ${className}"`);
-if (style) html = html.replace(/<(svg|img)\b/, `<$1 style="${escapeHtml(style)}"`);
+if (className)
+  html = html.replace('class="lilypond"', `class="lilypond ${className}"`);
+if (style)
+  html = html.replace(/<(svg|img)\b/, `<$1 style="${escapeHtml(style)}"`);
 ---
 
 <Fragment set:html={html} />

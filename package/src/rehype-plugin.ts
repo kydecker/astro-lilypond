@@ -1,6 +1,6 @@
 import { visit } from "unist-util-visit";
 import { render } from "./render.js";
-import { isLilypondLang, prependVersion, renderToHtml, resolveFormat } from "./util.js";
+import { includePathsFor, isLilypondLang, prependVersion, renderToHtml, resolveFormat } from "./util.js";
 import type { LilypondPluginOptions } from "./util.js";
 
 // Raw node type — an Astro/rehype extension not in the standard @types/hast
@@ -16,9 +16,10 @@ export type RehypePluginOptions = LilypondPluginOptions;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function rehypeLilypondPlugin(
 	options: RehypePluginOptions = {},
-): (tree: any) => Promise<void> {
-	return async (tree) => {
+): (tree: any, file?: { path?: string }) => Promise<void> {
+	return async (tree, file) => {
 		const promises: Promise<void>[] = [];
+		const includePaths = includePathsFor(file?.path);
 
 		visit(tree, "element", (node, index, parent) => {
 			if (
@@ -49,7 +50,7 @@ export function rehypeLilypondPlugin(
 				: raw;
 			const { format, resolution } = resolveFormat(options.format ?? "svg");
 
-			const promise = render(source, { format, resolution, crop: options.crop })
+			const promise = render(source, { format, resolution, crop: options.crop, includePaths })
 				.then((buf): void => {
 					const rawNode: RawNode = {
 						type: "raw",

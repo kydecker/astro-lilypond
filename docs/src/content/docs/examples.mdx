@@ -1,0 +1,104 @@
+---
+title: Examples
+description: A gallery of LilyPond notation styles rendered with astro-lilypond, mirroring lilypond.org/examples.html.
+---
+
+import { Aside } from "@astrojs/starlight/components";
+import ClassicalExample from "../../components/examples/ClassicalExample.astro";
+import ComplexExample from "../../components/examples/ComplexExample.astro";
+import CustomExample from "../../components/examples/CustomExample.astro";
+import EarlyExample from "../../components/examples/EarlyExample.astro";
+import EducationExample from "../../components/examples/EducationExample.astro";
+import FullScoreExample from "../../components/examples/FullScoreExample.astro";
+import LargeExample from "../../components/examples/LargeExample.astro";
+import LeadExample from "../../components/examples/LeadExample.astro";
+import ModernExample from "../../components/examples/ModernExample.astro";
+import PianoReductionExample from "../../components/examples/PianoReductionExample.astro";
+import SchenkerExample from "../../components/examples/SchenkerExample.astro";
+import TablatureExample from "../../components/examples/TablatureExample.astro";
+import VocalExample from "../../components/examples/VocalExample.astro";
+import ViolinPartExample from "../../components/examples/ViolinPartExample.astro";
+
+This page mirrors the showcase on [lilypond.org/examples](https://lilypond.org/examples.html), rendered here with `astro-lilypond`. Each section demonstrates a different notation style LilyPond supports.
+
+## Classical Music
+
+This organ work by J.S. Bach is a fairly typical engraving project in LilyPond.
+
+<ClassicalExample />
+
+## Complex Notation
+
+This example from _Goyescas_ by Enrique Granados shows some of the more advanced features of typesetting, including kneed beams, cross-staff stems, and voice-follow lines.
+
+<ComplexExample />
+
+## Early Music
+
+A passage of Gregorian chant, showcasing support for ancient notation types.
+
+<EarlyExample />
+
+## Modern Music
+
+Contemporary composers find LilyPond well-suited to displaying unusual notation. Here is an excerpt from Trevor Bača’s _Čáry_, for unaccompanied bass flute.
+
+<ModernExample />
+
+:::note
+This score does not precisely match [the example on lilypond.org](https://lilypond.org/examples.html#Modern-Music). A note in the source code states:
+
+> The excerpt as published on lilypond.org references custom notation macros from Bača's full score that weren't included in the snippet [...] These are stand-in approximations so the file compiles; they won't exactly match the original engraving.
+:::
+
+## Flexible Creation
+
+Various performance materials can be created from the same source code. This is an excerpt of [Nicolas Sceaux](https://editions-nicolas-sceaux.fr/)’s engraving of Handel’s _Giulio Cesare_, in full score, piano-vocal reduction, and a violin part.
+
+<FullScoreExample />
+
+<PianoReductionExample />
+
+<ViolinPartExample />
+
+## Tablature
+
+LilyPond supports tablature notation, which can be customized to suit any instrument that reads from tablature. The tablature staff is generated automatically from notes entered for the 5-line staff.
+
+<TablatureExample />
+
+## Vocal Music
+
+LilyPond is excellent for vocal music of all kinds, from sacred hymns to opera. Here is a medieval motet with slightly unusual requirements. The tenor voice is written in a different meter than the others, but must line up as if it were in the same meter. LilyPond handles this most elegantly. Note also the incipits with Vaticana style clefs, the slashed stems indicating plicated notes, and the ligature braces above certain groups of notes.
+
+<VocalExample />
+
+## Lead Sheets
+
+It is simple to create lead sheets with melody, lyrics, chord names, and fretboards. In this example you see some of the predefined fretboard diagrams, but these can be heavily customized to suit nearly any situation.
+
+<LeadExample />
+
+## Educational Applications
+
+LilyPond is perfectly suited for educational purposes as well. Here is an example of a simple counterpoint exercise.
+
+<EducationExample />
+
+## Large Projects
+
+LilyPond is excellent for large projects like operas or works for full symphony orchestra, as well. In addition, the text-based input provides greater accessibility—this example was contributed by Hu Haipeng, a blind composer.
+
+<LargeExample />
+
+## Customized Output
+
+A short excerpt from Stockhausen’s Klavierstück II to demonstrate LilyPond’s ability to provide customised output.
+
+<CustomExample />
+
+## Schenker Graphs
+
+Standard output can be modified heavily. Here is an impressive Schenkerian analysis, created by Kris Schaffer, for an article in [Linux Journal](https://www.linuxjournal.com/article/8364). The colors have been added for better visibility.
+
+<SchenkerExample />

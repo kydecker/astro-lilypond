@@ -1,12 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { Code, Html } from "mdast";
 
-vi.mock("../src/render.js", () => ({
+vi.mock("../../src/render.js", () => ({
 	render: vi.fn(),
 }));
 
-import { render } from "../src/render.js";
-import { satteriLilypondPlugin } from "../src/satteri-plugin.js";
+import { render } from "../../src/render.js";
+import { satteriLilypondPlugin } from "../../src/satteri-plugin.js";
 
 const mockRender = vi.mocked(render);
 
@@ -36,6 +36,7 @@ describe("satteriLilypondPlugin", () => {
 			format: "svg",
 			resolution: undefined,
 			crop: undefined,
+			includePaths: [],
 		});
 		expect(result).toEqual({ type: "html", value: RENDERED_SVG });
 	});
@@ -60,6 +61,7 @@ describe("satteriLilypondPlugin", () => {
 			format: "svg",
 			resolution: undefined,
 			crop: undefined,
+			includePaths: [],
 		});
 		expect(result).toEqual({ type: "html", value: RENDERED_SVG });
 	});
@@ -74,6 +76,7 @@ describe("satteriLilypondPlugin", () => {
 			format: "svg",
 			resolution: undefined,
 			crop: undefined,
+			includePaths: [],
 		});
 		expect(result).toEqual({ type: "html", value: RENDERED_SVG });
 	});
@@ -96,6 +99,7 @@ describe("satteriLilypondPlugin", () => {
 			format: "svg",
 			resolution: undefined,
 			crop: undefined,
+			includePaths: [],
 		});
 	});
 
@@ -110,6 +114,7 @@ describe("satteriLilypondPlugin", () => {
 			format: "svg",
 			resolution: undefined,
 			crop: undefined,
+			includePaths: [],
 		});
 	});
 
@@ -123,6 +128,7 @@ describe("satteriLilypondPlugin", () => {
 			format: "svg",
 			resolution: undefined,
 			crop: undefined,
+			includePaths: [],
 		});
 		expect((result as Html).value).toBe(RENDERED_SVG);
 	});
@@ -139,6 +145,7 @@ describe("satteriLilypondPlugin", () => {
 			format: "png",
 			resolution: undefined,
 			crop: undefined,
+			includePaths: [],
 		});
 		expect((result as Html).value).toContain(
 			'<img class="lilypond" src="data:image/png;base64,',
@@ -158,6 +165,7 @@ describe("satteriLilypondPlugin", () => {
 			format: "png",
 			resolution: 300,
 			crop: undefined,
+			includePaths: [],
 		});
 		expect((result as Html).value).toContain(
 			'<img class="lilypond" src="data:image/png;base64,',
@@ -174,6 +182,7 @@ it("passes crop: false to render when the crop option is set to false", async ()
 			format: "svg",
 			resolution: undefined,
 			crop: false,
+			includePaths: [],
 		});
 	});
 });

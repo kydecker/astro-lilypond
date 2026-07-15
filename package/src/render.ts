@@ -29,9 +29,17 @@ export interface RenderOptions {
 	 * `--define-default crop`. Defaults to `true`.
 	 */
 	crop?: boolean;
+	/**
+	 * Extra directories LilyPond should search for `\include`d files, in
+	 * addition to its own library (via `-I`). Typically the directory
+	 * containing the source `.ly`/Markdown file, so sibling
+	 * `\include "foo.ily"` files resolve even though rendering happens in a
+	 * temp directory.
+	 */
+	includePaths?: string[];
 }
 
-export const defaultOptions: Required<RenderOptions> = {
+export const defaultOptions: Required<Omit<RenderOptions, "includePaths">> = {
 	format: "svg",
 	resolution: 144,
 	binaryPath: "lilypond",
@@ -47,8 +55,9 @@ export async function render(
 		resolution = defaultOptions.resolution,
 		binaryPath = defaultOptions.binaryPath,
 		crop = defaultOptions.crop,
+		includePaths = [],
 	} = options;
-	const opts = { format, resolution, binaryPath, crop };
+	const opts = { format, resolution, binaryPath, crop, includePaths };
 
 	if (!(opts.format in FORMAT_FLAGS)) {
 		throw new Error(`${opts.format} is not a supported format`);
@@ -66,17 +75,23 @@ export async function render(
 			`--define-default=resolution=${opts.resolution ?? 144}`,
 			"--define-default=no-point-and-click",
 			...(opts.crop ? ["--define-default=crop"] : []),
+			...opts.includePaths.map((p) => `--include=${p}`),
 			"--silent",
 			"--output",
 			outputBase,
 			inputPath,
 		].filter((a): a is string => a !== null);
 
-		const { stderr } = await execFileAsync(
-			opts.binaryPath ?? "lilypond",
-			args,
-		);
-
+		let stderr: string;
+		try {
+			({ stderr } = await execFileAsync(opts.binaryPath ?? "lilypond", args));
+		} catch (err) {
+			const errStderr =
+				err && typeof err === "object" && "stderr" in err
+					? String((err as { stderr: unknown }).stderr)
+					: undefined;
+			throw new Error(errStderr || (err instanceof Error ? err.message : String(err)));
+		}
 		if (stderr) throw new Error(stderr);
 
 		return await readOutputFile(outputBase, opts.format, opts.crop);
@@ -94,15 +109,24 @@ async function readOutputFile(
 	if (crop) {
 		try {
 			return await readFile(`${base}.cropped.${format}`);
-		} catch {
-			// cropped output not present; fall through to standard path
+		} catch (err) {
+			throw new Error(
+				`expected cropped output at ${base}.cropped.${format} but it was not found: ${
+					err instanceof Error ? err.message : String(err)
+				}`,
+			);
 		}
 	}
 
-	// Regular output: single page → <base>.<format>, multi-page → <base>-1.<format>
+	// Regular output: single page → <base>.<format>, multi-page →
+	// <base>-1.<format> (svg/pdf/ps/eps) or <base>-page1.<format> (png).
 	try {
 		return await readFile(`${base}.${format}`);
 	} catch {
-		return await readFile(`${base}-1.${format}`);
+		try {
+			return await readFile(`${base}-1.${format}`);
+		} catch {
+			return await readFile(`${base}-page1.${format}`);
+		}
 	}
 }
