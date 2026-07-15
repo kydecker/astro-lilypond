@@ -1,5 +1,11 @@
 # astro-lilypond
 
+## 0.3.1
+
+### Patch Changes
+
+- d229102: Support the `ily` extension for LilyPond files, in addition to the existing `lilypond` and `ly` markers.
+
 ## 0.3.0
 
 ### Minor Changes
