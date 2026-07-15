@@ -1,5 +1,11 @@
 # astro-lilypond
 
+## 0.3.2
+
+### Patch Changes
+
+- 5bf0550: Automatically inject type definitions to allow importing `.ly`, `.ily`, and `.lilypond` files without manually editing `env.d.ts`.
+
 ## 0.3.1
 
 ### Patch Changes
