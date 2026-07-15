@@ -40,7 +40,7 @@ export default defineConfig({
         {
           icon: "npm",
           label: "npmx",
-          href: "https://npmx.dev/package/astro-lilypond"
+          href: "https://www.npmjs.com/package/astro-lilypond"
 				}
 			],
       sidebar: [
