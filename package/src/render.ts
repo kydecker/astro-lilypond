@@ -42,7 +42,13 @@ export async function render(
 	source: string,
 	options: RenderOptions = {},
 ): Promise<Buffer> {
-	const opts = { ...defaultOptions, ...options };
+	const {
+		format = defaultOptions.format,
+		resolution = defaultOptions.resolution,
+		binaryPath = defaultOptions.binaryPath,
+		crop = defaultOptions.crop,
+	} = options;
+	const opts = { format, resolution, binaryPath, crop };
 
 	if (!(opts.format in FORMAT_FLAGS)) {
 		throw new Error(`${opts.format} is not a supported format`);
@@ -57,11 +63,9 @@ export async function render(
 
 		const args: string[] = [
 			FORMAT_FLAGS[opts.format],
-			"--define-default",
-			`resolution=${opts.resolution ?? 144}`,
-			"--define-default",
-			"no-point-and-click",
-			...(opts.crop ? ["--define-default", "crop"] : []),
+			`--define-default=resolution=${opts.resolution ?? 144}`,
+			"--define-default=no-point-and-click",
+			...(opts.crop ? ["--define-default=crop"] : []),
 			"--silent",
 			"--output",
 			outputBase,

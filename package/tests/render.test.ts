@@ -51,18 +51,16 @@ describe("render", () => {
 		expect(args).toContain("--svg");
 	});
 
-	it("passes --define-default crop when crop is true", async () => {
+	it("passes --define-default=crop when crop is true", async () => {
 		await render("\\score { }", { crop: true });
 		const [, args] = mockExecFile.mock.calls[0] as unknown as [string, string[]];
-		const cropIdx = args.indexOf("crop");
-		expect(cropIdx).toBeGreaterThan(-1);
-		expect(args[cropIdx - 1]).toBe("--define-default");
+		expect(args).toContain("--define-default=crop");
 	});
 
-	it("omits crop args when crop is false", async () => {
+	it("omits --define-default=crop when crop is false", async () => {
 		await render("\\score { }", { crop: false });
 		const [, args] = mockExecFile.mock.calls[0] as unknown as [string, string[]];
-		expect(args).not.toContain("crop");
+		expect(args).not.toContain("--define-default=crop");
 	});
 
 	it("crop is true by default", () => {

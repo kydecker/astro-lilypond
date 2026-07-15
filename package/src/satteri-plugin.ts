@@ -5,12 +5,9 @@ import type {
 } from "satteri";
 import { render } from "./render.js";
 import { errorHtml, isLilypondLang, prependVersion, renderToHtml, resolveFormat } from "./util.js";
-import type { OutputFormat } from "./util.js";
+import type { LilypondPluginOptions } from "./util.js";
 
-export interface SatteriPluginOptions {
-	version?: string;
-	format?: OutputFormat;
-}
+export type SatteriPluginOptions = LilypondPluginOptions;
 
 export function satteriLilypondPlugin(
 	options: SatteriPluginOptions = {},
@@ -30,7 +27,7 @@ export function satteriLilypondPlugin(
 				: node.value;
 			const { format, resolution } = resolveFormat(options.format ?? "svg");
 			try {
-				const buf = await render(source, { format, resolution });
+				const buf = await render(source, { format, resolution, crop: options.crop });
 				return { type: "html", value: renderToHtml(buf, format) };
 			} catch (err) {
 				return { type: "html", value: errorHtml(err) };

@@ -31,16 +31,34 @@ import prelude from './scores/prelude.ly';
 <LilyPond content={prelude} />
 ```
 
-The `version` and `format` configured in your integration options apply automatically.
+The `version`, `format`, and `crop` configured in your integration options apply automatically.
 
 ### Props
 
 #### `content`
 
-**Type:** `string`  
+**Type:** `{ cropped: string; uncropped: string }`  
 **Required:** yes
 
-The pre-rendered HTML from an imported `.ly` file.
+The content from an imported `.ly` file. Both cropped and uncropped versions are rendered at build time; the component picks based on the `crop` prop.
+
+#### `crop`
+
+**Type:** `boolean`  
+**Default:** `true`
+
+Whether to use the tightly-cropped version of the score. Set to `false` for full-page scores where tight cropping is undesirable:
+
+```astro
+---
+import LilyPond from 'astro-lilypond/component';
+import excerpt from './scores/excerpt.ly';
+import fullPage from './scores/full-page.ly';
+---
+
+<LilyPond content={excerpt} />
+<LilyPond content={fullPage} crop={false} />
+```
 
 #### `class`
 

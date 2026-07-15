@@ -3,7 +3,7 @@ title: Astro + LilyPond
 description: Install astro-lilypond and render LilyPond music notation as inline SVG in your Astro site.
 ---
 
-import { LinkButton, Code } from "@astrojs/starlight/components";
+import { LinkCard, Code } from "@astrojs/starlight/components";
 import BachInvention from "../../components/BachInvention.astro";
 import BachInventionRaw from "../../components/BachInvention.astro?raw";
 
@@ -13,7 +13,10 @@ import BachInventionRaw from "../../components/BachInvention.astro?raw";
 ```lilypond
 \relative c' {
   \clef treble
-  c4 d e f | g a b c | c b a g | f e d c \bar "|."
+  c4 d e f |
+  g a b c  |
+  c b a g  |
+  f e d c \bar "|."
 }
 ```
 ````
@@ -23,7 +26,10 @@ import BachInventionRaw from "../../components/BachInvention.astro?raw";
 ```lilypond
 \relative c' {
   \clef treble
-  c4 d e f | g a b c | c b a g | f e d c \bar "|."
+  c4 d e f |
+  g a b c  |
+  c b a g  |
+  f e d c \bar "|."
 }
 ```
 
@@ -37,4 +43,4 @@ In addition to rendering in Markdown, the [`<LilyPond>` component](/usage/#compo
 
 <BachInvention />
 
-<LinkButton href="/getting-started" icon="rocket">Get Started</LinkButton>
+<LinkCard href="/getting-started" icon="rocket" title="Get Started" description="Install astro-lilypond and render music notation on your site." />

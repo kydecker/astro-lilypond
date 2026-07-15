@@ -40,18 +40,14 @@ Notes inherit the previous note's duration by default. A new duration can be set
 
 ```lilypond
 \relative c' {
-  c1 |
-  c2 c4 c8 c |
-  c16 c c c c32 c c c c c c c r2 |
+  c4 c8 c c16 c c c c32 c c c c c c c
 }
 ```
 
 ````md
 ```lilypond
 \relative c' {
-  c1 |
-  c2 c4 c8 c |
-  c16 c c c c32 c c c c c c c r2 |
+  c4 c8 c c16 c c c c32 c c c c c c c
 }
 ```
 ````
