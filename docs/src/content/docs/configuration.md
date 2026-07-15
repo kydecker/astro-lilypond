@@ -66,8 +66,15 @@ Blocks with an explicit `\version` declaration will always be used, regardless o
 
 The output format passed to the LilyPond binary. Controls how the rendered output is embedded in the page.
 
-```js
-lilypond({ format: 'png' })
+```js {5}
+// astro.config.mjs
+export default defineConfig({
+   integrations: [
+    lilypond({
+      format: "png"
+    }),
+  ],
+});
 ```
 
 | Value | Embedded as |
@@ -76,10 +83,20 @@ lilypond({ format: 'png' })
 | `"png"` | `<img>` element with a base64 data URI, at the default resolution (144 DPI) |
 | `{ type: "png", resolution: number }` | `<img>` element with a base64 data URI, at the specified DPI |
 
-SVG is the best choice for most web use — it scales to any size and stays sharp on high-DPI screens. Use PNG when you need a specific pixel resolution:
+If you need higher quality PNGs, pass an object with `type: "png"` and `resolution`:
 
-```js
-lilypond({ format: { type: 'png', resolution: 300 } })
+```js {5-8}
+// astro.config.mjs
+export default defineConfig({
+   integrations: [
+    lilypond({
+      format: {
+        type: "png",
+        resolution: 300
+      }
+    }),
+  ],
+});
 ```
 
 ### `crop`
@@ -91,12 +108,13 @@ When `true`, the margins are removed and the page is cropped to fit the rendered
 
 Set to `false` to preserve full page dimensions:
 
-```js
-lilypond({ crop: false })
-```
-
-This setting can be overridden at the component level when using the `<LilyPond>` component:
-
-```astro
-<LilyPond crop={false} />
+```js {5}
+// astro.config.mjs
+export default defineConfig({
+   integrations: [
+    lilypond({
+      crop: false
+    }),
+  ],
+});
 ```
