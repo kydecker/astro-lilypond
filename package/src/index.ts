@@ -32,9 +32,6 @@ export interface LilypondOptions extends LilypondPluginOptions {
 	format?: OutputFormat;
 	/**
 	 * Crop the output tightly to the content bounding box. Defaults to `true`.
-	 *
-	 * Can be overridden per `<LilyPond crop={false} />` when using `.ly` file imports.
-	 * Fenced code blocks in Markdown always use the global setting.
 	 */
 	crop?: boolean;
 }
@@ -47,15 +44,8 @@ function lyFilePlugin(options: LilypondOptions): Plugin {
 			if (!id.endsWith(".ly") && !id.endsWith(".lilypond")) return;
 			const src = options.version ? prependVersion(source, options.version) : source;
 			const { format, resolution } = resolveFormat(options.format ?? "svg");
-			const [croppedBuf, uncroppedBuf] = await Promise.all([
-				render(src, { format, resolution, crop: true }),
-				render(src, { format, resolution, crop: false }),
-			]);
-			const result = {
-				cropped: renderToHtml(croppedBuf, format),
-				uncropped: renderToHtml(uncroppedBuf, format),
-			};
-			return { code: `export default ${JSON.stringify(result)}` };
+				const buf = await render(src, { format, resolution, crop: options.crop ?? true });
+			return { code: `export default ${JSON.stringify(renderToHtml(buf, format))}` };
 		},
 	};
 }

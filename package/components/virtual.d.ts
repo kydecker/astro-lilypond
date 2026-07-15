@@ -1,9 +1,9 @@
 declare module "*.ly" {
-	const exports: { cropped: string; uncropped: string };
+	const exports: string;
 	export default exports;
 }
 
 declare module "*.lilypond" {
-	const exports: { cropped: string; uncropped: string };
+	const exports: string;
 	export default exports;
 }
