@@ -37,28 +37,10 @@ The `version`, `format`, and `crop` configured in your integration options apply
 
 #### `content`
 
-**Type:** `{ cropped: string; uncropped: string }`  
+**Type:** `string`  
 **Required:** yes
 
-The content from an imported `.ly` file. Both cropped and uncropped versions are rendered at build time; the component picks based on the `crop` prop.
-
-#### `crop`
-
-**Type:** `boolean`  
-**Default:** `true`
-
-Whether to use the tightly-cropped version of the score. Set to `false` for full-page scores where tight cropping is undesirable:
-
-```astro
----
-import LilyPond from 'astro-lilypond/component';
-import excerpt from './scores/excerpt.ly';
-import fullPage from './scores/full-page.ly';
----
-
-<LilyPond content={excerpt} />
-<LilyPond content={fullPage} crop={false} />
-```
+The HTML string from an imported `.ly` file. The output is resolved at build time according to the `version`, `format`, and `crop` options configured in your integration.
 
 #### `class`
 
