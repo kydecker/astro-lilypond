@@ -3,7 +3,9 @@ title: Astro + LilyPond
 description: Install astro-lilypond and render LilyPond music notation as inline SVG in your Astro site.
 ---
 
-import { LinkButton } from "@astrojs/starlight/components";
+import { LinkButton, Code } from "@astrojs/starlight/components";
+import BachInvention from "../../components/BachInvention.astro";
+import BachInventionRaw from "../../components/BachInvention.astro?raw";
 
 `astro-lilypond` is an [Astro](https://astro.build) integration that lets you write [LilyPond](https://lilypond.org) markup in your Markdown files...
 
@@ -26,5 +28,13 @@ import { LinkButton } from "@astrojs/starlight/components";
 ```
 
 Music can be rendered as an `.svg` or `.png`.
+
+In addition to rendering in Markdown, the [`<LilyPond>` component](/usage/#component) lets you import `.ly` files..
+
+<Code code={BachInventionRaw} lang="astro" />
+
+...and render them anywhere you use Astro. ♪~
+
+<BachInvention />
 
 <LinkButton href="/getting-started" icon="rocket">Get Started</LinkButton>

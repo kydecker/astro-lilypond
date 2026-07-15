@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { Code, Html, Paragraph, Root, Text } from "mdast";
 
-vi.mock("../src/render.js", () => ({
+vi.mock("../src/render", () => ({
 	render: vi.fn(),
 }));
 
-import { render } from "../src/render.js";
+import { render } from "../src/render";
 import {
 	remarkLilypondPlugin as _remarkLilypondPlugin,
 	type RemarkPluginOptions,

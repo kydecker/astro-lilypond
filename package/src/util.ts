@@ -36,12 +36,19 @@ export function prependVersion(source: string, version: string): string {
 }
 
 /** Converts a rendered LilyPond buffer to an HTML string suitable for inline embedding. */
-export function renderToHtml(buf: Buffer, format: "svg" | "png"): string {
+export function renderToHtml(
+	buf: Buffer,
+	format: "svg" | "png",
+	className?: string,
+	style?: string,
+): string {
+	const cls = className ? `lilypond ${className}` : "lilypond";
+	const styleAttr = style ? ` style="${escapeHtml(style)}"` : "";
 	if (format === "png") {
 		const b64 = buf.toString("base64");
-		return `<img class="lilypond" src="data:image/png;base64,${b64}" alt="LilyPond notation">`;
+		return `<img class="${cls}"${styleAttr} src="data:image/png;base64,${b64}" alt="LilyPond notation">`;
 	}
-	return buf.toString("utf-8").replace(/<svg\b/, '<svg class="lilypond"');
+	return buf.toString("utf-8").replace(/<svg\b/, `<svg class="${cls}"${styleAttr}`);
 }
 
 /** Returns a safe HTML string for an error block (no node wrapping). */

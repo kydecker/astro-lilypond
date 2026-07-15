@@ -10,11 +10,7 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
-    "./render": {
-      "types": "./dist/render.d.ts",
-      "import": "./dist/render.js"
-    },
-    "./LilyPond.astro": "./components/LilyPond.astro"
+    "./component": "./components/LilyPond.astro"
   },
   "files": [
     "dist",
@@ -50,6 +46,7 @@
     "satteri": "^0.9.5",
     "typescript": "^7.0.2",
     "unified": "^11.0.5",
+    "vite": "^8.0.0",
     "vitest": "^4.1.10"
   }
 }

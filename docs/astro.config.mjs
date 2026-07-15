@@ -29,6 +29,7 @@ export default defineConfig({
         },
         "getting-started",
         "configuration",
+        "usage",
         "styling",
         "lilypond-syntax",
       ],

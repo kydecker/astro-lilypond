@@ -1,0 +1,14 @@
+---
+import LilyPond from 'astro-lilypond/component';
+import score from '../scores/example.ly';
+---
+
+<LilyPond content={score} class="score" />
+
+<style>
+  .score {
+    color: darkslategray;
+    background: antiquewhite;
+    padding: 20px;
+  }
+</style>

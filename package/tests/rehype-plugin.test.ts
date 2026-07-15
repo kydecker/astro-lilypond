@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-vi.mock("../src/render.js", () => ({
+vi.mock("../src/render", () => ({
 	render: vi.fn(),
 }));
 
-import { render } from "../src/render.js";
-import { rehypeLilypondPlugin } from "../src/rehype-plugin.js";
+import { render } from "../src/render";
+import { rehypeLilypondPlugin } from "../src/rehype-plugin";
 
 const mockRender = vi.mocked(render);
 
