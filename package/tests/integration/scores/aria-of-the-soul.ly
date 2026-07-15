@@ -4,8 +4,8 @@
 
 \header {
  title = "Aria of the Soul"
- subtitle = \markup { \normal-weight "Velvet Room Theme" }
- subsubtitle = \markup { \italic \normal-weight \raise #0.5 "from Persona" }
+ subtitle = \markup { "Velvet Room Theme" }
+ subsubtitle = \markup { \italic \raise #0.5 "from Persona" }
  composer = "Shoji Meguro"
  arranger = "Arr. Ky Decker"
  tagline = ##f

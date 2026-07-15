@@ -4,7 +4,7 @@
 
 \header {
   title    = "Star Trek: Voyager"
-  subtitle = \markup { \normal-weight "Title Theme" }
+  subtitle = \markup { "Title Theme" }
   composer = "Jerry Goldsmith"
   arranger = "Arr. Ky Decker"
   tagline = ##f
