@@ -1,5 +1,12 @@
 # astro-lilypond
 
+## 0.3.3
+
+### Patch Changes
+
+- ce95ae1: Behavior change: loudly fail the build when attempting to process invalid LilyPond markup. Previously, the build would succeed, but an error message would be emitted to HTML, which could CI builds which pass but web pages which are broken on view. Prefer failing on error instead.
+- ce95ae1: Fix a broken import from src/utils that was causing <LilyPond> component imports to fail.
+
 ## 0.3.2
 
 ### Patch Changes
