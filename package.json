@@ -1,6 +1,6 @@
 {
   "name": "astro-lilypond",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "An Astro integration for rendering Lilypond scores to images in Markdown.",
   "type": "module",
   "main": "./dist/index.js",
