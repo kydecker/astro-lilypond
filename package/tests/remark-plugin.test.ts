@@ -115,31 +115,13 @@ describe("remarkLilypondPlugin", () => {
 		expect(tree.children[1].type).toBe("paragraph");
 	});
 
-	it("replaces a failing block with a styled error node", async () => {
+	it("propagates the error when a block fails to render", async () => {
 		mockRender.mockRejectedValue(new Error("lilypond crashed"));
 		const tree = makeTree([
 			{ type: "code", lang: "lilypond", value: "bad" } as Code,
 		]);
 
-		await runPlugin(tree);
-
-		const node = tree.children[0] as Html;
-		expect(node.type).toBe("html");
-		expect(node.value).toContain("lilypond-error");
-		expect(node.value).toContain("lilypond crashed");
-	});
-
-	it("escapes error message HTML to prevent XSS", async () => {
-		mockRender.mockRejectedValue(new Error('<img src=x onerror="alert(1)">'));
-		const tree = makeTree([
-			{ type: "code", lang: "lilypond", value: "bad" } as Code,
-		]);
-
-		await runPlugin(tree);
-
-		const node = tree.children[0] as Html;
-		expect(node.value).not.toContain("<img");
-		expect(node.value).toContain("&lt;img");
+		await expect(runPlugin(tree)).rejects.toThrow("lilypond crashed");
 	});
 
 	it("prepends \\version when the version option is set", async () => {

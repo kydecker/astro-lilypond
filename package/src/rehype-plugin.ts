@@ -1,6 +1,6 @@
 import { visit } from "unist-util-visit";
 import { render } from "./render.js";
-import { errorHtml, isLilypondLang, prependVersion, renderToHtml, resolveFormat } from "./util.js";
+import { isLilypondLang, prependVersion, renderToHtml, resolveFormat } from "./util.js";
 import type { LilypondPluginOptions } from "./util.js";
 
 // Raw node type — an Astro/rehype extension not in the standard @types/hast
@@ -55,10 +55,6 @@ export function rehypeLilypondPlugin(
 						type: "raw",
 						value: renderToHtml(buf, format),
 					};
-					parent.children[index] = rawNode;
-				})
-				.catch((err): void => {
-					const rawNode: RawNode = { type: "raw", value: errorHtml(err) };
 					parent.children[index] = rawNode;
 				});
 
