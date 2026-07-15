@@ -29,6 +29,10 @@
     "score",
     "engraving"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kydecker/astro-lilypond"
+  },
   "author": "Ky Decker",
   "license": "MIT",
   "peerDependencies": {
