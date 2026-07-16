@@ -5,15 +5,14 @@ import type { Plugin } from "vite";
 import { remarkLilypondPlugin } from "./remark-plugin.js";
 import { rehypeLilypondPlugin } from "./rehype-plugin.js";
 import { satteriLilypondPlugin } from "./satteri-plugin.js";
-import { render } from "./render.js";
-import { includePathsFor, prependVersion, renderToHtml, resolveFormat } from "./util.js";
-import type { LilypondPluginOptions, OutputFormat } from "./util.js";
+import { defaultOptions, render } from "./render.js";
+import { includePathsFor, prependVersion, renderToHtml } from "./util.js";
+import type { LilypondPluginOptions } from "./util.js";
 
 const execFileAsync = promisify(execFile);
 
 const LY_EXTENSIONS = [".ly", ".lilypond", ".ily"] as const;
 
-export type { OutputFormat };
 export type { LilypondPluginOptions };
 
 export interface LilypondOptions extends LilypondPluginOptions {
@@ -28,10 +27,13 @@ export interface LilypondOptions extends LilypondPluginOptions {
 	 * Output format. Defaults to `"svg"`.
 	 *
 	 * - `"svg"` — inline SVG embedded directly in the HTML (default)
-	 * - `"png"` — `<img>` element with a base64 data URI, at the default resolution
-	 * - `{ type: "png", resolution: number }` — PNG at a specific DPI
+	 * - `"png"` — `<img>` element with a base64 data URI
 	 */
-	format?: OutputFormat;
+	format?: "svg" | "png";
+	/**
+	 * Resolution in DPI (only applies to PNG). Defaults to `144`.
+	 */
+	resolution?: number;
 	/**
 	 * Crop the output tightly to the content bounding box. Defaults to `true`.
 	 */
@@ -45,11 +47,11 @@ function lyFilePlugin(options: LilypondOptions): Plugin {
 		async transform(source, id) {
 			if (!LY_EXTENSIONS.some(ext => id.endsWith(ext))) return;
 			const src = options.version ? prependVersion(source, options.version) : source;
-			const { format, resolution } = resolveFormat(options.format ?? "svg");
+			const format = options.format ?? defaultOptions.format;
 			const buf = await render(src, {
 				format,
-				resolution,
-				crop: options.crop ?? true,
+				resolution: options.resolution,
+				crop: options.crop,
 				includePaths: includePathsFor(id),
 			});
 			return { code: `export default ${JSON.stringify(renderToHtml(buf, format))}` };
@@ -95,7 +97,7 @@ export default function lilypond(options: LilypondOptions = {}): AstroIntegratio
 								...existingOptions,
 								mdastPlugins: [
 									...(existingOptions.mdastPlugins ?? []),
-									satteriLilypondPlugin({ version: options.version, format: options.format, crop: options.crop }),
+									satteriLilypondPlugin(options),
 								],
 							}),
 						},
@@ -123,11 +125,11 @@ export default function lilypond(options: LilypondOptions = {}): AstroIntegratio
 								...existingOptions,
 								remarkPlugins: [
 									...(existingOptions.remarkPlugins ?? []),
-									[remarkLilypondPlugin, { version: options.version, format: options.format, crop: options.crop }],
+									[remarkLilypondPlugin, options],
 								],
 								rehypePlugins: [
 									...(existingOptions.rehypePlugins ?? []),
-									[rehypeLilypondPlugin, { version: options.version, format: options.format, crop: options.crop }],
+									[rehypeLilypondPlugin, options],
 								],
 							}),
 						},

@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 vi.mock("../../src/render", () => ({
 	render: vi.fn(),
+	defaultOptions: { format: "svg", resolution: 144, binaryPath: "lilypond", crop: true },
 }));
 
 import { render } from "../../src/render";
@@ -210,11 +211,12 @@ describe("rehypeLilypondPlugin", () => {
 		);
 	});
 
-	it("passes resolution DPI when format is an object", async () => {
+	it("passes resolution DPI when resolution is set", async () => {
 		const fakePng = Buffer.from([0x89, 0x50, 0x4e, 0x47]);
 		mockRender.mockResolvedValue(fakePng);
 		const transformer = rehypeLilypondPlugin({
-			format: { type: "png", resolution: 300 },
+			format: "png",
+			resolution: 300,
 		});
 		const tree = makeTree([makeLilypondPre("\\score { }")]);
 

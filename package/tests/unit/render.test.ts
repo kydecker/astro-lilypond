@@ -45,22 +45,28 @@ describe("render", () => {
 		expect(Buffer.isBuffer(result)).toBe(true);
 	});
 
-	it("passes --svg flag for svg format", async () => {
+	it("passes --format=svg flag for svg format", async () => {
 		await render("\\score { }", { format: "svg" });
 		const [, args] = mockExecFile.mock.calls[0] as unknown as [string, string[]];
-		expect(args).toContain("--svg");
+		expect(args).toContain("--format=svg");
 	});
 
-	it("passes --define-default=crop when crop is true", async () => {
+	it("passes the cairo backend", async () => {
+		await render("\\score { }");
+		const [, args] = mockExecFile.mock.calls[0] as unknown as [string, string[]];
+		expect(args).toContain("--define-default=backend=cairo");
+	});
+
+	it("passes --define-default=crop=#t when crop is true", async () => {
 		await render("\\score { }", { crop: true });
 		const [, args] = mockExecFile.mock.calls[0] as unknown as [string, string[]];
-		expect(args).toContain("--define-default=crop");
+		expect(args).toContain("--define-default=crop=#t");
 	});
 
-	it("omits --define-default=crop when crop is false", async () => {
+	it("passes --define-default=crop=#f when crop is false", async () => {
 		await render("\\score { }", { crop: false });
 		const [, args] = mockExecFile.mock.calls[0] as unknown as [string, string[]];
-		expect(args).not.toContain("--define-default=crop");
+		expect(args).toContain("--define-default=crop=#f");
 	});
 
 	it("crop is true by default", () => {
@@ -82,7 +88,7 @@ describe("render", () => {
 		await expect(render("bad")).rejects.toThrow("fatal error: bad input");
 	});
 
-	it("throws when lilypond writes an unrecognized warning to stderr even though it exits zero", async () => {
+	it("does not throw when lilypond writes warnings to stderr but exits zero", async () => {
 		mockExecFile.mockImplementation(
 			((_bin: string, _args: string[], cb: (err: null, res: { stdout: string; stderr: string }) => void) =>
 				cb(null, {
@@ -90,33 +96,23 @@ describe("render", () => {
 					stderr: "warning: some other unexpected warning",
 				})) as typeof execFile,
 		);
-		await expect(render("\\score { }")).rejects.toThrow(
-			"warning: some other unexpected warning",
-		);
-	});
-
-	it("does not throw for the known-benign 'programming error ... continuing, cross fingers' recovery warning", async () => {
-		mockExecFile.mockImplementation(
-			((_bin: string, _args: string[], cb: (err: null, res: { stdout: string; stderr: string }) => void) =>
-				cb(null, {
-					stdout: "",
-					stderr:
-						"programming error: cyclic dependency: calculation-in-progress encountered for VerticalAxisGroup.adjacent-pure-heights\ncontinuing, cross fingers\nprogramming error: cyclic dependency: calculation-in-progress encountered for VerticalAxisGroup.adjacent-pure-heights\ncontinuing, cross fingers",
-				})) as typeof execFile,
-		);
 		await expect(render("\\score { }")).resolves.toBeInstanceOf(Buffer);
 	});
 
-	it("still throws if real stderr content is mixed in with the benign recovery warning", async () => {
+	it("writes stderr to process.stderr for visibility even on success", async () => {
+		const writeSpy = vi.spyOn(process.stderr, "write").mockImplementation(() => true);
 		mockExecFile.mockImplementation(
 			((_bin: string, _args: string[], cb: (err: null, res: { stdout: string; stderr: string }) => void) =>
 				cb(null, {
 					stdout: "",
-					stderr:
-						"programming error: cyclic dependency: calculation-in-progress encountered for VerticalAxisGroup.adjacent-pure-heights\ncontinuing, cross fingers\nwarning: something actually wrong",
+					stderr: "Processing `input.ly'\nSuccess: compilation successfully completed",
 				})) as typeof execFile,
 		);
-		await expect(render("\\score { }")).rejects.toThrow("something actually wrong");
+		await render("\\score { }");
+		expect(writeSpy).toHaveBeenCalledWith(
+			"Processing `input.ly'\nSuccess: compilation successfully completed",
+		);
+		writeSpy.mockRestore();
 	});
 
 	it("passes --include for each includePaths entry so \\include can find sibling files", async () => {

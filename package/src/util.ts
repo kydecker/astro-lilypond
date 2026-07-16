@@ -1,26 +1,16 @@
 import { dirname } from "path";
 import { fileURLToPath } from "url";
 
-export type OutputFormat = "svg" | "png" | { type: "png"; resolution: number };
-
 export interface LilypondPluginOptions {
 	version?: string;
-	format?: OutputFormat;
+	format?: "svg" | "png";
+	resolution?: number;
 	crop?: boolean;
 }
 
 /** Returns true for the fenced-block language identifiers that trigger SVG rendering. */
 export function isLilypondLang(lang: string | null | undefined): boolean {
 	return lang === "lilypond" || lang === "ly" || lang === "ily";
-}
-
-/** Normalises an OutputFormat value into a plain format string and optional resolution (DPI). */
-export function resolveFormat(format: OutputFormat): {
-	format: "svg" | "png";
-	resolution?: number;
-} {
-	if (typeof format === "string") return { format };
-	return { format: format.type, resolution: format.resolution };
 }
 
 /**

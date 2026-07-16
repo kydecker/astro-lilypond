@@ -3,6 +3,7 @@ import type { Code, Html, Paragraph, Root, Text } from "mdast";
 
 vi.mock("../../src/render", () => ({
 	render: vi.fn(),
+	defaultOptions: { format: "svg", resolution: 144, binaryPath: "lilypond", crop: true },
 }));
 
 import { render } from "../../src/render";
@@ -195,11 +196,12 @@ describe("remarkLilypondPlugin", () => {
 		);
 	});
 
-	it("passes resolution DPI when format is an object", async () => {
+	it("passes resolution DPI when resolution is set", async () => {
 		const fakePng = Buffer.from([0x89, 0x50, 0x4e, 0x47]);
 		mockRender.mockResolvedValue(fakePng);
 		const plugin = remarkLilypondPlugin({
-			format: { type: "png", resolution: 300 },
+			format: "png",
+			resolution: 300,
 		}) as unknown as SimpleTransformer;
 		const tree = makeTree([
 			{ type: "code", lang: "lilypond", value: "\\score { }" } as Code,

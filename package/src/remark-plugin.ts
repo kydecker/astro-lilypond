@@ -1,8 +1,8 @@
 import type { Html, Root } from "mdast";
 import type { Plugin } from "unified";
 import { visit } from "unist-util-visit";
-import { render } from "./render.js";
-import { includePathsFor, isLilypondLang, prependVersion, renderToHtml, resolveFormat } from "./util.js";
+import { defaultOptions, render } from "./render.js";
+import { includePathsFor, isLilypondLang, prependVersion, renderToHtml } from "./util.js";
 import type { LilypondPluginOptions } from "./util.js";
 
 export type RemarkPluginOptions = LilypondPluginOptions;
@@ -20,9 +20,14 @@ export const remarkLilypondPlugin: Plugin<[RemarkPluginOptions?], Root> = (
 			const source = options.version
 				? prependVersion(node.value, options.version)
 				: node.value;
-			const { format, resolution } = resolveFormat(options.format ?? "svg");
+			const format = options.format ?? defaultOptions.format;
 
-			const promise = render(source, { format, resolution, crop: options.crop, includePaths })
+			const promise = render(source, {
+				format,
+				resolution: options.resolution,
+				crop: options.crop,
+				includePaths,
+			})
 				.then((buf): void => {
 					const htmlNode: Html = {
 						type: "html",
