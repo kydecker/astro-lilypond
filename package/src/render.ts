@@ -6,8 +6,8 @@ import { promisify } from "util";
 
 const execFileAsync = promisify(execFile);
 
-// Concurrent `lilypond` processes can race over shared, lazily-populated
-// caches, corrupting the output. Serialize invocations of the binary so
+// Concurrent `lilypond` processes can encounter race conditions
+// and corrupt the output. Serialize invocations of the binary so
 // no two processes build at once.
 let invocationQueue: Promise<void> = Promise.resolve();
 
