@@ -1,7 +1,14 @@
 {
   "name": "astro-lilypond",
   "version": "0.3.3",
-  "description": "An Astro integration for rendering Lilypond scores to images in Markdown.",
+  "description": "An Astro integration for rendering Lilypond markup to music notation.",
+  "homepage": "https://lilypond.ky.fyi",
+  "author": "Ky Decker",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kydecker/astro-lilypond"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -29,15 +36,14 @@
     "images",
     "lilypond",
     "markdown",
+    "media",
     "music",
-    "score"
+    "renderer",
+    "score",
+    "tooling",
+    "withastro",
+    "utils"
   ],
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/kydecker/astro-lilypond"
-  },
-  "author": "Ky Decker",
-  "license": "MIT",
   "peerDependencies": {
     "astro": ">=7.0.0"
   },
