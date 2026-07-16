@@ -6,7 +6,7 @@ import { remarkLilypondPlugin } from "./remark-plugin.js";
 import { rehypeLilypondPlugin } from "./rehype-plugin.js";
 import { satteriLilypondPlugin } from "./satteri-plugin.js";
 import { defaultOptions, render } from "./render.js";
-import { includePathsFor, prependVersion, renderToHtml } from "./util.js";
+import { includePathsFor, prependVersion, renderToHtml, sourceNameFor } from "./util.js";
 import type { LilypondPluginOptions } from "./util.js";
 
 const execFileAsync = promisify(execFile);
@@ -53,6 +53,7 @@ function lyFilePlugin(options: LilypondOptions): Plugin {
 				resolution: options.resolution,
 				crop: options.crop,
 				includePaths: includePathsFor(id),
+				sourceName: sourceNameFor(id),
 			});
 			return { code: `export default ${JSON.stringify(renderToHtml(buf, format))}` };
 		},
