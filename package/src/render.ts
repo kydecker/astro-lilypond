@@ -35,11 +35,10 @@ export interface RenderOptions {
 
 	/**
 	 * Base name to give the temp input file passed to LilyPond, so build
-	 * output (e.g. `Processing "bach-schenker.ly"`) identifies the source
-	 * instead of a generic `input.ly`. Falls back to `"input.ly"` when
-	 * omitted or unsafe to use as a filename.
+	 * output (e.g. `Processing "bach-schenker.ly"`). Falls back to
+	 * `"input.ly"` when omitted or unsafe to use as a filename.
 	 */
-	sourceName?: string;
+  sourceName?: string;
 }
 
 export const defaultOptions: Required<Omit<RenderOptions, "includePaths" | "sourceName">> = {
