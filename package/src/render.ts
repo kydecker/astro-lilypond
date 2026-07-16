@@ -6,6 +6,20 @@ import { promisify } from "util";
 
 const execFileAsync = promisify(execFile);
 
+// Concurrent `lilypond` processes can encounter race conditions
+// and corrupt the output. Serialize invocations of the binary so
+// no two processes build at once.
+let invocationQueue: Promise<void> = Promise.resolve();
+
+function runExclusive<T>(task: () => Promise<T>): Promise<T> {
+	const result = invocationQueue.then(task, task);
+	invocationQueue = result.then(
+		() => undefined,
+		() => undefined,
+	);
+	return result;
+}
+
 const FORMATS = ["png", "svg"] as const;
 
 export type Format = (typeof FORMATS)[number];
@@ -102,7 +116,7 @@ export async function render(
 		// but let the exit code (not stderr content) decide pass/fail.
 		let stderr: string;
 		try {
-			({ stderr } = await execFileAsync(binaryPath, args));
+			({ stderr } = await runExclusive(() => execFileAsync(binaryPath, args)));
 		} catch (err) {
 			const errStderr =
 				err && typeof err === "object" && "stderr" in err

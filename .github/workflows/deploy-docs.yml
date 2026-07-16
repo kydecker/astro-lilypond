@@ -41,13 +41,6 @@ jobs:
       - name: Add LilyPond to PATH
         run: echo "$HOME/lilypond-2.26.0/bin" >> "$GITHUB_PATH"
 
-      - name: Warm LilyPond font cache
-        # Force fontconfig to build its cache before attempting to render examples
-        # to prevent malformatted glyphs/fonts from displaying on the scores
-        run: |
-          echo '\version "2.26.0" { c4 }' > /tmp/warmup.ly
-          lilypond --define-default=backend=cairo --output=/tmp/warmup /tmp/warmup.ly
-
       - name: Build library
         run: pnpm --filter astro-lilypond build
 
