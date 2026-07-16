@@ -1,9 +1,8 @@
 \version "2.25.5"
-\include "gregorian.ly"
 
 #(set-global-staff-size 23)
 
-\new VaticanaStaff {
+\new VaticanaScore {
   <<
     \new VaticanaVoice = "cantus" {
       \clef "vaticana-do3"

@@ -1,6 +1,12 @@
 import { visit } from "unist-util-visit";
 import { defaultOptions, render } from "./render.js";
-import { includePathsFor, isLilypondLang, prependVersion, renderToHtml } from "./util.js";
+import {
+	includePathsFor,
+	isLilypondLang,
+	prependVersion,
+	renderToHtml,
+	sourceNameFor,
+} from "./util.js";
 import type { LilypondPluginOptions } from "./util.js";
 
 // Raw node type — an Astro/rehype extension not in the standard @types/hast
@@ -20,6 +26,7 @@ export function rehypeLilypondPlugin(
 	return async (tree, file) => {
 		const promises: Promise<void>[] = [];
 		const includePaths = includePathsFor(file?.path);
+		const sourceName = sourceNameFor(file?.path);
 
 		visit(tree, "element", (node, index, parent) => {
 			if (
@@ -55,6 +62,7 @@ export function rehypeLilypondPlugin(
 				resolution: options.resolution,
 				crop: options.crop,
 				includePaths,
+				sourceName,
 			})
 				.then((buf): void => {
 					const rawNode: RawNode = {

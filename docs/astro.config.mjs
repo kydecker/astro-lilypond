@@ -5,9 +5,10 @@ import starlightThemeFlexoki from 'starlight-theme-flexoki'
 import lilypondGrammar from "./src/lilypond.tmLanguage.mjs"
 
 export default defineConfig({
+  site: "https://lilypond.ky.fyi",
   integrations: [
     lilypond({
-      version: "2.24.0",
+      version: "2.26.0",
     }),
 		starlight({
 			title: "Astro LilyPond",

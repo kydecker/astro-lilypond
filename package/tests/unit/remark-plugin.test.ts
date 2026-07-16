@@ -55,6 +55,7 @@ describe("remarkLilypondPlugin", () => {
 			resolution: undefined,
 			crop: undefined,
 			includePaths: ["."],
+			sourceName: "test.md",
 		});
 		expect(tree.children[0]).toEqual({ type: "html", value: RENDERED_SVG });
 	});
@@ -81,6 +82,7 @@ describe("remarkLilypondPlugin", () => {
 			resolution: undefined,
 			crop: undefined,
 			includePaths: ["."],
+			sourceName: "test.md",
 		});
 		expect(tree.children[0]).toEqual({ type: "html", value: RENDERED_SVG });
 	});
@@ -97,6 +99,7 @@ describe("remarkLilypondPlugin", () => {
 			resolution: undefined,
 			crop: undefined,
 			includePaths: ["."],
+			sourceName: "test.md",
 		});
 		expect(tree.children[0]).toEqual({ type: "html", value: RENDERED_SVG });
 	});
@@ -141,6 +144,7 @@ describe("remarkLilypondPlugin", () => {
 			resolution: undefined,
 			crop: undefined,
 			includePaths: ["."],
+			sourceName: "test.md",
 		});
 	});
 
@@ -156,6 +160,7 @@ describe("remarkLilypondPlugin", () => {
 			resolution: undefined,
 			crop: undefined,
 			includePaths: ["."],
+			sourceName: "test.md",
 		});
 	});
 
@@ -171,6 +176,7 @@ describe("remarkLilypondPlugin", () => {
 			resolution: undefined,
 			crop: undefined,
 			includePaths: ["."],
+			sourceName: "test.md",
 		});
 		expect((tree.children[0] as Html).value).toBe(RENDERED_SVG);
 	});
@@ -190,6 +196,7 @@ describe("remarkLilypondPlugin", () => {
 			resolution: undefined,
 			crop: undefined,
 			includePaths: ["."],
+			sourceName: "test.md",
 		});
 		expect((tree.children[0] as Html).value).toContain(
 			'<img class="lilypond" src="data:image/png;base64,',
@@ -214,6 +221,7 @@ describe("remarkLilypondPlugin", () => {
 			resolution: 300,
 			crop: undefined,
 			includePaths: ["."],
+			sourceName: "test.md",
 		});
 		expect((tree.children[0] as Html).value).toContain(
 			'<img class="lilypond" src="data:image/png;base64,',
@@ -233,6 +241,7 @@ describe("remarkLilypondPlugin", () => {
 			resolution: undefined,
 			crop: false,
 			includePaths: ["."],
+			sourceName: "test.md",
 		});
 	});
 });

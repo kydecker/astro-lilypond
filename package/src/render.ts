@@ -1,6 +1,6 @@
 import { execFile } from "child_process";
 import { mkdtemp, readFile, rm, writeFile } from "fs/promises";
-import { join } from "path";
+import { basename, join } from "path";
 import { tmpdir } from "os";
 import { promisify } from "util";
 
@@ -32,9 +32,17 @@ export interface RenderOptions {
 	 * Typically the directory containing the source `.ly`/Markdown file.
 	 */
 	includePaths?: string[];
+
+	/**
+	 * Base name to give the temp input file passed to LilyPond, so build
+	 * output (e.g. `Processing "bach-schenker.ly"`) identifies the source
+	 * instead of a generic `input.ly`. Falls back to `"input.ly"` when
+	 * omitted or unsafe to use as a filename.
+	 */
+	sourceName?: string;
 }
 
-export const defaultOptions: Required<Omit<RenderOptions, "includePaths">> = {
+export const defaultOptions: Required<Omit<RenderOptions, "includePaths" | "sourceName">> = {
 	format: "svg",
 	resolution: 144,
 	binaryPath: "lilypond",
@@ -51,6 +59,7 @@ export async function render(
 		binaryPath = defaultOptions.binaryPath,
 		crop = defaultOptions.crop,
 		includePaths = [],
+		sourceName,
 	} = options;
 
 	if (!FORMATS.includes(format)) {
@@ -58,7 +67,7 @@ export async function render(
 	}
 
 	const dir = await mkdtemp(join(tmpdir(), "astro-lilypond-"));
-	const inputPath = join(dir, "input.ly");
+	const inputPath = join(dir, safeInputFileName(sourceName));
 	const outputBase = join(dir, "output");
 
 	try {
@@ -109,6 +118,21 @@ export async function render(
 	} finally {
 		await rm(dir, { recursive: true, force: true });
 	}
+}
+
+/**
+ * Resolves the base name to use for the temp input file. Strips any
+ * directory components from `sourceName` (it may be a full path) and
+ * rejects anything that isn't a plain, safe file name, falling back to
+ * the generic `"input.ly"`.
+ */
+function safeInputFileName(sourceName: string | undefined): string {
+	if (!sourceName) return "input.ly";
+	const base = basename(sourceName);
+	if (!base || base === "." || base === ".." || !/^[\w.-]+$/.test(base)) {
+		return "input.ly";
+	}
+	return base;
 }
 
 async function readOutputFile(
