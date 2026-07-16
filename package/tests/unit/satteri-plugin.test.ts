@@ -14,7 +14,7 @@ const mockRender = vi.mocked(render);
 const FAKE_SVG = "<svg xmlns='http://www.w3.org/2000/svg'><g>fake</g></svg>";
 const RENDERED_SVG = `<img class="lilypond" src="data:image/svg+xml;base64,${Buffer.from(
 	FAKE_SVG,
-).toString("base64")}" alt="LilyPond notation">`;
+).toString("base64")}" alt="">`;
 
 beforeEach(() => {
 	vi.clearAllMocks();
