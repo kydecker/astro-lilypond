@@ -7,30 +7,25 @@ interface Props {
   code: string;
   /** `<Code>` frame title, e.g. the source filename. */
   title: string;
-  class?: string | undefined;
-  style?: string | undefined;
   summary?: string;
 }
 
-const {
-  content,
-  code,
-  title,
-  class: className,
-  style,
-  summary = "View source",
-} = Astro.props;
+const { content, code, title, summary = "View source" } = Astro.props;
 ---
 
-<LilyPond content={content} class={className} style={style} />
+<LilyPond content={content} class="example" } />
 
 <details>
   <summary>{summary}</summary>
-  <Code code={code} lang="lilypondtext" title={title} class="example" />
+  <Code code={code} lang="lilypondtext" title={title} class="example-code" />
 </details>
 
 <style>
-  .example :global(.frame pre) {
+  .example {
+    width: 100%;
+  }
+
+  .example-code :global(.frame pre) {
     max-height: min(68vh, 600px);
     overflow: auto;
   }

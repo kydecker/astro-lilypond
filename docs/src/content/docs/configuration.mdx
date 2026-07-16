@@ -8,7 +8,7 @@ import versionExample from "../../examples/version-example.ly?raw";
 
 Pass options to the integration when registering it in `astro.config.mjs`:
 
-```js {7-9}
+```js
 // astro.config.mjs
 import { defineConfig } from 'astro/config';
 import lilypond from 'astro-lilypond';
@@ -52,7 +52,7 @@ Blocks with an explicit `\version` declaration will always use that version, reg
 
 ### `format`
 
-**Type:** `"svg" | "png" | { type: "png"; resolution: number }`  
+**Type:** `"svg" | "png"`  
 **Default:** `"svg"`
 
 The output format passed to the LilyPond binary. Controls how the rendered output is embedded in the page.
@@ -68,23 +68,20 @@ export default defineConfig({
 });
 ```
 
-| Value | Embedded as |
-|---|---|
-| `"svg"` | Inline `<svg>` element (default) |
-| `"png"` | `<img>` element with a base64 data URI, at the default resolution (144 DPI) |
-| `{ type: "png", resolution: number }` | `<img>` element with a base64 data URI, at the specified DPI |
+### `resolution`
 
-If you need higher quality PNGs, pass an object with `type: "png"` and `resolution`:
+**Type:** `number`  
+**Default:** `144`
 
-```js {5-8}
+Resolution to render `.png` files, in DPI. Only works when `format` is set to `png`.
+
+```js {4-7}
 // astro.config.mjs
 export default defineConfig({
    integrations: [
     lilypond({
-      format: {
-        type: "png",
-        resolution: 300
-      }
+      format: "png",
+      resolution: 300
     }),
   ],
 });

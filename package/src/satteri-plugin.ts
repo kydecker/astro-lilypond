@@ -3,8 +3,8 @@ import type {
 	MdastPluginDefinition,
 	MdastVisitorContext,
 } from "satteri";
-import { render } from "./render.js";
-import { includePathsFor, isLilypondLang, prependVersion, renderToHtml, resolveFormat } from "./util.js";
+import { defaultOptions, render } from "./render.js";
+import { includePathsFor, isLilypondLang, prependVersion, renderToHtml } from "./util.js";
 import type { LilypondPluginOptions } from "./util.js";
 
 export type SatteriPluginOptions = LilypondPluginOptions;
@@ -25,9 +25,14 @@ export function satteriLilypondPlugin(
 			const source = options.version
 				? prependVersion(node.value, options.version)
 				: node.value;
-			const { format, resolution } = resolveFormat(options.format ?? "svg");
+			const format = options.format ?? defaultOptions.format;
 			const includePaths = includePathsFor(ctx.fileURL);
-			const buf = await render(source, { format, resolution, crop: options.crop, includePaths });
+			const buf = await render(source, {
+				format,
+				resolution: options.resolution,
+				crop: options.crop,
+				includePaths,
+			});
 			return { type: "html", value: renderToHtml(buf, format) };
 		},
 	};

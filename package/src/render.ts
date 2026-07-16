@@ -6,45 +6,30 @@ import { promisify } from "util";
 
 const execFileAsync = promisify(execFile);
 
-// LilyPond sometimes hits an internal programming error but recovers and
-// still produces valid output (it logs "continuing, cross fingers" and exits
-// zero). Complex real-world scores with cross-staff spacing can legitimately
-// trigger this, so it shouldn't fail the build on its own.
-const BENIGN_STDERR_RE = /^programming error:.*\n^continuing, cross fingers$/gm;
+const FORMATS = ["png", "svg"] as const;
 
-function isBenignStderr(stderr: string): boolean {
-	return stderr.replace(BENIGN_STDERR_RE, "").trim() === "";
-}
-
-export type Format = "midi" | "pdf" | "ps" | "png" | "svg" | "eps";
-
-const FORMAT_FLAGS: Record<Format, string | null> = {
-	midi: null,
-	pdf: "--pdf",
-	png: "--png",
-	ps: "--ps",
-	svg: "--svg",
-	eps: "--eps",
-};
+export type Format = (typeof FORMATS)[number];
 
 export interface RenderOptions {
 	/** Output format. Defaults to `"svg"`. */
 	format?: Format;
+
 	/** Resolution in DPI (only applies to PNG). Defaults to `144`. */
 	resolution?: number;
+
 	/** Path to the `lilypond` binary. Defaults to `"lilypond"`. */
 	binaryPath?: string;
+
 	/**
-	 * Crop the output SVG tightly to the content bounding box using
-	 * `--define-default crop`. Defaults to `true`.
+	 * Crop the output tightly to the content bounding box.
+	 * Disable if full-page renders are preferred.
+	 * Defaults to `true`.
 	 */
 	crop?: boolean;
+
 	/**
-	 * Extra directories LilyPond should search for `\include`d files, in
-	 * addition to its own library (via `-I`). Typically the directory
-	 * containing the source `.ly`/Markdown file, so sibling
-	 * `\include "foo.ily"` files resolve even though rendering happens in a
-	 * temp directory.
+	 * Extra directories LilyPond should search for `\include`d files.
+	 * Typically the directory containing the source `.ly`/Markdown file.
 	 */
 	includePaths?: string[];
 }
@@ -67,10 +52,9 @@ export async function render(
 		crop = defaultOptions.crop,
 		includePaths = [],
 	} = options;
-	const opts = { format, resolution, binaryPath, crop, includePaths };
 
-	if (!(opts.format in FORMAT_FLAGS)) {
-		throw new Error(`${opts.format} is not a supported format`);
+	if (!FORMATS.includes(format)) {
+		throw new Error(`${format} is not a supported format`);
 	}
 
 	const dir = await mkdtemp(join(tmpdir(), "astro-lilypond-"));
@@ -80,31 +64,48 @@ export async function render(
 	try {
 		await writeFile(inputPath, source, "utf8");
 
-		const args: string[] = [
-			FORMAT_FLAGS[opts.format],
-			`--define-default=resolution=${opts.resolution ?? 144}`,
+		const args = [
+			// Render the correct format
+			`--format=${format}`,
+
+			// Define defaults — these can be overridden with the appropriate flags
+			// inside of individual .ly files
+
+			// Disable point-and-click behavior on SVGs when clicking noteheads
 			"--define-default=no-point-and-click",
-			...(opts.crop ? ["--define-default=crop"] : []),
-			...opts.includePaths.map((p) => `--include=${p}`),
-			"--silent",
+			// Use the `cairo` backend for graphics rendering; faster than the default `ps` backend
+			// https://lilypond.org/doc/v2.26/Documentation/usage/advanced-command_002dline-options-for-lilypond
+			"--define-default=backend=cairo",
+			// Resolution for generating PNGs (set in DPI)
+			`--define-default=resolution=${resolution}`,
+			// Set cropping
+			`--define-default=crop=${crop ? "#t" : "#f"}`,
+
+			// If the LilyPond file imports from others via \include, make sure those files are included
+			...includePaths.map((p) => `--include=${p}`),
+
 			"--output",
 			outputBase,
 			inputPath,
-		].filter((a): a is string => a !== null);
+		];
 
+		// LilyPond writes its progress log, and any warnings/errors, to stderr
+		// even on success — surface it in the build output so it's visible,
+		// but let the exit code (not stderr content) decide pass/fail.
 		let stderr: string;
 		try {
-			({ stderr } = await execFileAsync(opts.binaryPath ?? "lilypond", args));
+			({ stderr } = await execFileAsync(binaryPath, args));
 		} catch (err) {
 			const errStderr =
 				err && typeof err === "object" && "stderr" in err
 					? String((err as { stderr: unknown }).stderr)
 					: undefined;
+			if (errStderr) process.stderr.write(errStderr);
 			throw new Error(errStderr || (err instanceof Error ? err.message : String(err)));
 		}
-		if (stderr && !isBenignStderr(stderr)) throw new Error(stderr);
+		if (stderr) process.stderr.write(stderr);
 
-		return await readOutputFile(outputBase, opts.format, opts.crop);
+		return await readOutputFile(outputBase, format, crop);
 	} finally {
 		await rm(dir, { recursive: true, force: true });
 	}
@@ -129,7 +130,7 @@ async function readOutputFile(
 	}
 
 	// Regular output: single page → <base>.<format>, multi-page →
-	// <base>-1.<format> (svg/pdf/ps/eps) or <base>-page1.<format> (png).
+	// <base>-1.<format> (svg) or <base>-page1.<format> (png).
 	try {
 		return await readFile(`${base}.${format}`);
 	} catch {

@@ -3,6 +3,7 @@ import type { Code, Html } from "mdast";
 
 vi.mock("../../src/render.js", () => ({
 	render: vi.fn(),
+	defaultOptions: { format: "svg", resolution: 144, binaryPath: "lilypond", crop: true },
 }));
 
 import { render } from "../../src/render.js";
@@ -153,10 +154,10 @@ describe("satteriLilypondPlugin", () => {
 		expect((result as Html).value).toContain(fakePng.toString("base64"));
 	});
 
-	it("passes resolution DPI when format is an object", async () => {
+	it("passes resolution DPI when resolution is set", async () => {
 		const fakePng = Buffer.from([0x89, 0x50, 0x4e, 0x47]);
 		mockRender.mockResolvedValue(fakePng);
-		const plugin = satteriLilypondPlugin({ format: { type: "png", resolution: 300 } });
+		const plugin = satteriLilypondPlugin({ format: "png", resolution: 300 });
 		const node: Code = { type: "code", lang: "lilypond", value: "\\score { }" };
 
 		const result = await plugin.code!(node, {} as never);
