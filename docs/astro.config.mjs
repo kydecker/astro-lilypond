@@ -17,6 +17,9 @@ export default defineConfig({
       plugins: [starlightThemeFlexoki({
         accentColor: "green"
       })],
+      customCss: [
+        './src/styles/docs.css',
+      ],
       expressiveCode: {
         shiki: {
           langs: [lilypondGrammar],

@@ -15,8 +15,9 @@ import {
 const mockRender = vi.mocked(render);
 
 const FAKE_SVG = "<svg xmlns='http://www.w3.org/2000/svg'><g>fake</g></svg>";
-const RENDERED_SVG =
-	"<svg class=\"lilypond\" xmlns='http://www.w3.org/2000/svg'><g>fake</g></svg>";
+const RENDERED_SVG = `<img class="lilypond" src="data:image/svg+xml;base64,${Buffer.from(
+	FAKE_SVG,
+).toString("base64")}" alt="">`;
 
 type SimpleTransformer = (tree: Root, file: { path: string }) => Promise<void>;
 type SimplePlugin = (opts?: RemarkPluginOptions) => SimpleTransformer;
@@ -43,7 +44,7 @@ describe("remarkLilypondPlugin", () => {
 		expect(typeof transformer).toBe("function");
 	});
 
-	it("transforms a lilypond code block to an html node with inline SVG", async () => {
+	it("transforms a lilypond code block to an html node with an svg img tag", async () => {
 		const tree = makeTree([
 			{ type: "code", lang: "lilypond", value: "\\score { }" } as Code,
 		]);
