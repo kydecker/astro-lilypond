@@ -4,9 +4,6 @@
   tagline = ##f
   title = "Violent Dance For Orchestra"
   composer = "Hu Haipeng"
-%  arranger = "July 5, 2009"
-
-%  poet = "  I'm writing this piece because I'm terribly frustrated, facing a task which will seriously stain my aesthetics and conviction to the true art. It consists of all kinds of devils, dancing and whirling violently, turning the world into an abyss of darkness. Although the main melodies are derived from folk music, these are only a beautiful skin, and the essence of this piece is violent and evil, full of my 10 years' pain and rage. It's a large volcano of my long repressed heart!"
 }
 
 \paper{
@@ -335,7 +332,6 @@ R2. |
     s2.*4 |
     s1*9/8 |
   }
-
 
   violinI = \relative {
     \clef treble \key ees \minor \time 6/8

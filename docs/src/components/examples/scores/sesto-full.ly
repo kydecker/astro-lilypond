@@ -62,6 +62,5 @@
         \remove System_start_delimiter_engraver
       }
     }
-%    \midi { }
   }
 }

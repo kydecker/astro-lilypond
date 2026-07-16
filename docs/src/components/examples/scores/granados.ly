@@ -4,7 +4,6 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \version "2.25.34"
-\include "example-header.ily"
 
 #(set-global-staff-size 14)
 
@@ -177,7 +176,6 @@ lowerVoiceTwo = \relative {
     }
     \context {
       \Staff
-      \override Accidental.extra-spacing-width = #'(0 . 0)
     }
   }
 }

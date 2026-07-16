@@ -5,9 +5,9 @@
 #(set-global-staff-size 24)
 
 global = {
-    \time 4/4
-    \numericTimeSignature
-    \key c \major
+  \time 4/4
+  \numericTimeSignature
+  \key c \major
 }
 
 cf = \relative {
@@ -44,16 +44,9 @@ bassFigures = \figuremode {
 
     \new Staff = lower {
       <<
-%      \context Voice = "cantus firmus" \with {
-%        \consists Balloon_engraver
-%      }
         \context Staff = lower \cf
         \new FiguredBass \bassFigures
       >>
     }
   >>
-  \layout {}
-  %{\midi {
-    \tempo 4 = 120
-  }%}
 }
