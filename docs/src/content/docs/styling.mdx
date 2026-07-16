@@ -7,20 +7,18 @@ import { Code } from "@astrojs/starlight/components";
 import StyledMusicExample from "../../components/examples/StyledMusicExample.astro";
 import StyledMusicExampleRaw from "../../components/examples/StyledMusicExample.astro?raw";
 
-Every rendered LilyPond block receives a `lilypond` class on its root element — an `<svg>` for SVG output or an `<img>` for PNG output. Use this class as your CSS hook.
+Every rendered LilyPond block receives a `lilypond` class on an `<img>` element. Use this class as your CSS hook.
 
 ## Global styles
 
-Target `.lilypond` in any global stylesheet:
+Target `.lilypond` in any global stylesheet to add a background or padding, for example:
 
 ```css
 .lilypond {
-  color: navy;
   background: ivory;
+  padding: 20px;
 }
 ```
-
-By default, LilyPond SVGs use `currentColor`, so the `color` property controls the notation colour and inherits from the surrounding text if unset.
 
 ## Scoped styles
 

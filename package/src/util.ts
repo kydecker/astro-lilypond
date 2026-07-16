@@ -44,11 +44,16 @@ export function sourceNameFor(source: string | URL | null | undefined): string |
 	return basename(path);
 }
 
-/** Converts a rendered LilyPond buffer to an HTML string suitable for inline embedding. */
+const MIME_TYPES = {
+	svg: "image/svg+xml",
+	png: "image/png",
+} as const;
+
+/**
+ * Converts a rendered LilyPond buffer to an HTML string suitable for
+ * embedding.
+ */
 export function renderToHtml(buf: Buffer, format: "svg" | "png"): string {
-	if (format === "png") {
-		const b64 = buf.toString("base64");
-		return `<img class="lilypond" src="data:image/png;base64,${b64}" alt="LilyPond notation">`;
-	}
-	return buf.toString("utf-8").replace(/<svg\b/, '<svg class="lilypond"');
+	const b64 = buf.toString("base64");
+	return `<img class="lilypond" src="data:${MIME_TYPES[format]};base64,${b64}" alt="">`;
 }

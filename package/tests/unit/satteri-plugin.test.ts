@@ -12,8 +12,9 @@ import { satteriLilypondPlugin } from "../../src/satteri-plugin.js";
 const mockRender = vi.mocked(render);
 
 const FAKE_SVG = "<svg xmlns='http://www.w3.org/2000/svg'><g>fake</g></svg>";
-const RENDERED_SVG =
-	"<svg class=\"lilypond\" xmlns='http://www.w3.org/2000/svg'><g>fake</g></svg>";
+const RENDERED_SVG = `<img class="lilypond" src="data:image/svg+xml;base64,${Buffer.from(
+	FAKE_SVG,
+).toString("base64")}" alt="LilyPond notation">`;
 
 beforeEach(() => {
 	vi.clearAllMocks();
@@ -27,7 +28,7 @@ describe("satteriLilypondPlugin", () => {
 		expect(typeof plugin.code).toBe("function");
 	});
 
-	it("transforms a lilypond code node to an html node with inline SVG", async () => {
+	it("transforms a lilypond code node to an html node with an svg img tag", async () => {
 		const plugin = satteriLilypondPlugin();
 		const node: Code = { type: "code", lang: "lilypond", value: "\\score { }" };
 

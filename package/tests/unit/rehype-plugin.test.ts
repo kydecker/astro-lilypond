@@ -11,8 +11,9 @@ import { rehypeLilypondPlugin } from "../../src/rehype-plugin";
 const mockRender = vi.mocked(render);
 
 const FAKE_SVG = "<svg xmlns='http://www.w3.org/2000/svg'><g>fake</g></svg>";
-const RENDERED_SVG =
-	"<svg class=\"lilypond\" xmlns='http://www.w3.org/2000/svg'><g>fake</g></svg>";
+const RENDERED_SVG = `<img class="lilypond" src="data:image/svg+xml;base64,${Buffer.from(
+	FAKE_SVG,
+).toString("base64")}" alt="LilyPond notation">`;
 
 beforeEach(() => {
 	vi.clearAllMocks();
@@ -90,7 +91,7 @@ describe("rehypeLilypondPlugin", () => {
 		expect(typeof rehypeLilypondPlugin()).toBe("function");
 	});
 
-	it("transforms <pre><code.language-lilypond> to a raw SVG node", async () => {
+	it("transforms <pre><code.language-lilypond> to a raw img node", async () => {
 		const tree = makeTree([makeLilypondPre("\\score { }")]);
 
 		await runPlugin(tree);
