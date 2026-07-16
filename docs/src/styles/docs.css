@@ -1,6 +1,6 @@
 .lilypond {
   /* From starlight-theme-flexoki */
-  background: var(--color-paper);
+  background: var(--color-paper, #fffcf0);
 }
 
 [data-theme="dark"] .lilypond {
