@@ -1,5 +1,4 @@
 \version "2.21.0"
-\include "example-header.ily"
 
 \header {
   mutopiatitle = "Jesu, meine Freude"
