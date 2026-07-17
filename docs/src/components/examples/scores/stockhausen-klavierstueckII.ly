@@ -1,4 +1,4 @@
-\version "2.25.35"
+\version "2.26.0"
 
 \paper {
   tagline = ##f

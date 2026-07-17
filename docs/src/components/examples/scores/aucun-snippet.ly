@@ -1,4 +1,4 @@
-\version "2.25.28"
+\version "2.26.0"
 \include "example-header.ily"
 
 \paper {
