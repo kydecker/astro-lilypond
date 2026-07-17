@@ -329,9 +329,3 @@ Use `<<` and `>>` to stack voices on the same staff. `\voiceOne` and `\voiceTwo`
   }
 >>
 ```
-
-## Further reading
-
-- [LilyPond Learning Manual](https://lilypond.org/doc/v2.24/Documentation/learning/)
-- [LilyPond Notation Reference](https://lilypond.org/doc/v2.24/Documentation/notation/)
-- [LilyPond Text Input](https://lilypond.org/doc/v2.24/Documentation/web/text-input)
