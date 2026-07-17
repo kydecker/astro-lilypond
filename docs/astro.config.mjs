@@ -47,16 +47,13 @@ export default defineConfig({
 				},
 			],
 			sidebar: [
-				{
-					label: "Introduction",
-					slug: "",
-				},
 				"getting-started",
 				"configuration",
 				"usage",
 				"styling",
 				"lilypond-syntax",
 				"examples",
+				"resources",
 			],
 			editLink: {
 				baseUrl: "https://github.com/kydecker/astro-lilypond/edit/main/docs/",
