@@ -1,5 +1,6 @@
 ---
 title: Additional Resources
+description: Some helpful links for working with LilyPond.
 ---
 
 Here are some resources that [Ky](https://ky.fyi) has found helpful for working with LilyPond:
