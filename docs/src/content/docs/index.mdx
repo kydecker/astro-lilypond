@@ -1,35 +1,42 @@
 ---
 title: Astro LilyPond
-description: Render LilyPond music notation to images with Astro.
+description: Render LilyPond markup to music notation with Astro.
 head:
   - tag: title
     content: Astro LilyPond
 ---
 
-import { LinkCard, CardGrid, Card } from "@astrojs/starlight/components";
+import { CardGrid, Card, LinkButton } from "@astrojs/starlight/components";
 import HowToUse from "../../components/examples/HowToUse.astro";
 
 `astro-lilypond` is an [Astro](https://astro.build) integration for displaying musical notation on the web.
 
 <HowToUse />
 
+<LinkButton href="/getting-started" icon="right-arrow">
+  Get Started
+</LinkButton>
+<LinkButton
+  href="https://github.com/kydecker/astro-lilypond"
+  icon="external"
+  variant="minimal"
+>
+  View on GitHub
+</LinkButton>
+
 ## Features
 
-<CardGrid stagger>
-  <Card title="Text to SVG or PNG">
+<CardGrid>
+  <Card title="Text to images">
     Render musical scores via [Markdown](/usage/#markdown) or with a `<LilyPond>` [component](/usage/#component).
   </Card>
   <Card title="Easy setup">
     Works with both `unified()` and `satteri()` Markdown processors out-of-the-box.
   </Card>
-  <Card title="Ships zero JS">
+  <Card title="Zero client-side JavaScript">
     Images are compiled at build time, keeping your site fast.
   </Card>
   <Card title="Full LilyPond support">
     Works with all LilyPond display syntax.
   </Card>
 </CardGrid>
-
-<LinkCard href="/getting-started" title="Get Started" description="Install astro-lilypond and render music notation on your site." />
-
-<LinkCard href="https://github.com/kydecker/astro-lilypond" title="Star on GitHub" description="Check out the source code and leave a star." />
