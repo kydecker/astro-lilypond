@@ -1,4 +1,4 @@
-\version "2.19.21"
+\version "2.26.0"
 
 #(define (glissando::calc-extra-dy grob)
    (let* ((original (ly:grob-original grob))

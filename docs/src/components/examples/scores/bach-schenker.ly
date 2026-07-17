@@ -1,4 +1,4 @@
-\version "2.19.21"
+\version "2.26.0"
 
 \header{
   composer = "J.S. Bach"

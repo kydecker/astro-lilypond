@@ -3,7 +3,7 @@
 % Goyescas, "Coloquio en la Reja."              %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\version "2.25.34"
+\version "2.26.0"
 
 #(set-global-staff-size 14)
 

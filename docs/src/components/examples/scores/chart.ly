@@ -1,4 +1,4 @@
-\version "2.19.21"
+\version "2.26.0"
 \include "example-header.ily"
 \include "predefined-guitar-fretboards.ly"
 

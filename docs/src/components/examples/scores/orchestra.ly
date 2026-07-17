@@ -1,4 +1,4 @@
-\version "2.25.80"
+\version "2.26.0"
 
 \header {
   tagline = ##f
