@@ -1,6 +1,6 @@
 {
 	"name": "astro-lilypond",
-	"version": "0.5.0",
+	"version": "0.5.1",
 	"description": "An Astro integration for rendering Lilypond markup to music notation.",
 	"homepage": "https://lilypond.ky.fyi",
 	"author": "Ky Decker",

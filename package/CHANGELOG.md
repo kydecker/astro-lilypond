@@ -1,5 +1,11 @@
 # astro-lilypond
 
+## 0.5.1
+
+### Patch Changes
+
+- efae0f7: Remove unnecessary invocation queue from render pipeline
+
 ## 0.5.0
 
 ### Minor Changes
