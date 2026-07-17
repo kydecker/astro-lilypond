@@ -3,10 +3,13 @@ import { Code } from "@astrojs/starlight/components";
 
 interface Props {
 	code: string;
+	title?: string;
 }
-const { code } = Astro.props;
+
+const { code, title } = Astro.props;
+
 const fenced = (c: string) =>
 	`\`\`\`lilypond\n${c.replace(/^(?=.)/gm, "  ").trimEnd()}\n\`\`\``;
 ---
 
-<Code code={fenced(code)} lang="lilypondtext" />
+<Code code={fenced(code)} lang="lilypondtext" title={title} />
