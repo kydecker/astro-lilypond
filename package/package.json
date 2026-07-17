@@ -1,65 +1,65 @@
 {
-  "name": "astro-lilypond",
-  "version": "0.5.1",
-  "description": "An Astro integration for rendering Lilypond markup to music notation.",
-  "homepage": "https://lilypond.ky.fyi",
-  "author": "Ky Decker",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/kydecker/astro-lilypond"
-  },
-  "type": "module",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
-    },
-    "./component": "./components/LilyPond.astro"
-  },
-  "files": [
-    "dist",
-    "components"
-  ],
-  "scripts": {
-    "build": "tsc --project tsconfig.json",
-    "test": "vitest --project unit",
-    "test:integration": "vitest run --project integration"
-  },
-  "keywords": [
-    "astro",
-    "astro-integration",
-    "engraving",
-    "image",
-    "images",
-    "lilypond",
-    "markdown",
-    "media",
-    "music",
-    "renderer",
-    "score",
-    "tooling",
-    "withastro",
-    "utils"
-  ],
-  "peerDependencies": {
-    "astro": ">=7.0.0"
-  },
-  "dependencies": {
-    "unist-util-visit": "^5.1.0"
-  },
-  "devDependencies": {
-    "@astrojs/markdown-remark": "^7.2.1",
-    "@astrojs/markdown-satteri": "^0.3.4",
-    "@types/mdast": "^4.0.4",
-    "@types/node": "^26.1.1",
-    "astro": "^7.0.8",
-    "satteri": "^0.9.5",
-    "typescript": "^7.0.2",
-    "unified": "^11.0.5",
-    "vite": "^8.0.0",
-    "vitest": "^4.1.10"
-  }
+	"name": "astro-lilypond",
+	"version": "0.5.1",
+	"description": "An Astro integration for rendering Lilypond markup to music notation.",
+	"homepage": "https://lilypond.ky.fyi",
+	"author": "Ky Decker",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/kydecker/astro-lilypond"
+	},
+	"type": "module",
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js"
+		},
+		"./component": "./components/LilyPond.astro"
+	},
+	"files": [
+		"dist",
+		"components"
+	],
+	"scripts": {
+		"build": "tsc --project tsconfig.json",
+		"test": "vitest --project unit",
+		"test:integration": "vitest run --project integration"
+	},
+	"keywords": [
+		"astro",
+		"astro-integration",
+		"engraving",
+		"image",
+		"images",
+		"lilypond",
+		"markdown",
+		"media",
+		"music",
+		"renderer",
+		"score",
+		"tooling",
+		"withastro",
+		"utils"
+	],
+	"peerDependencies": {
+		"astro": ">=7.0.0"
+	},
+	"dependencies": {
+		"unist-util-visit": "^5.1.0"
+	},
+	"devDependencies": {
+		"@astrojs/markdown-remark": "^7.2.1",
+		"@astrojs/markdown-satteri": "^0.3.4",
+		"@types/mdast": "^4.0.4",
+		"@types/node": "^26.1.1",
+		"astro": "^7.0.8",
+		"satteri": "^0.9.5",
+		"typescript": "^7.0.2",
+		"unified": "^11.0.5",
+		"vite": "^8.0.0",
+		"vitest": "^4.1.10"
+	}
 }

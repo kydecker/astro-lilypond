@@ -1,29 +1,29 @@
 {
-  "name": "astro-lilypond-workspace",
-  "private": true,
-  "type": "module",
-  "packageManager": "pnpm@11.13.0",
-  "scripts": {
-    "dev:docs": "pnpm --filter docs dev",
-    "build": "pnpm --filter astro-lilypond build",
-    "test": "pnpm --filter astro-lilypond test",
-    "release": "changeset publish",
-    "check": "biome check",
-    "check:fix": "biome check --write"
-  },
-  "devDependencies": {
-    "@changesets/cli": "^2.31.0",
-    "biome": "^0.3.3",
-    "nano-staged": "^1.0.2",
-    "simple-git-hooks": "^2.13.1",
-    "wrangler": "^4.110.0"
-  },
-  "simple-git-hooks": {
-    "pre-commit": "./node_modules/.bin/nano-staged"
-  },
-  "nano-staged": {
-    "*.{js,mjs,cjs,jsx,ts,mts,cts,tsx,json,jsonc,css,astro}": [
-      "biome check --write"
-    ]
-  }
+	"name": "astro-lilypond-workspace",
+	"private": true,
+	"type": "module",
+	"packageManager": "pnpm@11.13.0",
+	"scripts": {
+		"dev:docs": "pnpm --filter docs dev",
+		"build": "pnpm --filter astro-lilypond build",
+		"test": "pnpm --filter astro-lilypond test",
+		"release": "changeset publish",
+		"check": "biome check",
+		"check:fix": "biome check --write"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.5.3",
+		"@changesets/cli": "^2.31.0",
+		"nano-staged": "^1.0.2",
+		"simple-git-hooks": "^2.13.1",
+		"wrangler": "^4.110.0"
+	},
+	"simple-git-hooks": {
+		"pre-commit": "./node_modules/.bin/nano-staged"
+	},
+	"nano-staged": {
+		"*.{js,mjs,cjs,jsx,ts,mts,cts,tsx,json,jsonc,css,astro}": [
+			"biome check --write"
+		]
+	}
 }

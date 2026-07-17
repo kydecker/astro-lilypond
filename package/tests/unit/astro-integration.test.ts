@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import lilypond from "../../src/";
 
 interface SetupHookArgs {
@@ -34,14 +34,21 @@ describe("lilypond integration", () => {
 				isSatteriProcessor: vi.fn(() => true),
 			}));
 			const integration = lilypond(opts);
-			await integration.hooks["astro:config:setup"]!({
+			await integration.hooks["astro:config:setup"]?.({
 				config: { markdown: { processor: { name: "satteri", options: {} } } },
 				updateConfig,
 				logger: { info: vi.fn(), warn: vi.fn() },
 			} as never);
 			vi.doUnmock("@astrojs/markdown-satteri");
-			const { plugins } = (updateConfig.mock.calls[0][0] as { vite: { plugins: unknown[] } }).vite;
-			return plugins[0] as { transform: (src: string, id: string) => Promise<{ code: string } | undefined> };
+			const { plugins } = (
+				updateConfig.mock.calls[0][0] as { vite: { plugins: unknown[] } }
+			).vite;
+			return plugins[0] as {
+				transform: (
+					src: string,
+					id: string,
+				) => Promise<{ code: string } | undefined>;
+			};
 		}
 
 		it("transforms .ily files", async () => {
@@ -51,12 +58,15 @@ describe("lilypond integration", () => {
 			expect(skipped).toBeUndefined();
 		});
 
-		it.each([".ly", ".lilypond", ".ily"])("handles %s extension", async (ext) => {
-			const plugin = await getVitePlugin();
-			// render is the actual lilypond binary call — we only verify the plugin
-			// doesn't skip the file; a thrown error is fine here
-			await expect(plugin.transform("", `score${ext}`)).rejects.toThrow();
-		});
+		it.each([".ly", ".lilypond", ".ily"])(
+			"handles %s extension",
+			async (ext) => {
+				const plugin = await getVitePlugin();
+				// render is the actual lilypond binary call — we only verify the plugin
+				// doesn't skip the file; a thrown error is fine here
+				await expect(plugin.transform("", `score${ext}`)).rejects.toThrow();
+			},
+		);
 	});
 
 	it("registers the Sätteri mdast plugin when processor is satteri", async () => {
@@ -76,7 +86,7 @@ describe("lilypond integration", () => {
 		};
 
 		const integration = lilypond();
-		await integration.hooks["astro:config:setup"]!({
+		await integration.hooks["astro:config:setup"]?.({
 			config,
 			updateConfig,
 			logger,
@@ -106,7 +116,7 @@ describe("lilypond integration", () => {
 		};
 
 		const integration = lilypond();
-		await integration.hooks["astro:config:setup"]!({
+		await integration.hooks["astro:config:setup"]?.({
 			config,
 			updateConfig,
 			logger,
@@ -116,7 +126,11 @@ describe("lilypond integration", () => {
 		// First call registers Vite plugins; second call sets the markdown processor.
 		const { remarkPlugins, rehypePlugins } = (
 			updateConfig.mock.calls[1][0] as {
-				markdown: { processor: { options: { remarkPlugins: unknown[]; rehypePlugins: unknown[] } } };
+				markdown: {
+					processor: {
+						options: { remarkPlugins: unknown[]; rehypePlugins: unknown[] };
+					};
+				};
 			}
 		).markdown.processor.options;
 		expect(remarkPlugins.length).toBeGreaterThan(0);
@@ -131,7 +145,7 @@ describe("lilypond integration", () => {
 
 		const integration = lilypond();
 		await expect(
-			integration.hooks["astro:config:setup"]!({
+			integration.hooks["astro:config:setup"]?.({
 				config: { markdown: {} },
 				updateConfig,
 				logger,
@@ -147,7 +161,7 @@ describe("lilypond integration", () => {
 	it("injects types with the correct filename", () => {
 		const injectTypes = vi.fn();
 		const integration = lilypond();
-		integration.hooks["astro:config:done"]!({ injectTypes } as never);
+		integration.hooks["astro:config:done"]?.({ injectTypes } as never);
 		expect(injectTypes).toHaveBeenCalledOnce();
 		expect(injectTypes.mock.calls[0][0].filename).toBe("ly-types.d.ts");
 	});
@@ -155,7 +169,7 @@ describe("lilypond integration", () => {
 	it("injected types declare modules for .ly, .lilypond, and .ily", () => {
 		const injectTypes = vi.fn();
 		const integration = lilypond();
-		integration.hooks["astro:config:done"]!({ injectTypes } as never);
+		integration.hooks["astro:config:done"]?.({ injectTypes } as never);
 		const { content } = injectTypes.mock.calls[0][0] as { content: string };
 		expect(content).toContain('declare module "*.ly"');
 		expect(content).toContain('declare module "*.lilypond"');
@@ -165,7 +179,7 @@ describe("lilypond integration", () => {
 	it("injected type declarations export a default html string", () => {
 		const injectTypes = vi.fn();
 		const integration = lilypond();
-		integration.hooks["astro:config:done"]!({ injectTypes } as never);
+		integration.hooks["astro:config:done"]?.({ injectTypes } as never);
 		const { content } = injectTypes.mock.calls[0][0] as { content: string };
 		expect(content.match(/export default html/g)?.length).toBe(3);
 	});
@@ -176,7 +190,7 @@ describe("lilypond integration", () => {
 
 		const integration = lilypond();
 		await expect(
-			integration.hooks["astro:config:setup"]!({
+			integration.hooks["astro:config:setup"]?.({
 				config: { markdown: { processor: { name: "custom-proc" } } },
 				updateConfig,
 				logger,

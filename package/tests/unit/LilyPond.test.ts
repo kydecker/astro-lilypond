@@ -1,5 +1,5 @@
 import { experimental_AstroContainer as AstroContainer } from "astro/container";
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import LilyPond from "../../components/LilyPond.astro";
 
 describe("LilyPond.astro", () => {
@@ -22,7 +22,10 @@ describe("LilyPond.astro", () => {
 	it("applies a style attribute to the svg element", async () => {
 		const container = await AstroContainer.create();
 		const result = await container.renderToString(LilyPond, {
-			props: { content: '<svg class="lilypond"></svg>', style: "max-width: 100%" },
+			props: {
+				content: '<svg class="lilypond"></svg>',
+				style: "max-width: 100%",
+			},
 		});
 		expect(result).toContain('<svg style="max-width: 100%"');
 	});
@@ -30,7 +33,10 @@ describe("LilyPond.astro", () => {
 	it("applies a style attribute to an img element", async () => {
 		const container = await AstroContainer.create();
 		const result = await container.renderToString(LilyPond, {
-			props: { content: '<img class="lilypond" src="data:image/png;base64,">', style: "width: 50%" },
+			props: {
+				content: '<img class="lilypond" src="data:image/png;base64,">',
+				style: "width: 50%",
+			},
 		});
 		expect(result).toContain('<img style="width: 50%"');
 	});
@@ -38,7 +44,10 @@ describe("LilyPond.astro", () => {
 	it("escapes HTML-significant characters in the style attribute", async () => {
 		const container = await AstroContainer.create();
 		const result = await container.renderToString(LilyPond, {
-			props: { content: '<svg class="lilypond"></svg>', style: '"><script>alert(1)</script>' },
+			props: {
+				content: '<svg class="lilypond"></svg>',
+				style: '"><script>alert(1)</script>',
+			},
 		});
 		expect(result).not.toContain("<script>alert(1)</script>");
 		expect(result).toContain("&lt;script&gt;");

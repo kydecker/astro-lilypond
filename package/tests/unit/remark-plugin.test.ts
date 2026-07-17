@@ -1,16 +1,21 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { Code, Html, Paragraph, Root, Text } from "mdast";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../../src/render", () => ({
 	render: vi.fn(),
-	defaultOptions: { format: "svg", resolution: 144, binaryPath: "lilypond", crop: true },
+	defaultOptions: {
+		format: "svg",
+		resolution: 144,
+		binaryPath: "lilypond",
+		crop: true,
+	},
 }));
 
-import { render } from "../../src/render";
 import {
 	remarkLilypondPlugin as _remarkLilypondPlugin,
 	type RemarkPluginOptions,
 } from "../../src/remark-plugin.js";
+import { render } from "../../src/render";
 
 const mockRender = vi.mocked(render);
 
@@ -133,7 +138,9 @@ describe("remarkLilypondPlugin", () => {
 	});
 
 	it("prepends \\version when the version option is set", async () => {
-		const plugin = remarkLilypondPlugin({ version: "2.24.0" }) as unknown as SimpleTransformer;
+		const plugin = remarkLilypondPlugin({
+			version: "2.24.0",
+		}) as unknown as SimpleTransformer;
 		const tree = makeTree([
 			{ type: "code", lang: "lilypond", value: "\\score { }" } as Code,
 		]);
@@ -150,7 +157,9 @@ describe("remarkLilypondPlugin", () => {
 	});
 
 	it("does not prepend \\version when the block already declares it", async () => {
-		const plugin = remarkLilypondPlugin({ version: "2.24.0" }) as unknown as SimpleTransformer;
+		const plugin = remarkLilypondPlugin({
+			version: "2.24.0",
+		}) as unknown as SimpleTransformer;
 		const value = '\\version "2.22.0"\n\\score { }';
 		const tree = makeTree([{ type: "code", lang: "lilypond", value } as Code]);
 
@@ -185,7 +194,9 @@ describe("remarkLilypondPlugin", () => {
 	it("wraps png output in an img data URI", async () => {
 		const fakePng = Buffer.from([0x89, 0x50, 0x4e, 0x47]);
 		mockRender.mockResolvedValue(fakePng);
-		const plugin = remarkLilypondPlugin({ format: "png" }) as unknown as SimpleTransformer;
+		const plugin = remarkLilypondPlugin({
+			format: "png",
+		}) as unknown as SimpleTransformer;
 		const tree = makeTree([
 			{ type: "code", lang: "lilypond", value: "\\score { }" } as Code,
 		]);
@@ -230,7 +241,9 @@ describe("remarkLilypondPlugin", () => {
 	});
 
 	it("passes crop: false to render when the crop option is set to false", async () => {
-		const plugin = remarkLilypondPlugin({ crop: false }) as unknown as SimpleTransformer;
+		const plugin = remarkLilypondPlugin({
+			crop: false,
+		}) as unknown as SimpleTransformer;
 		const tree = makeTree([
 			{ type: "code", lang: "lilypond", value: "\\score { }" } as Code,
 		]);

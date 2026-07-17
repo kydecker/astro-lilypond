@@ -1,8 +1,8 @@
 .lilypond {
-  /* From starlight-theme-flexoki */
-  background: var(--color-paper, #fffcf0);
+	/* From starlight-theme-flexoki */
+	background: var(--color-paper, #fffcf0);
 }
 
 [data-theme="dark"] .lilypond {
-  padding: 5%;
+	padding: 5%;
 }

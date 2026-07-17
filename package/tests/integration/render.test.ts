@@ -31,9 +31,7 @@ function lilypondAvailable(): boolean {
 }
 
 function svgDimensions(svg: string): { width: number; height: number } {
-	const match = svg.match(
-		/viewBox="[-\d.]+\s+[-\d.]+\s+([\d.]+)\s+([\d.]+)"/,
-	);
+	const match = svg.match(/viewBox="[-\d.]+\s+[-\d.]+\s+([\d.]+)\s+([\d.]+)"/);
 	if (!match) throw new Error("no viewBox found in SVG output");
 	return { width: Number(match[1]), height: Number(match[2]) };
 }
@@ -47,9 +45,9 @@ function pngDimensions(buf: Buffer): { width: number; height: number } {
 // child process, so the Node event loop is free the whole time — running
 // them concurrently lets CI overlap multiple lilypond processes instead of
 // paying their compile time one at a time.
-describe.skipIf(!lilypondAvailable()).concurrent(
-	"render() against the real lilypond binary",
-	() => {
+describe
+	.skipIf(!lilypondAvailable())
+	.concurrent("render() against the real lilypond binary", () => {
 		let multiPagePng: string;
 		let multiPageSvg: string;
 
@@ -113,7 +111,10 @@ describe.skipIf(!lilypondAvailable()).concurrent(
 
 		describe("multi-page scores", () => {
 			it("renders the first page's SVG without throwing when crop is false", async () => {
-				const result = await render(multiPageSvg, { format: "svg", crop: false });
+				const result = await render(multiPageSvg, {
+					format: "svg",
+					crop: false,
+				});
 				const svg = result.toString("utf-8");
 				expect(svg).toContain("<svg");
 				const { width, height } = svgDimensions(svg);
@@ -123,7 +124,10 @@ describe.skipIf(!lilypondAvailable()).concurrent(
 			});
 
 			it("merges all pages into one tall image when crop is true", async () => {
-				const result = await render(multiPageSvg, { format: "svg", crop: true });
+				const result = await render(multiPageSvg, {
+					format: "svg",
+					crop: true,
+				});
 				const svg = result.toString("utf-8");
 				const { width, height } = svgDimensions(svg);
 				// multi-page-svg.ly is a 2-page score; the cropped merge stacks
@@ -134,14 +138,20 @@ describe.skipIf(!lilypondAvailable()).concurrent(
 
 		describe("png format", () => {
 			it("renders valid PNG bytes", async () => {
-				const result = await render(multiPagePng, { format: "png", crop: true });
+				const result = await render(multiPagePng, {
+					format: "png",
+					crop: true,
+				});
 				const { width, height } = pngDimensions(result);
 				expect(width).toBeGreaterThan(0);
 				expect(height).toBeGreaterThan(0);
 			});
 
 			it("renders a multi-page score to PNG when crop is false", async () => {
-				const result = await render(multiPagePng, { format: "png", crop: false });
+				const result = await render(multiPagePng, {
+					format: "png",
+					crop: false,
+				});
 				const { width, height } = pngDimensions(result);
 				expect(width).toBeGreaterThan(0);
 				expect(height).toBeGreaterThan(0);
@@ -173,5 +183,4 @@ describe.skipIf(!lilypondAvailable()).concurrent(
 				expect(result.toString("utf-8")).toContain("<svg");
 			});
 		});
-	},
-);
+	});
