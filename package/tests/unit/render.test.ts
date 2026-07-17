@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("child_process", () => ({
 	execFile: vi.fn(
@@ -23,19 +23,20 @@ vi.mock("fs/promises", async (importOriginal) => {
 	};
 });
 
-import { execFile } from "child_process";
-import { readFile } from "fs/promises";
-import { render, defaultOptions } from "../../src/render.js";
+import { execFile } from "node:child_process";
+import { readFile } from "node:fs/promises";
+import { defaultOptions, render } from "../../src/render.js";
 
 const mockExecFile = vi.mocked(execFile);
 const mockReadFile = vi.mocked(readFile);
 
 beforeEach(() => {
 	vi.clearAllMocks();
-	mockExecFile.mockImplementation(
-		((_bin: string, _args: string[], cb: (err: null, res: { stdout: string; stderr: string }) => void) =>
-			cb(null, { stdout: "", stderr: "" })) as typeof execFile,
-	);
+	mockExecFile.mockImplementation(((
+		_bin: string,
+		_args: string[],
+		cb: (err: null, res: { stdout: string; stderr: string }) => void,
+	) => cb(null, { stdout: "", stderr: "" })) as typeof execFile);
 	mockReadFile.mockResolvedValue(Buffer.from("<svg>fake</svg>"));
 });
 
@@ -47,25 +48,37 @@ describe("render", () => {
 
 	it("passes --format=svg flag for svg format", async () => {
 		await render("\\score { }", { format: "svg" });
-		const [, args] = mockExecFile.mock.calls[0] as unknown as [string, string[]];
+		const [, args] = mockExecFile.mock.calls[0] as unknown as [
+			string,
+			string[],
+		];
 		expect(args).toContain("--format=svg");
 	});
 
 	it("passes the cairo backend", async () => {
 		await render("\\score { }");
-		const [, args] = mockExecFile.mock.calls[0] as unknown as [string, string[]];
+		const [, args] = mockExecFile.mock.calls[0] as unknown as [
+			string,
+			string[],
+		];
 		expect(args).toContain("--define-default=backend=cairo");
 	});
 
 	it("passes --define-default=crop=#t when crop is true", async () => {
 		await render("\\score { }", { crop: true });
-		const [, args] = mockExecFile.mock.calls[0] as unknown as [string, string[]];
+		const [, args] = mockExecFile.mock.calls[0] as unknown as [
+			string,
+			string[],
+		];
 		expect(args).toContain("--define-default=crop=#t");
 	});
 
 	it("passes --define-default=crop=#f when crop is false", async () => {
 		await render("\\score { }", { crop: false });
-		const [, args] = mockExecFile.mock.calls[0] as unknown as [string, string[]];
+		const [, args] = mockExecFile.mock.calls[0] as unknown as [
+			string,
+			string[],
+		];
 		expect(args).toContain("--define-default=crop=#f");
 	});
 
@@ -81,33 +94,46 @@ describe("render", () => {
 	});
 
 	it("throws when lilypond exits with a non-zero status", async () => {
-		mockExecFile.mockImplementation(
-			((_bin: string, _args: string[], cb: (err: Error & { stderr?: string }) => void) =>
-				cb(Object.assign(new Error("Command failed"), { stderr: "fatal error: bad input" }))) as typeof execFile,
-		);
+		mockExecFile.mockImplementation(((
+			_bin: string,
+			_args: string[],
+			cb: (err: Error & { stderr?: string }) => void,
+		) =>
+			cb(
+				Object.assign(new Error("Command failed"), {
+					stderr: "fatal error: bad input",
+				}),
+			)) as typeof execFile);
 		await expect(render("bad")).rejects.toThrow("fatal error: bad input");
 	});
 
 	it("does not throw when lilypond writes warnings to stderr but exits zero", async () => {
-		mockExecFile.mockImplementation(
-			((_bin: string, _args: string[], cb: (err: null, res: { stdout: string; stderr: string }) => void) =>
-				cb(null, {
-					stdout: "",
-					stderr: "warning: some other unexpected warning",
-				})) as typeof execFile,
-		);
+		mockExecFile.mockImplementation(((
+			_bin: string,
+			_args: string[],
+			cb: (err: null, res: { stdout: string; stderr: string }) => void,
+		) =>
+			cb(null, {
+				stdout: "",
+				stderr: "warning: some other unexpected warning",
+			})) as typeof execFile);
 		await expect(render("\\score { }")).resolves.toBeInstanceOf(Buffer);
 	});
 
 	it("writes stderr to process.stderr for visibility even on success", async () => {
-		const writeSpy = vi.spyOn(process.stderr, "write").mockImplementation(() => true);
-		mockExecFile.mockImplementation(
-			((_bin: string, _args: string[], cb: (err: null, res: { stdout: string; stderr: string }) => void) =>
-				cb(null, {
-					stdout: "",
-					stderr: "Processing `input.ly'\nSuccess: compilation successfully completed",
-				})) as typeof execFile,
-		);
+		const writeSpy = vi
+			.spyOn(process.stderr, "write")
+			.mockImplementation(() => true);
+		mockExecFile.mockImplementation(((
+			_bin: string,
+			_args: string[],
+			cb: (err: null, res: { stdout: string; stderr: string }) => void,
+		) =>
+			cb(null, {
+				stdout: "",
+				stderr:
+					"Processing `input.ly'\nSuccess: compilation successfully completed",
+			})) as typeof execFile);
 		await render("\\score { }");
 		expect(writeSpy).toHaveBeenCalledWith(
 			"Processing `input.ly'\nSuccess: compilation successfully completed",
@@ -116,8 +142,13 @@ describe("render", () => {
 	});
 
 	it("passes --include for each includePaths entry so \\include can find sibling files", async () => {
-		await render("\\score { }", { includePaths: ["/docs/src/examples", "/other/dir"] });
-		const [, args] = mockExecFile.mock.calls[0] as unknown as [string, string[]];
+		await render("\\score { }", {
+			includePaths: ["/docs/src/examples", "/other/dir"],
+		});
+		const [, args] = mockExecFile.mock.calls[0] as unknown as [
+			string,
+			string[],
+		];
 		expect(args).toContain("--include=/docs/src/examples");
 		expect(args).toContain("--include=/other/dir");
 	});

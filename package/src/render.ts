@@ -1,8 +1,8 @@
-import { execFile } from "child_process";
-import { mkdtemp, readFile, rm, writeFile } from "fs/promises";
-import { basename, join } from "path";
-import { tmpdir } from "os";
-import { promisify } from "util";
+import { execFile } from "node:child_process";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { basename, join } from "node:path";
+import { promisify } from "node:util";
 
 const execFileAsync = promisify(execFile);
 
@@ -38,10 +38,12 @@ export interface RenderOptions {
 	 * output (e.g. `Processing "bach-schenker.ly"`). Falls back to
 	 * `"input.ly"` when omitted or unsafe to use as a filename.
 	 */
-  sourceName?: string;
+	sourceName?: string;
 }
 
-export const defaultOptions: Required<Omit<RenderOptions, "includePaths" | "sourceName">> = {
+export const defaultOptions: Required<
+	Omit<RenderOptions, "includePaths" | "sourceName">
+> = {
 	format: "svg",
 	resolution: 144,
 	binaryPath: "lilypond",
@@ -109,7 +111,9 @@ export async function render(
 					? String((err as { stderr: unknown }).stderr)
 					: undefined;
 			if (errStderr) process.stderr.write(errStderr);
-			throw new Error(errStderr || (err instanceof Error ? err.message : String(err)));
+			throw new Error(
+				errStderr || (err instanceof Error ? err.message : String(err)),
+			);
 		}
 		if (stderr) process.stderr.write(stderr);
 

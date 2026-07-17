@@ -1,9 +1,7 @@
 import type { Code, Html } from "mdast";
-import type {
-	MdastPluginDefinition,
-	MdastVisitorContext,
-} from "satteri";
+import type { MdastPluginDefinition, MdastVisitorContext } from "satteri";
 import { defaultOptions, render } from "./render.js";
+import type { LilypondPluginOptions } from "./util.js";
 import {
 	includePathsFor,
 	isLilypondLang,
@@ -11,7 +9,6 @@ import {
 	renderToHtml,
 	sourceNameFor,
 } from "./util.js";
-import type { LilypondPluginOptions } from "./util.js";
 
 export type SatteriPluginOptions = LilypondPluginOptions;
 

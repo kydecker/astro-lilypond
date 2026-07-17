@@ -1,5 +1,5 @@
-import { basename, dirname } from "path";
-import { fileURLToPath } from "url";
+import { basename, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 
 export interface LilypondPluginOptions {
 	version?: string;
@@ -27,7 +27,9 @@ export function prependVersion(source: string, version: string): string {
  * `\include`d sibling files resolve even though rendering happens in a temp
  * directory. Returns `[]` when the source location is unknown.
  */
-export function includePathsFor(source: string | URL | null | undefined): string[] {
+export function includePathsFor(
+	source: string | URL | null | undefined,
+): string[] {
 	if (!source) return [];
 	const path = typeof source === "string" ? source : fileURLToPath(source);
 	return [dirname(path)];
@@ -38,7 +40,9 @@ export function includePathsFor(source: string | URL | null | undefined): string
  * build output identifies the originating file instead of a generic
  * `input.ly`. Returns `undefined` when the source location is unknown.
  */
-export function sourceNameFor(source: string | URL | null | undefined): string | undefined {
+export function sourceNameFor(
+	source: string | URL | null | undefined,
+): string | undefined {
 	if (!source) return undefined;
 	const path = typeof source === "string" ? source : fileURLToPath(source);
 	return basename(path);

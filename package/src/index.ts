@@ -1,13 +1,18 @@
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
 import type { AstroIntegration } from "astro";
-import { execFile } from "child_process";
-import { promisify } from "util";
 import type { Plugin } from "vite";
-import { remarkLilypondPlugin } from "./remark-plugin.js";
 import { rehypeLilypondPlugin } from "./rehype-plugin.js";
-import { satteriLilypondPlugin } from "./satteri-plugin.js";
+import { remarkLilypondPlugin } from "./remark-plugin.js";
 import { defaultOptions, render } from "./render.js";
-import { includePathsFor, prependVersion, renderToHtml, sourceNameFor } from "./util.js";
+import { satteriLilypondPlugin } from "./satteri-plugin.js";
 import type { LilypondPluginOptions } from "./util.js";
+import {
+	includePathsFor,
+	prependVersion,
+	renderToHtml,
+	sourceNameFor,
+} from "./util.js";
 
 const execFileAsync = promisify(execFile);
 
@@ -45,8 +50,10 @@ function lyFilePlugin(options: LilypondOptions): Plugin {
 		name: "vite-plugin-astro-lilypond-ly",
 		enforce: "pre",
 		async transform(source, id) {
-			if (!LY_EXTENSIONS.some(ext => id.endsWith(ext))) return;
-			const src = options.version ? prependVersion(source, options.version) : source;
+			if (!LY_EXTENSIONS.some((ext) => id.endsWith(ext))) return;
+			const src = options.version
+				? prependVersion(source, options.version)
+				: source;
 			const format = options.format ?? defaultOptions.format;
 			const buf = await render(src, {
 				format,
@@ -55,23 +62,29 @@ function lyFilePlugin(options: LilypondOptions): Plugin {
 				includePaths: includePathsFor(id),
 				sourceName: sourceNameFor(id),
 			});
-			return { code: `export default ${JSON.stringify(renderToHtml(buf, format))}` };
+			return {
+				code: `export default ${JSON.stringify(renderToHtml(buf, format))}`,
+			};
 		},
 	};
 }
 
-export default function lilypond(options: LilypondOptions = {}): AstroIntegration {
+export default function lilypond(
+	options: LilypondOptions = {},
+): AstroIntegration {
 	return {
 		name: "astro-lilypond",
 		hooks: {
 			"astro:config:setup": async ({ config, updateConfig, logger }) => {
-				await execFileAsync("lilypond", ["--version"]).catch((err: NodeJS.ErrnoException) => {
-					if (err.code === "ENOENT") {
-						logger?.warn(
-							"astro-lilypond: `lilypond` binary not found — LilyPond blocks will render as errors. Install LilyPond and ensure it is on PATH.",
-						);
-					}
-				});
+				await execFileAsync("lilypond", ["--version"]).catch(
+					(err: NodeJS.ErrnoException) => {
+						if (err.code === "ENOENT") {
+							logger?.warn(
+								"astro-lilypond: `lilypond` binary not found — LilyPond blocks will render as errors. Install LilyPond and ensure it is on PATH.",
+							);
+						}
+					},
+				);
 
 				updateConfig({
 					vite: { plugins: [lyFilePlugin(options)] },
@@ -135,7 +148,9 @@ export default function lilypond(options: LilypondOptions = {}): AstroIntegratio
 							}),
 						},
 					});
-					logger?.info("astro-lilypond: registered unified remark/rehype plugins");
+					logger?.info(
+						"astro-lilypond: registered unified remark/rehype plugins",
+					);
 					return;
 				}
 
@@ -150,9 +165,10 @@ export default function lilypond(options: LilypondOptions = {}): AstroIntegratio
 			"astro:config:done": ({ injectTypes }) => {
 				injectTypes({
 					filename: "ly-types.d.ts",
-					content: LY_EXTENSIONS
-						.map(ext => `declare module "*${ext}" {\n  const html: string;\n  export default html;\n}`)
-						.join("\n"),
+					content: LY_EXTENSIONS.map(
+						(ext) =>
+							`declare module "*${ext}" {\n  const html: string;\n  export default html;\n}`,
+					).join("\n"),
 				});
 			},
 		},

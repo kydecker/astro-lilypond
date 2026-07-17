@@ -1,5 +1,6 @@
 import { visit } from "unist-util-visit";
 import { defaultOptions, render } from "./render.js";
+import type { LilypondPluginOptions } from "./util.js";
 import {
 	includePathsFor,
 	isLilypondLang,
@@ -7,7 +8,6 @@ import {
 	renderToHtml,
 	sourceNameFor,
 } from "./util.js";
-import type { LilypondPluginOptions } from "./util.js";
 
 // Raw node type — an Astro/rehype extension not in the standard @types/hast
 interface RawNode {
@@ -19,9 +19,9 @@ export type RehypePluginOptions = LilypondPluginOptions;
 
 // Typed loosely so it's assignable to both RehypePlugin and the unified
 // Plugin generic regardless of which @types/hast version the host project pins.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function rehypeLilypondPlugin(
 	options: RehypePluginOptions = {},
+	// biome-ignore lint/suspicious/noExplicitAny: see above
 ): (tree: any, file?: { path?: string }) => Promise<void> {
 	return async (tree, file) => {
 		const promises: Promise<void>[] = [];
@@ -42,7 +42,9 @@ export function rehypeLilypondPlugin(
 			const codeNode = node.children[0];
 			const cls = codeNode.properties?.className as unknown;
 			if (!Array.isArray(cls)) return;
-			const lang = (cls as string[]).find((c) => c.startsWith("language-"))?.slice("language-".length);
+			const lang = (cls as string[])
+				.find((c) => c.startsWith("language-"))
+				?.slice("language-".length);
 			if (!isLilypondLang(lang)) return;
 
 			const raw: string = (
@@ -63,14 +65,13 @@ export function rehypeLilypondPlugin(
 				crop: options.crop,
 				includePaths,
 				sourceName,
-			})
-				.then((buf): void => {
-					const rawNode: RawNode = {
-						type: "raw",
-						value: renderToHtml(buf, format),
-					};
-					parent.children[index] = rawNode;
-				});
+			}).then((buf): void => {
+				const rawNode: RawNode = {
+					type: "raw",
+					value: renderToHtml(buf, format),
+				};
+				parent.children[index] = rawNode;
+			});
 
 			promises.push(promise);
 		});

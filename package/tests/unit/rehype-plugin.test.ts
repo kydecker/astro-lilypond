@@ -1,12 +1,17 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../../src/render", () => ({
 	render: vi.fn(),
-	defaultOptions: { format: "svg", resolution: 144, binaryPath: "lilypond", crop: true },
+	defaultOptions: {
+		format: "svg",
+		resolution: 144,
+		binaryPath: "lilypond",
+		crop: true,
+	},
 }));
 
-import { render } from "../../src/render";
 import { rehypeLilypondPlugin } from "../../src/rehype-plugin";
+import { render } from "../../src/render";
 
 const mockRender = vi.mocked(render);
 

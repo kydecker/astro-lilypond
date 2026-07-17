@@ -1,9 +1,14 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { Code, Html } from "mdast";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../../src/render.js", () => ({
 	render: vi.fn(),
-	defaultOptions: { format: "svg", resolution: 144, binaryPath: "lilypond", crop: true },
+	defaultOptions: {
+		format: "svg",
+		resolution: 144,
+		binaryPath: "lilypond",
+		crop: true,
+	},
 }));
 
 import { render } from "../../src/render.js";
@@ -32,7 +37,7 @@ describe("satteriLilypondPlugin", () => {
 		const plugin = satteriLilypondPlugin();
 		const node: Code = { type: "code", lang: "lilypond", value: "\\score { }" };
 
-		const result = await plugin.code!(node, {} as never);
+		const result = await plugin.code?.(node, {} as never);
 
 		expect(mockRender).toHaveBeenCalledWith("\\score { }", {
 			format: "svg",
@@ -47,7 +52,7 @@ describe("satteriLilypondPlugin", () => {
 		const plugin = satteriLilypondPlugin();
 		const node: Code = { type: "code", lang: "js", value: "console.log(1)" };
 
-		const result = await plugin.code!(node, {} as never);
+		const result = await plugin.code?.(node, {} as never);
 
 		expect(mockRender).not.toHaveBeenCalled();
 		expect(result).toBeUndefined();
@@ -57,7 +62,7 @@ describe("satteriLilypondPlugin", () => {
 		const plugin = satteriLilypondPlugin();
 		const node: Code = { type: "code", lang: "ly", value: "\\score { }" };
 
-		const result = await plugin.code!(node, {} as never);
+		const result = await plugin.code?.(node, {} as never);
 
 		expect(mockRender).toHaveBeenCalledWith("\\score { }", {
 			format: "svg",
@@ -72,7 +77,7 @@ describe("satteriLilypondPlugin", () => {
 		const plugin = satteriLilypondPlugin();
 		const node: Code = { type: "code", lang: "ily", value: "\\score { }" };
 
-		const result = await plugin.code!(node, {} as never);
+		const result = await plugin.code?.(node, {} as never);
 
 		expect(mockRender).toHaveBeenCalledWith("\\score { }", {
 			format: "svg",
@@ -88,14 +93,16 @@ describe("satteriLilypondPlugin", () => {
 		const plugin = satteriLilypondPlugin();
 		const node: Code = { type: "code", lang: "lilypond", value: "invalid" };
 
-		await expect(plugin.code!(node, {} as never)).rejects.toThrow("bad syntax");
+		await expect(plugin.code?.(node, {} as never)).rejects.toThrow(
+			"bad syntax",
+		);
 	});
 
 	it("prepends \\version when the version option is set", async () => {
 		const plugin = satteriLilypondPlugin({ version: "2.24.0" });
 		const node: Code = { type: "code", lang: "lilypond", value: "\\score { }" };
 
-		await plugin.code!(node, {} as never);
+		await plugin.code?.(node, {} as never);
 
 		expect(mockRender).toHaveBeenCalledWith('\\version "2.24.0"\n\\score { }', {
 			format: "svg",
@@ -110,7 +117,7 @@ describe("satteriLilypondPlugin", () => {
 		const value = '\\version "2.22.0"\n\\score { }';
 		const node: Code = { type: "code", lang: "lilypond", value };
 
-		await plugin.code!(node, {} as never);
+		await plugin.code?.(node, {} as never);
 
 		expect(mockRender).toHaveBeenCalledWith(value, {
 			format: "svg",
@@ -124,7 +131,7 @@ describe("satteriLilypondPlugin", () => {
 		const plugin = satteriLilypondPlugin();
 		const node: Code = { type: "code", lang: "lilypond", value: "\\score { }" };
 
-		const result = await plugin.code!(node, {} as never);
+		const result = await plugin.code?.(node, {} as never);
 
 		expect(mockRender).toHaveBeenCalledWith("\\score { }", {
 			format: "svg",
@@ -141,7 +148,7 @@ describe("satteriLilypondPlugin", () => {
 		const plugin = satteriLilypondPlugin({ format: "png" });
 		const node: Code = { type: "code", lang: "lilypond", value: "\\score { }" };
 
-		const result = await plugin.code!(node, {} as never);
+		const result = await plugin.code?.(node, {} as never);
 
 		expect(mockRender).toHaveBeenCalledWith("\\score { }", {
 			format: "png",
@@ -161,7 +168,7 @@ describe("satteriLilypondPlugin", () => {
 		const plugin = satteriLilypondPlugin({ format: "png", resolution: 300 });
 		const node: Code = { type: "code", lang: "lilypond", value: "\\score { }" };
 
-		const result = await plugin.code!(node, {} as never);
+		const result = await plugin.code?.(node, {} as never);
 
 		expect(mockRender).toHaveBeenCalledWith("\\score { }", {
 			format: "png",
@@ -174,11 +181,11 @@ describe("satteriLilypondPlugin", () => {
 		);
 	});
 
-it("passes crop: false to render when the crop option is set to false", async () => {
+	it("passes crop: false to render when the crop option is set to false", async () => {
 		const plugin = satteriLilypondPlugin({ crop: false });
 		const node: Code = { type: "code", lang: "lilypond", value: "\\score { }" };
 
-		await plugin.code!(node, {} as never);
+		await plugin.code?.(node, {} as never);
 
 		expect(mockRender).toHaveBeenCalledWith("\\score { }", {
 			format: "svg",

@@ -1,6 +1,6 @@
 {
-  "extends": "astro/tsconfigs/strictest",
-  "compilerOptions": {
-    "moduleResolution": "bundler"
-  }
+	"extends": "astro/tsconfigs/strictest",
+	"compilerOptions": {
+		"moduleResolution": "bundler"
+	}
 }
