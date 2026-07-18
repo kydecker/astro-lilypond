@@ -6,3 +6,7 @@
 [data-theme="dark"] .lilypond {
 	padding: 5%;
 }
+
+.sl-steps li:last-child::after {
+	display: none;
+}
