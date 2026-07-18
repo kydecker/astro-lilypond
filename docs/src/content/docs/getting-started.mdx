@@ -8,7 +8,9 @@ import InstallAstro from "../../components/InstallAstro.astro";
 import InstallAstroLilyPond from "../../components/InstallAstroLilyPond.astro";
 import InstallLilyPond from "../../components/InstallLilyPond.astro";
 
-## Prerequisites
+To begin writing and displaying music on your site, you will need LilyPond, Astro, and this integration.
+
+## Installation
 
 <Steps>
 
@@ -18,21 +20,15 @@ import InstallLilyPond from "../../components/InstallLilyPond.astro";
 
    <InstallLilyPond />
 
-2. [Install Astro](https://docs.astro.build/en/install-and-setup/) running `v7.0` or later.
+2. [Create an Astro project](https://docs.astro.build/en/install-and-setup/) running `v7.0` or later.
 
    <InstallAstro />
 
-</Steps>
-
-## Installation
-
-<Steps>
-
-1. Install `astro-lilypond`.
+3. Install `astro-lilypond`.
 
    <InstallAstroLilyPond />
 
-2. Add the integration to your Astro config.
+4. Add the integration to your Astro config.
 
    ```diff lang="js"
      // astro.config.mjs
@@ -46,6 +42,6 @@ import InstallLilyPond from "../../components/InstallLilyPond.astro";
 
    See [Configuration](/configuration/) for available options.
 
-3. Start writing music! See [Usage](/usage/) for Markdown and component-based approaches.
+5. Start writing music! See [Usage](/usage/) for Markdown and component-based approaches.
 
 </Steps>
