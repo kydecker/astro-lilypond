@@ -1,0 +1,15 @@
+---
+import { Code, TabItem, Tabs } from "@astrojs/starlight/components";
+---
+
+<Tabs syncKey="packageManager">
+  <TabItem label="pnpm">
+    <Code lang="sh" code="pnpm add astro-lilypond" />
+  </TabItem>
+  <TabItem label="npm">
+    <Code lang="sh" code="npm install astro-lilypond" />
+  </TabItem>
+  <TabItem label="yarn">
+    <Code lang="sh" code="yarn add astro-lilypond" />
+  </TabItem>
+</Tabs>

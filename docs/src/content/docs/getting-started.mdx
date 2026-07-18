@@ -3,15 +3,26 @@ title: Getting Started
 description: Install astro-lilypond and render music notation on your site.
 ---
 
-import { Steps, Tabs, TabItem } from "@astrojs/starlight/components";
+import { LinkButton, Steps, Tabs, TabItem } from "@astrojs/starlight/components";
+import InstallAstro from "../../components/InstallAstro.astro";
+import InstallAstroLilyPond from "../../components/InstallAstroLilyPond.astro";
+import InstallLilyPond from "../../components/InstallLilyPond.astro";
 
 ## Prerequisites
 
-1. The LilyPond binary must be installed.
-   - [Install the LilyPond binary](https://lilypond.org/download.html), or run `brew install lilypond` (Mac) or `apt install lilypond` (Linux).
-   - Verify the install with `lilypond --version`.
-2. You should have an `astro` project running `v7.0` or newer.
-   - [Install Astro](https://docs.astro.build/en/install-and-setup/).
+<Steps>
+
+1. [Install LilyPond](https://lilypond.org/download.html).
+
+   The LilyPond binary is required in order to compile music notation. Make sure it is installed on the computer or container used to `build` your website (locally, in GitHub workflows, etc).
+
+   <InstallLilyPond />
+
+2. [Install Astro](https://docs.astro.build/en/install-and-setup/) running `v7.0` or later.
+
+   <InstallAstro />
+
+</Steps>
 
 ## Installation
 
@@ -19,23 +30,7 @@ import { Steps, Tabs, TabItem } from "@astrojs/starlight/components";
 
 1. Install `astro-lilypond`.
 
-   <Tabs>
-     <TabItem label="pnpm">
-       ```sh
-       pnpm add astro-lilypond
-       ```
-     </TabItem>
-     <TabItem label="npm">
-       ```sh
-       npm install astro-lilypond
-       ```
-     </TabItem>
-     <TabItem label="yarn">
-       ```sh
-       yarn add astro-lilypond
-       ```
-     </TabItem>
-   </Tabs>
+   <InstallAstroLilyPond />
 
 2. Add the integration to your Astro config.
 
@@ -51,6 +46,6 @@ import { Steps, Tabs, TabItem } from "@astrojs/starlight/components";
 
    See [Configuration](/configuration/) for available options.
 
-3. Start writing LilyPond. See [Usage](/usage/) for Markdown and component-based approaches.
+3. Start writing music! See [Usage](/usage/) for Markdown and component-based approaches.
 
 </Steps>

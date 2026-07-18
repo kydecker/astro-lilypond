@@ -1,0 +1,53 @@
+---
+import { Code, LinkButton, TabItem, Tabs } from "@astrojs/starlight/components";
+---
+
+<Tabs>
+  <TabItem label="Mac">
+    <LinkButton
+      href="https://gitlab.com/lilypond/lilypond/-/releases/v2.26.0/downloads/lilypond-2.26.0-darwin-x86_64.tar.gz"
+      variant="secondary"
+      icon="apple"
+      iconPlacement="start"
+      class="button"
+    >
+      Download LilyPond v2.26.0 for Mac
+    </LinkButton>
+    <p>
+      Or install via <a href="https://formulae.brew.sh/formula/lilypond"
+        >Homebrew</a
+      >:
+    </p>
+    <Code lang="sh" code="brew install lilypond" />
+  </TabItem>
+  <TabItem label="Linux">
+    <LinkButton
+      href="https://gitlab.com/lilypond/lilypond/-/releases/v2.26.0/downloads/lilypond-2.26.0-linux-x86_64.tar.gz"
+      variant="secondary"
+      icon="linux"
+      iconPlacement="start"
+      class="button"
+    >
+      Download LilyPond v2.26.0 for Linux
+    </LinkButton>
+    <p>Or install via apt:</p>
+    <Code lang="sh" code="apt install lilypond" />
+  </TabItem>
+  <TabItem label="Windows">
+    <LinkButton
+      href="https://gitlab.com/lilypond/lilypond/-/releases/v2.26.0/downloads/lilypond-2.26.0-mingw-x86_64.zip"
+      variant="secondary"
+      icon="seti:windows"
+      iconPlacement="start"
+      class="button"
+    >
+      Download LilyPond v2.26.0 for Windows
+    </LinkButton>
+  </TabItem>
+</Tabs>
+
+<style>
+  .button {
+    margin-block-start: 0;
+  }
+</style>
