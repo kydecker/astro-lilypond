@@ -35,7 +35,7 @@ All LilyPond content must specify `\version` at the start so that the compiler k
 
 Specify `version` in the config to apply it to all LilyPond blocks by default:
 
-```js {5}
+```js
 // astro.config.mjs  
 export default defineConfig({
    integrations: [
@@ -57,7 +57,7 @@ Blocks with an explicit `\version` declaration will always use that version, reg
 
 The output format passed to the LilyPond binary. Controls how the rendered output is embedded in the page.
 
-```js {5}
+```js
 // astro.config.mjs
 export default defineConfig({
   integrations: [
@@ -75,7 +75,7 @@ export default defineConfig({
 
 Resolution to render `.png` files, in DPI. Only works when `format` is set to `png`.
 
-```js {4-7}
+```js
 // astro.config.mjs
 export default defineConfig({
   integrations: [
@@ -96,7 +96,7 @@ When `true`, the margins are removed and the page is cropped to fit the rendered
 
 Set to `false` to preserve full page dimensions:
 
-```js {5}
+```js
 // astro.config.mjs
 export default defineConfig({
   integrations: [
