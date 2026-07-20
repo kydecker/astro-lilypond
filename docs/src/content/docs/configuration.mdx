@@ -119,6 +119,7 @@ Directory name that rendered scores are written to, relative to Astro's [`public
 export default defineConfig({
   integrations: [
     lilypond({
+      // change output from `public/_lilypond` to `public/scores`
       outputDir: "scores"
     }),
   ],
@@ -128,7 +129,7 @@ export default defineConfig({
 :::note
 Output files will be built, pruned, and rebuilt as needed. If you prefer not to have built images from `astro-lilypond` clutter up your repository or show up in diffs, add the output directory to your `.gitignore`:
 
-```.gitignore title=".gitignore"
+```ini title=".gitignore"
 # exclude generated LilyPond images
 public/_lilypond
 ```
