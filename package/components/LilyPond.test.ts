@@ -41,6 +41,21 @@ describe("LilyPond.astro", () => {
 		expect(result).toContain('<img style="width: 50%"');
 	});
 
+	it("renders content pointing at a written asset file (not a data URI)", async () => {
+		const container = await AstroContainer.create();
+		const result = await container.renderToString(LilyPond, {
+			props: {
+				content:
+					'<img class="lilypond" src="/_lilypond/abc123.bach-bwv610.svg" alt="">',
+				class: "extra",
+				style: "width: 50%",
+			},
+		});
+		expect(result).toContain('src="/_lilypond/abc123.bach-bwv610.svg"');
+		expect(result).toContain('class="lilypond extra"');
+		expect(result).toContain('<img style="width: 50%"');
+	});
+
 	it("escapes HTML-significant characters in the style attribute", async () => {
 		const container = await AstroContainer.create();
 		const result = await container.renderToString(LilyPond, {

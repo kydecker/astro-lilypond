@@ -10,18 +10,32 @@ vi.mock("../render", () => ({
 	},
 }));
 
+vi.mock("../writeAsset.js", () => ({
+	writeAsset: vi.fn(),
+}));
+
 import { render } from "../render";
-import { renderToHtml } from "../utils/index.js";
-import { rehypePlugin } from "./rehype.js";
+import { writeAsset } from "../writeAsset.js";
+import { type RehypePluginOptions, rehypePlugin } from "./rehype.js";
 
 const mockRender = vi.mocked(render);
+const mockWriteAsset = vi.mocked(writeAsset);
 
 const FAKE_SVG = "<svg xmlns='http://www.w3.org/2000/svg'><g>fake</g></svg>";
-const RENDERED_SVG = renderToHtml(Buffer.from(FAKE_SVG), "svg");
+
+const BASE_OPTIONS: RehypePluginOptions = {
+	assetsDir: "/project/public/_lilypond",
+	assetsUrlBase: "/_lilypond",
+	trackAsset: vi.fn(),
+};
 
 beforeEach(() => {
 	vi.clearAllMocks();
 	mockRender.mockResolvedValue(Buffer.from(FAKE_SVG));
+	mockWriteAsset.mockImplementation(async (opts) => {
+		await opts.getBuffer();
+		return `/_lilypond/mock-hash.${opts.title}.${opts.format}`;
+	});
 });
 
 interface HastText {
@@ -84,18 +98,21 @@ function makeTree(children: HastChild[]): HastRoot {
 	return { type: "root", children };
 }
 
-async function runPlugin(tree: HastRoot): Promise<HastRoot> {
-	const transformer = rehypePlugin();
+async function runPlugin(
+	tree: HastRoot,
+	options: RehypePluginOptions = BASE_OPTIONS,
+): Promise<HastRoot> {
+	const transformer = rehypePlugin(options);
 	await transformer(tree);
 	return tree;
 }
 
 describe("rehypePlugin", () => {
 	it("returns a transformer function", () => {
-		expect(typeof rehypePlugin()).toBe("function");
+		expect(typeof rehypePlugin(BASE_OPTIONS)).toBe("function");
 	});
 
-	it("transforms <pre><code.language-lilypond> to a raw img node", async () => {
+	it("transforms <pre><code.language-lilypond> to a raw img node pointing at the written asset", async () => {
 		const tree = makeTree([makeLilypondPre("\\score { }")]);
 
 		await runPlugin(tree);
@@ -106,7 +123,20 @@ describe("rehypePlugin", () => {
 			crop: undefined,
 			includePaths: [],
 		});
-		expect(tree.children[0]).toEqual({ type: "raw", value: RENDERED_SVG });
+		expect(mockWriteAsset).toHaveBeenCalledWith(
+			expect.objectContaining({
+				title: "score",
+				format: "svg",
+				outputDir: BASE_OPTIONS.assetsDir,
+				urlBase: BASE_OPTIONS.assetsUrlBase,
+				trackAsset: BASE_OPTIONS.trackAsset,
+			}),
+		);
+		expect(tree.children[0]).toEqual({
+			type: "raw",
+			value:
+				'<img class="lilypond" src="/_lilypond/mock-hash.score.svg" alt="">',
+		});
 	});
 
 	it("accepts 'ly' as an alternative language marker", async () => {
@@ -120,7 +150,6 @@ describe("rehypePlugin", () => {
 			crop: undefined,
 			includePaths: [],
 		});
-		expect(tree.children[0]).toEqual({ type: "raw", value: RENDERED_SVG });
 	});
 
 	it("accepts 'ily' as an alternative language marker", async () => {
@@ -134,7 +163,6 @@ describe("rehypePlugin", () => {
 			crop: undefined,
 			includePaths: [],
 		});
-		expect(tree.children[0]).toEqual({ type: "raw", value: RENDERED_SVG });
 	});
 
 	it("leaves non-lilypond <pre><code> untouched", async () => {
@@ -144,6 +172,7 @@ describe("rehypePlugin", () => {
 		await runPlugin(tree);
 
 		expect(mockRender).not.toHaveBeenCalled();
+		expect(mockWriteAsset).not.toHaveBeenCalled();
 		expect(tree.children[0]).toBe(pre);
 	});
 
@@ -155,10 +184,9 @@ describe("rehypePlugin", () => {
 	});
 
 	it("prepends \\version when the version option is set", async () => {
-		const transformer = rehypePlugin({ version: "2.24.0" });
 		const tree = makeTree([makeLilypondPre("\\score { }")]);
 
-		await transformer(tree);
+		await runPlugin(tree, { ...BASE_OPTIONS, version: "2.24.0" });
 
 		expect(mockRender).toHaveBeenCalledWith('\\version "2.24.0"\n\\score { }', {
 			format: "svg",
@@ -169,11 +197,10 @@ describe("rehypePlugin", () => {
 	});
 
 	it("does not prepend \\version when the block already declares it", async () => {
-		const transformer = rehypePlugin({ version: "2.24.0" });
 		const value = '\\version "2.22.0"\n\\score { }';
 		const tree = makeTree([makeLilypondPre(value)]);
 
-		await transformer(tree);
+		await runPlugin(tree, { ...BASE_OPTIONS, version: "2.24.0" });
 
 		expect(mockRender).toHaveBeenCalledWith(value, {
 			format: "svg",
@@ -188,22 +215,17 @@ describe("rehypePlugin", () => {
 
 		await runPlugin(tree);
 
-		expect(mockRender).toHaveBeenCalledWith("\\score { }", {
-			format: "svg",
-			resolution: undefined,
-			crop: undefined,
-			includePaths: [],
-		});
-		expect((tree.children[0] as HastRaw).value).toBe(RENDERED_SVG);
+		expect((tree.children[0] as HastRaw).value).toContain(
+			'src="/_lilypond/mock-hash.score.svg"',
+		);
 	});
 
-	it("wraps png output in an img data URI", async () => {
+	it("passes format: png through to render and writeAsset", async () => {
 		const fakePng = Buffer.from([0x89, 0x50, 0x4e, 0x47]);
 		mockRender.mockResolvedValue(fakePng);
-		const transformer = rehypePlugin({ format: "png" });
 		const tree = makeTree([makeLilypondPre("\\score { }")]);
 
-		await transformer(tree);
+		await runPlugin(tree, { ...BASE_OPTIONS, format: "png" });
 
 		expect(mockRender).toHaveBeenCalledWith("\\score { }", {
 			format: "png",
@@ -211,21 +233,17 @@ describe("rehypePlugin", () => {
 			crop: undefined,
 			includePaths: [],
 		});
-		expect((tree.children[0] as HastRaw).value).toContain(
-			'<img class="lilypond" src="data:image/png;base64,',
+		expect((tree.children[0] as HastRaw).value).toBe(
+			'<img class="lilypond" src="/_lilypond/mock-hash.score.png" alt="">',
 		);
 	});
 
 	it("passes resolution DPI when resolution is set", async () => {
 		const fakePng = Buffer.from([0x89, 0x50, 0x4e, 0x47]);
 		mockRender.mockResolvedValue(fakePng);
-		const transformer = rehypePlugin({
-			format: "png",
-			resolution: 300,
-		});
 		const tree = makeTree([makeLilypondPre("\\score { }")]);
 
-		await transformer(tree);
+		await runPlugin(tree, { ...BASE_OPTIONS, format: "png", resolution: 300 });
 
 		expect(mockRender).toHaveBeenCalledWith("\\score { }", {
 			format: "png",
@@ -233,16 +251,12 @@ describe("rehypePlugin", () => {
 			crop: undefined,
 			includePaths: [],
 		});
-		expect((tree.children[0] as HastRaw).value).toContain(
-			'<img class="lilypond" src="data:image/png;base64,',
-		);
 	});
 
 	it("passes crop: false to render when the crop option is set to false", async () => {
-		const transformer = rehypePlugin({ crop: false });
 		const tree = makeTree([makeLilypondPre("\\score { }")]);
 
-		await transformer(tree);
+		await runPlugin(tree, { ...BASE_OPTIONS, crop: false });
 
 		expect(mockRender).toHaveBeenCalledWith("\\score { }", {
 			format: "svg",

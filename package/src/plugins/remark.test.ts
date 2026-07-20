@@ -11,44 +11,63 @@ vi.mock("../render", () => ({
 	},
 }));
 
+vi.mock("../writeAsset.js", () => ({
+	writeAsset: vi.fn(),
+}));
+
 import { render } from "../render";
-import { renderToHtml } from "../utils/index.js";
+import { writeAsset } from "../writeAsset.js";
 import {
 	remarkPlugin as _remarkLilypondPlugin,
 	type RemarkPluginOptions,
 } from "./remark.js";
 
 const mockRender = vi.mocked(render);
+const mockWriteAsset = vi.mocked(writeAsset);
 
 const FAKE_SVG = "<svg xmlns='http://www.w3.org/2000/svg'><g>fake</g></svg>";
-const RENDERED_SVG = renderToHtml(Buffer.from(FAKE_SVG), "svg");
+
+const BASE_OPTIONS: RemarkPluginOptions = {
+	assetsDir: "/project/public/_lilypond",
+	assetsUrlBase: "/_lilypond",
+	trackAsset: vi.fn(),
+};
 
 type SimpleTransformer = (tree: Root, file: { path: string }) => Promise<void>;
-type SimplePlugin = (opts?: RemarkPluginOptions) => SimpleTransformer;
+type SimplePlugin = (opts: RemarkPluginOptions) => SimpleTransformer;
 const remarkLilypondPlugin = _remarkLilypondPlugin as unknown as SimplePlugin;
 
 beforeEach(() => {
 	vi.clearAllMocks();
 	mockRender.mockResolvedValue(Buffer.from(FAKE_SVG));
+	// Simulates a cache miss: invokes the deferred render (so tests can still
+	// assert on render()'s call args) and returns a predictable URL.
+	mockWriteAsset.mockImplementation(async (opts) => {
+		await opts.getBuffer();
+		return `/_lilypond/mock-hash.${opts.title}.${opts.format}`;
+	});
 });
 
 function makeTree(nodes: Root["children"]): Root {
 	return { type: "root", children: nodes };
 }
 
-async function runPlugin(tree: Root): Promise<Root> {
-	const plugin = remarkLilypondPlugin() as unknown as SimpleTransformer;
+async function runPlugin(
+	tree: Root,
+	options: RemarkPluginOptions = BASE_OPTIONS,
+): Promise<Root> {
+	const plugin = remarkLilypondPlugin(options) as unknown as SimpleTransformer;
 	await plugin(tree, { path: "test.md" });
 	return tree;
 }
 
 describe("remarkLilypondPlugin", () => {
 	it("returns a transformer function", () => {
-		const transformer = remarkLilypondPlugin();
+		const transformer = remarkLilypondPlugin(BASE_OPTIONS);
 		expect(typeof transformer).toBe("function");
 	});
 
-	it("transforms a lilypond code block to an html node with an svg img tag", async () => {
+	it("transforms a lilypond code block to an html node with an img tag pointing at the written asset", async () => {
 		const tree = makeTree([
 			{ type: "code", lang: "lilypond", value: "\\score { }" } as Code,
 		]);
@@ -62,7 +81,20 @@ describe("remarkLilypondPlugin", () => {
 			includePaths: ["."],
 			sourceName: "test.md",
 		});
-		expect(tree.children[0]).toEqual({ type: "html", value: RENDERED_SVG });
+		expect(mockWriteAsset).toHaveBeenCalledWith(
+			expect.objectContaining({
+				title: "test",
+				format: "svg",
+				outputDir: BASE_OPTIONS.assetsDir,
+				urlBase: BASE_OPTIONS.assetsUrlBase,
+				trackAsset: BASE_OPTIONS.trackAsset,
+			}),
+		);
+		expect(tree.children[0]).toEqual({
+			type: "html",
+			value:
+				'<img class="lilypond" src="/_lilypond/mock-hash.test.svg" alt="">',
+		});
 	});
 
 	it("leaves non-lilypond code blocks untouched", async () => {
@@ -72,6 +104,7 @@ describe("remarkLilypondPlugin", () => {
 		await runPlugin(tree);
 
 		expect(mockRender).not.toHaveBeenCalled();
+		expect(mockWriteAsset).not.toHaveBeenCalled();
 		expect(tree.children[0]).toBe(jsNode);
 	});
 
@@ -89,7 +122,6 @@ describe("remarkLilypondPlugin", () => {
 			includePaths: ["."],
 			sourceName: "test.md",
 		});
-		expect(tree.children[0]).toEqual({ type: "html", value: RENDERED_SVG });
 	});
 
 	it("accepts 'ily' as an alternative language marker", async () => {
@@ -106,7 +138,6 @@ describe("remarkLilypondPlugin", () => {
 			includePaths: ["."],
 			sourceName: "test.md",
 		});
-		expect(tree.children[0]).toEqual({ type: "html", value: RENDERED_SVG });
 	});
 
 	it("handles multiple lilypond blocks in one document", async () => {
@@ -137,9 +168,10 @@ describe("remarkLilypondPlugin", () => {
 	});
 
 	it("prepends \\version when the version option is set", async () => {
-		const plugin = remarkLilypondPlugin({
-			version: "2.24.0",
-		}) as unknown as SimpleTransformer;
+		const options = { ...BASE_OPTIONS, version: "2.24.0" };
+		const plugin = remarkLilypondPlugin(
+			options,
+		) as unknown as SimpleTransformer;
 		const tree = makeTree([
 			{ type: "code", lang: "lilypond", value: "\\score { }" } as Code,
 		]);
@@ -156,9 +188,10 @@ describe("remarkLilypondPlugin", () => {
 	});
 
 	it("does not prepend \\version when the block already declares it", async () => {
-		const plugin = remarkLilypondPlugin({
-			version: "2.24.0",
-		}) as unknown as SimpleTransformer;
+		const options = { ...BASE_OPTIONS, version: "2.24.0" };
+		const plugin = remarkLilypondPlugin(
+			options,
+		) as unknown as SimpleTransformer;
 		const value = '\\version "2.22.0"\n\\score { }';
 		const tree = makeTree([{ type: "code", lang: "lilypond", value } as Code]);
 
@@ -180,22 +213,18 @@ describe("remarkLilypondPlugin", () => {
 
 		await runPlugin(tree);
 
-		expect(mockRender).toHaveBeenCalledWith("\\score { }", {
-			format: "svg",
-			resolution: undefined,
-			crop: undefined,
-			includePaths: ["."],
-			sourceName: "test.md",
-		});
-		expect((tree.children[0] as Html).value).toBe(RENDERED_SVG);
+		expect((tree.children[0] as Html).value).toContain(
+			'src="/_lilypond/mock-hash.test.svg"',
+		);
 	});
 
-	it("wraps png output in an img data URI", async () => {
+	it("passes format: png through to render and writeAsset", async () => {
 		const fakePng = Buffer.from([0x89, 0x50, 0x4e, 0x47]);
 		mockRender.mockResolvedValue(fakePng);
-		const plugin = remarkLilypondPlugin({
-			format: "png",
-		}) as unknown as SimpleTransformer;
+		const options = { ...BASE_OPTIONS, format: "png" as const };
+		const plugin = remarkLilypondPlugin(
+			options,
+		) as unknown as SimpleTransformer;
 		const tree = makeTree([
 			{ type: "code", lang: "lilypond", value: "\\score { }" } as Code,
 		]);
@@ -209,18 +238,22 @@ describe("remarkLilypondPlugin", () => {
 			includePaths: ["."],
 			sourceName: "test.md",
 		});
-		expect((tree.children[0] as Html).value).toContain(
-			'<img class="lilypond" src="data:image/png;base64,',
+		expect((tree.children[0] as Html).value).toBe(
+			'<img class="lilypond" src="/_lilypond/mock-hash.test.png" alt="">',
 		);
 	});
 
 	it("passes resolution DPI when resolution is set", async () => {
 		const fakePng = Buffer.from([0x89, 0x50, 0x4e, 0x47]);
 		mockRender.mockResolvedValue(fakePng);
-		const plugin = remarkLilypondPlugin({
-			format: "png",
+		const options = {
+			...BASE_OPTIONS,
+			format: "png" as const,
 			resolution: 300,
-		}) as unknown as SimpleTransformer;
+		};
+		const plugin = remarkLilypondPlugin(
+			options,
+		) as unknown as SimpleTransformer;
 		const tree = makeTree([
 			{ type: "code", lang: "lilypond", value: "\\score { }" } as Code,
 		]);
@@ -234,15 +267,13 @@ describe("remarkLilypondPlugin", () => {
 			includePaths: ["."],
 			sourceName: "test.md",
 		});
-		expect((tree.children[0] as Html).value).toContain(
-			'<img class="lilypond" src="data:image/png;base64,',
-		);
 	});
 
 	it("passes crop: false to render when the crop option is set to false", async () => {
-		const plugin = remarkLilypondPlugin({
-			crop: false,
-		}) as unknown as SimpleTransformer;
+		const options = { ...BASE_OPTIONS, crop: false };
+		const plugin = remarkLilypondPlugin(
+			options,
+		) as unknown as SimpleTransformer;
 		const tree = makeTree([
 			{ type: "code", lang: "lilypond", value: "\\score { }" } as Code,
 		]);

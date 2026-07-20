@@ -5,6 +5,9 @@ node_modules/
 dist/
 .astro/
 
+# astro-lilypond rendered assets (regenerated from source on every build)
+docs/public/_lilypond/
+
 # Environment files
 .env
 .env.local

@@ -14,16 +14,33 @@ vi.mock("./render.js", () => ({
 	},
 }));
 
+vi.mock("./pruneOrphanedAssets.js", () => ({
+	pruneOrphanedAssets: vi.fn(),
+}));
+
 import lilypond from "./index.js";
+import { pruneOrphanedAssets } from "./pruneOrphanedAssets.js";
+
+const mockPruneOrphanedAssets = vi.mocked(pruneOrphanedAssets);
+
+const FAKE_PUBLIC_DIR = new URL("file:///project/public/");
 
 interface SetupHookArgs {
 	config: {
 		markdown?: {
 			processor?: { name: string; options?: Record<string, unknown> };
 		};
+		publicDir?: URL;
+		base?: string;
 	};
 	updateConfig: ReturnType<typeof vi.fn>;
 	logger: { info: ReturnType<typeof vi.fn>; warn: ReturnType<typeof vi.fn> };
+}
+
+function baseConfig(
+	overrides: Partial<SetupHookArgs["config"]> = {},
+): SetupHookArgs["config"] {
+	return { publicDir: FAKE_PUBLIC_DIR, base: "/", ...overrides };
 }
 
 describe("lilypond integration", () => {
@@ -50,7 +67,9 @@ describe("lilypond integration", () => {
 			}));
 			const integration = lilypond(opts);
 			await integration.hooks["astro:config:setup"]?.({
-				config: { markdown: { processor: { name: "satteri", options: {} } } },
+				config: baseConfig({
+					markdown: { processor: { name: "satteri", options: {} } },
+				}),
 				updateConfig,
 				logger: { info: vi.fn(), warn: vi.fn() },
 			} as never);
@@ -88,7 +107,7 @@ describe("lilypond integration", () => {
 
 	it("registers the Sätteri mdast plugin when processor is satteri", async () => {
 		const { updateConfig, logger }: SetupHookArgs = {
-			config: {},
+			config: baseConfig(),
 			updateConfig: vi.fn(),
 			logger: { info: vi.fn(), warn: vi.fn() },
 		};
@@ -98,9 +117,9 @@ describe("lilypond integration", () => {
 			isSatteriProcessor: vi.fn(() => true),
 		}));
 
-		const config: SetupHookArgs["config"] = {
+		const config = baseConfig({
 			markdown: { processor: { name: "satteri", options: {} } },
-		};
+		});
 
 		const integration = lilypond();
 		await integration.hooks["astro:config:setup"]?.({
@@ -128,9 +147,9 @@ describe("lilypond integration", () => {
 			isUnifiedProcessor: vi.fn(() => true),
 		}));
 
-		const config: SetupHookArgs["config"] = {
+		const config = baseConfig({
 			markdown: { processor: { name: "unified", options: {} } },
-		};
+		});
 
 		const integration = lilypond();
 		await integration.hooks["astro:config:setup"]?.({
@@ -163,7 +182,7 @@ describe("lilypond integration", () => {
 		const integration = lilypond();
 		await expect(
 			integration.hooks["astro:config:setup"]?.({
-				config: { markdown: {} },
+				config: baseConfig({ markdown: {} }),
 				updateConfig,
 				logger,
 			} as never),
@@ -208,10 +227,77 @@ describe("lilypond integration", () => {
 		const integration = lilypond();
 		await expect(
 			integration.hooks["astro:config:setup"]?.({
-				config: { markdown: { processor: { name: "custom-proc" } } },
+				config: baseConfig({
+					markdown: { processor: { name: "custom-proc" } },
+				}),
 				updateConfig,
 				logger,
 			} as never),
 		).rejects.toThrow("custom-proc");
+	});
+
+	describe("astro:build:done", () => {
+		it("has an astro:build:done hook", () => {
+			const integration = lilypond();
+			expect(typeof integration.hooks?.["astro:build:done"]).toBe("function");
+		});
+
+		it("does nothing if astro:config:setup never ran", async () => {
+			const integration = lilypond();
+			await integration.hooks["astro:build:done"]?.({
+				logger: { info: vi.fn(), warn: vi.fn() },
+			} as never);
+			expect(mockPruneOrphanedAssets).not.toHaveBeenCalled();
+		});
+
+		it("prunes the resolved assets dir under publicDir/outputDir after setup ran", async () => {
+			vi.doMock("@astrojs/markdown-satteri", () => ({
+				satteri: vi.fn((o: unknown) => ({ name: "satteri", options: o })),
+				isSatteriProcessor: vi.fn(() => true),
+			}));
+
+			const integration = lilypond();
+			const logger = { info: vi.fn(), warn: vi.fn() };
+			await integration.hooks["astro:config:setup"]?.({
+				config: baseConfig({
+					markdown: { processor: { name: "satteri", options: {} } },
+				}),
+				updateConfig: vi.fn(),
+				logger,
+			} as never);
+			vi.doUnmock("@astrojs/markdown-satteri");
+
+			await integration.hooks["astro:build:done"]?.({ logger } as never);
+
+			expect(mockPruneOrphanedAssets).toHaveBeenCalledWith({
+				dir: "/project/public/_lilypond",
+				referenced: expect.any(Set),
+				logger,
+			});
+		});
+
+		it("uses a custom outputDir name when provided", async () => {
+			vi.doMock("@astrojs/markdown-satteri", () => ({
+				satteri: vi.fn((o: unknown) => ({ name: "satteri", options: o })),
+				isSatteriProcessor: vi.fn(() => true),
+			}));
+
+			const integration = lilypond({ outputDir: "scores" });
+			const logger = { info: vi.fn(), warn: vi.fn() };
+			await integration.hooks["astro:config:setup"]?.({
+				config: baseConfig({
+					markdown: { processor: { name: "satteri", options: {} } },
+				}),
+				updateConfig: vi.fn(),
+				logger,
+			} as never);
+			vi.doUnmock("@astrojs/markdown-satteri");
+
+			await integration.hooks["astro:build:done"]?.({ logger } as never);
+
+			expect(mockPruneOrphanedAssets).toHaveBeenCalledWith(
+				expect.objectContaining({ dir: "/project/public/scores" }),
+			);
+		});
 	});
 });

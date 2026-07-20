@@ -2,18 +2,21 @@ import type { Code, Html } from "mdast";
 import type { MdastPluginDefinition, MdastVisitorContext } from "satteri";
 import { defaultOptions, render } from "../render.js";
 import {
+	contentHashFor,
+	imgTag,
 	includePathsFor,
 	isLilypondLang,
 	prependVersion,
-	renderToHtml,
 	sourceNameFor,
+	titleFor,
 } from "../utils/index.js";
-import type { PluginOptions } from "./types.js";
+import { writeAsset } from "../writeAsset.js";
+import type { ResolvedPluginOptions } from "./types.js";
 
-export type SatteriPluginOptions = PluginOptions;
+export type SatteriPluginOptions = ResolvedPluginOptions;
 
 export function satteriPlugin(
-	options: SatteriPluginOptions = {},
+	options: SatteriPluginOptions,
 ): MdastPluginDefinition {
 	return {
 		name: "astro-lilypond",
@@ -29,17 +32,30 @@ export function satteriPlugin(
 				? prependVersion(node.value, options.version)
 				: node.value;
 			const format = options.format ?? defaultOptions.format;
+			const resolution = options.resolution ?? defaultOptions.resolution;
+			const crop = options.crop ?? defaultOptions.crop;
 			const includePaths = includePathsFor(ctx.fileURL);
 			const sourceName = sourceNameFor(ctx.fileURL);
-			const buf = await render(source, {
+			const title = titleFor(sourceName);
+			const hash = contentHashFor({ source, format, resolution, crop });
+			const url = await writeAsset({
+				hash,
+				title,
 				format,
-				resolution: options.resolution,
-				crop: options.crop,
-				timeout: options.timeout,
-				includePaths,
-				sourceName,
+				outputDir: options.assetsDir,
+				urlBase: options.assetsUrlBase,
+				trackAsset: options.trackAsset,
+				getBuffer: () =>
+					render(source, {
+						format,
+						resolution: options.resolution,
+						crop: options.crop,
+						timeout: options.timeout,
+						includePaths,
+						sourceName,
+					}),
 			});
-			return { type: "html", value: renderToHtml(buf, format) };
+			return { type: "html", value: imgTag(url) };
 		},
 	};
 }

@@ -11,29 +11,43 @@ vi.mock("../render.js", () => ({
 	},
 }));
 
+vi.mock("../writeAsset.js", () => ({
+	writeAsset: vi.fn(),
+}));
+
 import { render } from "../render.js";
-import { renderToHtml } from "../utils/index.js";
-import { satteriPlugin } from "./satteri.js";
+import { writeAsset } from "../writeAsset.js";
+import { type SatteriPluginOptions, satteriPlugin } from "./satteri.js";
 
 const mockRender = vi.mocked(render);
+const mockWriteAsset = vi.mocked(writeAsset);
 
 const FAKE_SVG = "<svg xmlns='http://www.w3.org/2000/svg'><g>fake</g></svg>";
-const RENDERED_SVG = renderToHtml(Buffer.from(FAKE_SVG), "svg");
+
+const BASE_OPTIONS: SatteriPluginOptions = {
+	assetsDir: "/project/public/_lilypond",
+	assetsUrlBase: "/_lilypond",
+	trackAsset: vi.fn(),
+};
 
 beforeEach(() => {
 	vi.clearAllMocks();
 	mockRender.mockResolvedValue(Buffer.from(FAKE_SVG));
+	mockWriteAsset.mockImplementation(async (opts) => {
+		await opts.getBuffer();
+		return `/_lilypond/mock-hash.${opts.title}.${opts.format}`;
+	});
 });
 
 describe("satteriPlugin", () => {
 	it("returns a plugin object with a name and code function", () => {
-		const plugin = satteriPlugin();
+		const plugin = satteriPlugin(BASE_OPTIONS);
 		expect(plugin.name).toBe("astro-lilypond");
 		expect(typeof plugin.code).toBe("function");
 	});
 
-	it("transforms a lilypond code node to an html node with an svg img tag", async () => {
-		const plugin = satteriPlugin();
+	it("transforms a lilypond code node to an html node with an img tag pointing at the written asset", async () => {
+		const plugin = satteriPlugin(BASE_OPTIONS);
 		const node: Code = { type: "code", lang: "lilypond", value: "\\score { }" };
 
 		const result = await plugin.code?.(node, {} as never);
@@ -44,24 +58,38 @@ describe("satteriPlugin", () => {
 			crop: undefined,
 			includePaths: [],
 		});
-		expect(result).toEqual({ type: "html", value: RENDERED_SVG });
+		expect(mockWriteAsset).toHaveBeenCalledWith(
+			expect.objectContaining({
+				title: "score",
+				format: "svg",
+				outputDir: BASE_OPTIONS.assetsDir,
+				urlBase: BASE_OPTIONS.assetsUrlBase,
+				trackAsset: BASE_OPTIONS.trackAsset,
+			}),
+		);
+		expect(result).toEqual({
+			type: "html",
+			value:
+				'<img class="lilypond" src="/_lilypond/mock-hash.score.svg" alt="">',
+		});
 	});
 
 	it("returns undefined for non-lilypond code nodes", async () => {
-		const plugin = satteriPlugin();
+		const plugin = satteriPlugin(BASE_OPTIONS);
 		const node: Code = { type: "code", lang: "js", value: "console.log(1)" };
 
 		const result = await plugin.code?.(node, {} as never);
 
 		expect(mockRender).not.toHaveBeenCalled();
+		expect(mockWriteAsset).not.toHaveBeenCalled();
 		expect(result).toBeUndefined();
 	});
 
 	it("accepts 'ly' as an alternative language marker", async () => {
-		const plugin = satteriPlugin();
+		const plugin = satteriPlugin(BASE_OPTIONS);
 		const node: Code = { type: "code", lang: "ly", value: "\\score { }" };
 
-		const result = await plugin.code?.(node, {} as never);
+		await plugin.code?.(node, {} as never);
 
 		expect(mockRender).toHaveBeenCalledWith("\\score { }", {
 			format: "svg",
@@ -69,14 +97,13 @@ describe("satteriPlugin", () => {
 			crop: undefined,
 			includePaths: [],
 		});
-		expect(result).toEqual({ type: "html", value: RENDERED_SVG });
 	});
 
 	it("accepts 'ily' as an alternative language marker", async () => {
-		const plugin = satteriPlugin();
+		const plugin = satteriPlugin(BASE_OPTIONS);
 		const node: Code = { type: "code", lang: "ily", value: "\\score { }" };
 
-		const result = await plugin.code?.(node, {} as never);
+		await plugin.code?.(node, {} as never);
 
 		expect(mockRender).toHaveBeenCalledWith("\\score { }", {
 			format: "svg",
@@ -84,12 +111,11 @@ describe("satteriPlugin", () => {
 			crop: undefined,
 			includePaths: [],
 		});
-		expect(result).toEqual({ type: "html", value: RENDERED_SVG });
 	});
 
 	it("propagates the error when render throws", async () => {
 		mockRender.mockRejectedValue(new Error("bad syntax"));
-		const plugin = satteriPlugin();
+		const plugin = satteriPlugin(BASE_OPTIONS);
 		const node: Code = { type: "code", lang: "lilypond", value: "invalid" };
 
 		await expect(plugin.code?.(node, {} as never)).rejects.toThrow(
@@ -98,7 +124,7 @@ describe("satteriPlugin", () => {
 	});
 
 	it("prepends \\version when the version option is set", async () => {
-		const plugin = satteriPlugin({ version: "2.24.0" });
+		const plugin = satteriPlugin({ ...BASE_OPTIONS, version: "2.24.0" });
 		const node: Code = { type: "code", lang: "lilypond", value: "\\score { }" };
 
 		await plugin.code?.(node, {} as never);
@@ -112,7 +138,7 @@ describe("satteriPlugin", () => {
 	});
 
 	it("does not prepend \\version when the block already declares it", async () => {
-		const plugin = satteriPlugin({ version: "2.24.0" });
+		const plugin = satteriPlugin({ ...BASE_OPTIONS, version: "2.24.0" });
 		const value = '\\version "2.22.0"\n\\score { }';
 		const node: Code = { type: "code", lang: "lilypond", value };
 
@@ -127,24 +153,20 @@ describe("satteriPlugin", () => {
 	});
 
 	it("uses svg format by default", async () => {
-		const plugin = satteriPlugin();
+		const plugin = satteriPlugin(BASE_OPTIONS);
 		const node: Code = { type: "code", lang: "lilypond", value: "\\score { }" };
 
 		const result = await plugin.code?.(node, {} as never);
 
-		expect(mockRender).toHaveBeenCalledWith("\\score { }", {
-			format: "svg",
-			resolution: undefined,
-			crop: undefined,
-			includePaths: [],
-		});
-		expect((result as Html).value).toBe(RENDERED_SVG);
+		expect((result as Html).value).toContain(
+			'src="/_lilypond/mock-hash.score.svg"',
+		);
 	});
 
-	it("wraps png output in an img data URI", async () => {
+	it("passes format: png through to render and writeAsset", async () => {
 		const fakePng = Buffer.from([0x89, 0x50, 0x4e, 0x47]);
 		mockRender.mockResolvedValue(fakePng);
-		const plugin = satteriPlugin({ format: "png" });
+		const plugin = satteriPlugin({ ...BASE_OPTIONS, format: "png" });
 		const node: Code = { type: "code", lang: "lilypond", value: "\\score { }" };
 
 		const result = await plugin.code?.(node, {} as never);
@@ -155,19 +177,22 @@ describe("satteriPlugin", () => {
 			crop: undefined,
 			includePaths: [],
 		});
-		expect((result as Html).value).toContain(
-			'<img class="lilypond" src="data:image/png;base64,',
+		expect((result as Html).value).toBe(
+			'<img class="lilypond" src="/_lilypond/mock-hash.score.png" alt="">',
 		);
-		expect((result as Html).value).toContain(fakePng.toString("base64"));
 	});
 
 	it("passes resolution DPI when resolution is set", async () => {
 		const fakePng = Buffer.from([0x89, 0x50, 0x4e, 0x47]);
 		mockRender.mockResolvedValue(fakePng);
-		const plugin = satteriPlugin({ format: "png", resolution: 300 });
+		const plugin = satteriPlugin({
+			...BASE_OPTIONS,
+			format: "png",
+			resolution: 300,
+		});
 		const node: Code = { type: "code", lang: "lilypond", value: "\\score { }" };
 
-		const result = await plugin.code?.(node, {} as never);
+		await plugin.code?.(node, {} as never);
 
 		expect(mockRender).toHaveBeenCalledWith("\\score { }", {
 			format: "png",
@@ -175,13 +200,10 @@ describe("satteriPlugin", () => {
 			crop: undefined,
 			includePaths: [],
 		});
-		expect((result as Html).value).toContain(
-			'<img class="lilypond" src="data:image/png;base64,',
-		);
 	});
 
 	it("passes crop: false to render when the crop option is set to false", async () => {
-		const plugin = satteriPlugin({ crop: false });
+		const plugin = satteriPlugin({ ...BASE_OPTIONS, crop: false });
 		const node: Code = { type: "code", lang: "lilypond", value: "\\score { }" };
 
 		await plugin.code?.(node, {} as never);

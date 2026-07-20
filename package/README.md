@@ -45,6 +45,8 @@ Write LilyPond code within fenced code blocks with the `lilypond`, `ly`, or `ily
 
 Your score will be built to `.svg` or `.png` and display alongside the rest of your content.
 
+Rendered scores are written to `public/_lilypond/` (configurable via the `outputDir` option) and referenced by URL rather than inlined, so add that directory to your `.gitignore` — it's regenerated from your LilyPond source on every build.
+
 ---
 
 For more info, refer to the docs: https://lilypond.ky.fyi

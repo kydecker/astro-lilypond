@@ -1,13 +1,16 @@
 import { visit } from "unist-util-visit";
 import { defaultOptions, render } from "../render.js";
 import {
+	contentHashFor,
+	imgTag,
 	includePathsFor,
 	isLilypondLang,
 	prependVersion,
-	renderToHtml,
 	sourceNameFor,
+	titleFor,
 } from "../utils/index.js";
-import type { PluginOptions } from "./types.js";
+import { writeAsset } from "../writeAsset.js";
+import type { ResolvedPluginOptions } from "./types.js";
 
 // Raw node type — an Astro/rehype extension not in the standard @types/hast
 interface RawNode {
@@ -15,18 +18,19 @@ interface RawNode {
 	value: string;
 }
 
-export type RehypePluginOptions = PluginOptions;
+export type RehypePluginOptions = ResolvedPluginOptions;
 
 // Typed loosely so it's assignable to both RehypePlugin and the unified
 // Plugin generic regardless of which @types/hast version the host project pins.
 export function rehypePlugin(
-	options: RehypePluginOptions = {},
+	options: RehypePluginOptions,
 	// biome-ignore lint/suspicious/noExplicitAny: see above
 ): (tree: any, file?: { path?: string }) => Promise<void> {
 	return async (tree, file) => {
 		const promises: Promise<void>[] = [];
 		const includePaths = includePathsFor(file?.path);
 		const sourceName = sourceNameFor(file?.path);
+		const title = titleFor(sourceName);
 
 		visit(tree, "element", (node, index, parent) => {
 			if (
@@ -58,19 +62,28 @@ export function rehypePlugin(
 				? prependVersion(raw, options.version)
 				: raw;
 			const format = options.format ?? defaultOptions.format;
+			const resolution = options.resolution ?? defaultOptions.resolution;
+			const crop = options.crop ?? defaultOptions.crop;
+			const hash = contentHashFor({ source, format, resolution, crop });
 
-			const promise = render(source, {
+			const promise = writeAsset({
+				hash,
+				title,
 				format,
-				resolution: options.resolution,
-				crop: options.crop,
-				timeout: options.timeout,
-				includePaths,
-				sourceName,
-			}).then((buf): void => {
-				const rawNode: RawNode = {
-					type: "raw",
-					value: renderToHtml(buf, format),
-				};
+				outputDir: options.assetsDir,
+				urlBase: options.assetsUrlBase,
+				trackAsset: options.trackAsset,
+				getBuffer: () =>
+					render(source, {
+						format,
+						resolution: options.resolution,
+						crop: options.crop,
+						timeout: options.timeout,
+						includePaths,
+						sourceName,
+					}),
+			}).then((url): void => {
+				const rawNode: RawNode = { type: "raw", value: imgTag(url) };
 				parent.children[index] = rawNode;
 			});
 

@@ -106,3 +106,21 @@ export default defineConfig({
   ],
 });
 ```
+
+### `outputDir`
+
+**Type:** `string`  
+**Default:** `"_lilypond"`
+
+Directory name that rendered scores are written to, relative to Astro's [`publicDir`](https://docs.astro.build/en/reference/configuration-reference/#publicdir) (`./public` by default). Files in this directory are served at `/` during dev and copied to your build directory during build.
+
+```js
+// astro.config.mjs
+export default defineConfig({
+  integrations: [
+    lilypond({
+      outputDir: "scores"
+    }),
+  ],
+});
+```
