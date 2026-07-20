@@ -9,6 +9,7 @@ export default defineConfig({
 	site: "https://lilypond.ky.fyi",
 	adapter: cloudflare({
 		prerenderEnvironment: "node",
+		imageService: "passthrough",
 	}),
 	integrations: [
 		lilypond({
