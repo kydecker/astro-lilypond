@@ -1,3 +1,4 @@
+import cloudflare from "@astrojs/cloudflare";
 import starlight from "@astrojs/starlight";
 import { defineConfig } from "astro/config";
 import lilypond from "astro-lilypond";
@@ -6,6 +7,9 @@ import lilypondGrammar from "./src/lilypond.tmLanguage.mjs";
 
 export default defineConfig({
 	site: "https://lilypond.ky.fyi",
+	adapter: cloudflare({
+		prerenderEnvironment: "node",
+	}),
 	integrations: [
 		lilypond({
 			version: "2.26.0",

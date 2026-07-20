@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { execLilyPond } from "./execLilyPond.js";
 import { readOutputFile, safeInputFileName } from "./readOutputFile.js";
 
-const FORMATS = ["png", "svg"] as const;
+export const FORMATS = ["png", "svg"] as const;
 
 export type Format = (typeof FORMATS)[number];
 

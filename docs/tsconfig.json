@@ -2,5 +2,6 @@
 	"extends": "astro/tsconfigs/strictest",
 	"compilerOptions": {
 		"moduleResolution": "bundler"
-	}
+	},
+	"include": ["./worker-configuration.d.ts"]
 }

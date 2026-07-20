@@ -106,3 +106,34 @@ export default defineConfig({
   ],
 });
 ```
+
+### `outputDir`
+
+**Type:** `string`  
+**Default:** `"_lilypond"`
+
+Directory name that rendered scores are written to, relative to Astro's [`publicDir`](https://docs.astro.build/en/reference/configuration-reference/#publicdir) (`./public` by default). Files in this directory are served at `/` during dev and copied to your build directory during build.
+
+```js
+// astro.config.mjs
+export default defineConfig({
+  integrations: [
+    lilypond({
+      // change output from `public/_lilypond` to `public/scores`
+      outputDir: "scores"
+    }),
+  ],
+});
+```
+
+:::note
+Output files will be built, pruned, and rebuilt as needed. If you prefer not to have built images from `astro-lilypond` clutter up your repository or show up in diffs, add the output directory to your `.gitignore`:
+
+```ini title=".gitignore"
+# exclude generated LilyPond images
+public/_lilypond
+```
+
+Alternatively, you can commit the generated files to cut down on build times. If the score hasn't changed, `astro-lilypond` will skip regenerating the image.
+
+:::

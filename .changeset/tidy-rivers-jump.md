@@ -1,0 +1,28 @@
+---
+"astro-lilypond": minor
+---
+
+Rendered scores are now written to image files and referenced by URL, instead of being embedded inline as base64 data. This enables a few things:
+
+- Browser-native caching of image assets
+- Faster rebuilds since unchanged scores can be skipped
+
+Images are written to a new `outputDir` config option (which defaults to `_lilypond/`), output inside Astro's `publicDir` (which defaults to `public`). You can change the `outpurDir` via the config in the integration:
+
+```js
+// astro.config.mjs
+lilypond({
+  outputDir: "scores"
+})
+```
+
+Compiled images are regenerated automatically and use content-addressable hashes, meaning that filenames will not change if the content has not changed. You can safely commit generated files to your repository, if you want.
+
+Comitting generated files will make rebuilds and startup faster, since LilyPond does not have to regenerate files from scratch. However, it will increase the size of your repository, which can pose issues if you have many scores, or if you use use `png` output with high `resolution`.
+
+If you would prefer that generated scores not show up in your git repository or history, update `.gitignore`:
+
+```ini
+# ignore generated LilyPond scores
+public/_lilypond
+```
