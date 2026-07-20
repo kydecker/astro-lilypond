@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import type { AstroIntegration } from "astro";
 import type { Plugin } from "vite";
+import { pruneOrphanedAssets, pruneStaleAssets } from "./deleteAssets.js";
 import {
 	type PluginOptions,
 	type ResolvedPluginOptions,
@@ -11,7 +12,6 @@ import {
 	remarkPlugin,
 	satteriPlugin,
 } from "./plugins/index.js";
-import { pruneOrphanedAssets } from "./pruneOrphanedAssets.js";
 import { defaultOptions, render } from "./render.js";
 import {
 	assetsUrlBaseFor,
@@ -92,6 +92,7 @@ function lyFilePlugin(options: ResolvedPluginOptions): Plugin {
 			const sourceName = sourceNameFor(id);
 			const title = titleFor(sourceName);
 			const hash = contentHashFor({ source: src, format, resolution, crop });
+			const fileName = `${hash}.${title}.${format}`;
 			const url = await writeAsset({
 				hash,
 				title,
@@ -109,6 +110,7 @@ function lyFilePlugin(options: ResolvedPluginOptions): Plugin {
 						sourceName,
 					}),
 			});
+			await options.pruneStaleAssets(id, [fileName]);
 			return {
 				code: `export default ${JSON.stringify(imgTag(url))}`,
 			};
@@ -120,6 +122,7 @@ export default function lilypond(
 	options: LilypondOptions = {},
 ): AstroIntegration {
 	const referencedAssets = new Set<string>();
+	const assetsBySource = new Map<string, Set<string>>();
 	let assetsDir: string | undefined;
 
 	return {
@@ -139,13 +142,25 @@ export default function lilypond(
 				const outputDirName = options.outputDir ?? "_lilypond";
 				const assetsUrlBase = assetsUrlBaseFor(config.base, outputDirName);
 
-				assetsDir = join(fileURLToPath(config.publicDir), outputDirName);
+				const resolvedAssetsDir = join(
+					fileURLToPath(config.publicDir),
+					outputDirName,
+				);
+				assetsDir = resolvedAssetsDir;
 
 				const resolvedOptions: ResolvedPluginOptions = {
 					...options,
 					assetsDir,
 					assetsUrlBase,
 					trackAsset: (fileName) => referencedAssets.add(fileName),
+					pruneStaleAssets: (sourceKey, fileNames) =>
+						pruneStaleAssets({
+							assetsBySource,
+							sourceKey,
+							fileNames,
+							outputDir: resolvedAssetsDir,
+							logger,
+						}),
 				};
 
 				updateConfig({

@@ -19,6 +19,7 @@ export type RemarkPluginOptions = ResolvedPluginOptions;
 export const remarkPlugin: Plugin<[RemarkPluginOptions], Root> = (options) => {
 	return async (tree, file) => {
 		const promises: Promise<void>[] = [];
+		const fileNames: string[] = [];
 		const includePaths = includePathsFor(file?.path);
 		const sourceName = sourceNameFor(file?.path);
 		const title = titleFor(sourceName);
@@ -33,6 +34,7 @@ export const remarkPlugin: Plugin<[RemarkPluginOptions], Root> = (options) => {
 			const resolution = options.resolution ?? defaultOptions.resolution;
 			const crop = options.crop ?? defaultOptions.crop;
 			const hash = contentHashFor({ source, format, resolution, crop });
+			fileNames.push(`${hash}.${title}.${format}`);
 
 			const promise = writeAsset({
 				hash,
@@ -59,5 +61,9 @@ export const remarkPlugin: Plugin<[RemarkPluginOptions], Root> = (options) => {
 		});
 
 		await Promise.all(promises);
+
+		if (file?.path) {
+			await options.pruneStaleAssets(file.path, fileNames);
+		}
 	};
 };

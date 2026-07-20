@@ -19,4 +19,10 @@ export interface ResolvedPluginOptions extends PluginOptions {
 
 	/** Records that a given output filename was referenced during this build. */
 	trackAsset: (fileName: string) => void;
+
+	/** Deletes files this source previously produced but no longer does. */
+	pruneStaleAssets: (
+		sourceKey: string,
+		fileNames: readonly string[],
+	) => Promise<void>;
 }

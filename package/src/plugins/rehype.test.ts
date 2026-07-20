@@ -28,6 +28,7 @@ const BASE_OPTIONS: RehypePluginOptions = {
 	assetsDir: "/project/public/_lilypond",
 	assetsUrlBase: "/_lilypond",
 	trackAsset: vi.fn(),
+	pruneStaleAssets: vi.fn(),
 };
 
 beforeEach(() => {
@@ -102,9 +103,10 @@ function makeTree(children: HastChild[]): HastRoot {
 async function runPlugin(
 	tree: HastRoot,
 	options: RehypePluginOptions = BASE_OPTIONS,
+	file?: { path?: string },
 ): Promise<HastRoot> {
 	const transformer = rehypePlugin(options);
-	await transformer(tree);
+	await transformer(tree, file);
 	return tree;
 }
 
@@ -264,6 +266,44 @@ describe("rehypePlugin", () => {
 			resolution: undefined,
 			crop: false,
 			includePaths: [],
+		});
+	});
+
+	describe("pruning stale assets", () => {
+		it("prunes with file.path and every filename produced this pass", async () => {
+			const pruneStaleAssets = vi.fn();
+			const tree = makeTree([
+				makeLilypondPre("\\score { c }"),
+				makeLilypondPre("\\score { d }"),
+			]);
+
+			await runPlugin(
+				tree,
+				{ ...BASE_OPTIONS, pruneStaleAssets },
+				{ path: "syntax.md" },
+			);
+
+			expect(pruneStaleAssets).toHaveBeenCalledTimes(1);
+			const [sourceKey, fileNames] = pruneStaleAssets.mock.calls[0] as [
+				string,
+				string[],
+			];
+			expect(sourceKey).toBe("syntax.md");
+			expect(fileNames).toHaveLength(2);
+			for (const fileName of fileNames) {
+				expect(fileName).toMatch(/^[0-9a-f]+\.syntax\.svg$/);
+			}
+			// Two distinct blocks hash to two distinct filenames.
+			expect(fileNames[0]).not.toBe(fileNames[1]);
+		});
+
+		it("skips pruning when file.path is unavailable", async () => {
+			const pruneStaleAssets = vi.fn();
+			const tree = makeTree([makeLilypondPre("\\score { }")]);
+
+			await runPlugin(tree, { ...BASE_OPTIONS, pruneStaleAssets });
+
+			expect(pruneStaleAssets).not.toHaveBeenCalled();
 		});
 	});
 });

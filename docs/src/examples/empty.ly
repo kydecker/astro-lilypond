@@ -4,6 +4,7 @@
   indent = #0
   line-width = #100
   ragged-last = ##f
+
 }
 
 upper = {
@@ -18,8 +19,10 @@ lower = {
 
 \score {
   \new PianoStaff
+
   \with {
     \omit TimeSignature
+    \remove "System_start_delimiter_engraver"
   }
   <<
     \new Staff = "upper" \upper

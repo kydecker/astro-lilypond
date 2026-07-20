@@ -12,12 +12,13 @@ vi.mock("./render.js", () => ({
 	},
 }));
 
-vi.mock("./pruneOrphanedAssets.js", () => ({
+vi.mock("./deleteAssets.js", () => ({
 	pruneOrphanedAssets: vi.fn(),
+	pruneStaleAssets: vi.fn(),
 }));
 
+import { pruneOrphanedAssets } from "./deleteAssets.js";
 import lilypond from "./index.js";
-import { pruneOrphanedAssets } from "./pruneOrphanedAssets.js";
 
 const mockPruneOrphanedAssets = vi.mocked(pruneOrphanedAssets);
 

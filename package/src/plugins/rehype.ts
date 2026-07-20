@@ -28,6 +28,7 @@ export function rehypePlugin(
 ): (tree: any, file?: { path?: string }) => Promise<void> {
 	return async (tree, file) => {
 		const promises: Promise<void>[] = [];
+		const fileNames: string[] = [];
 		const includePaths = includePathsFor(file?.path);
 		const sourceName = sourceNameFor(file?.path);
 		const title = titleFor(sourceName);
@@ -65,6 +66,7 @@ export function rehypePlugin(
 			const resolution = options.resolution ?? defaultOptions.resolution;
 			const crop = options.crop ?? defaultOptions.crop;
 			const hash = contentHashFor({ source, format, resolution, crop });
+			fileNames.push(`${hash}.${title}.${format}`);
 
 			const promise = writeAsset({
 				hash,
@@ -91,5 +93,9 @@ export function rehypePlugin(
 		});
 
 		await Promise.all(promises);
+
+		if (file?.path) {
+			await options.pruneStaleAssets(file.path, fileNames);
+		}
 	};
 }
