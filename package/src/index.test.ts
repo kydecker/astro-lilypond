@@ -1,4 +1,19 @@
 import { describe, expect, it, vi } from "vitest";
+
+// Without this, the vite plugin transform tests below would invoke the real
+// `lilypond` binary (since transform() calls render() for .ly/.lilypond/.ily
+// files) — leaking its compile log to stderr on every CI run.
+vi.mock("./render.js", () => ({
+	render: vi.fn().mockRejectedValue(new Error("mock render failure")),
+	defaultOptions: {
+		format: "svg",
+		resolution: 144,
+		binaryPath: "lilypond",
+		crop: true,
+		timeout: 60_000,
+	},
+}));
+
 import lilypond from "./index.js";
 
 interface SetupHookArgs {
@@ -62,9 +77,11 @@ describe("lilypond integration", () => {
 			"handles %s extension",
 			async (ext) => {
 				const plugin = await getVitePlugin();
-				// render is the actual lilypond binary call — we only verify the plugin
-				// doesn't skip the file; a thrown error is fine here
-				await expect(plugin.transform("", `score${ext}`)).rejects.toThrow();
+				// render() is mocked to always reject — we're only verifying the
+				// plugin doesn't skip the file (i.e. it calls render() at all)
+				await expect(plugin.transform("", `score${ext}`)).rejects.toThrow(
+					"mock render failure",
+				);
 			},
 		);
 	});
