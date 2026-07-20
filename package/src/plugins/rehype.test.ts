@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("../../src/render", () => ({
+vi.mock("../render", () => ({
 	render: vi.fn(),
 	defaultOptions: {
 		format: "svg",
@@ -10,15 +10,14 @@ vi.mock("../../src/render", () => ({
 	},
 }));
 
-import { rehypeLilypondPlugin } from "../../src/rehype-plugin";
-import { render } from "../../src/render";
+import { render } from "../render";
+import { renderToHtml } from "../utils/index.js";
+import { rehypePlugin } from "./rehype.js";
 
 const mockRender = vi.mocked(render);
 
 const FAKE_SVG = "<svg xmlns='http://www.w3.org/2000/svg'><g>fake</g></svg>";
-const RENDERED_SVG = `<img class="lilypond" src="data:image/svg+xml;base64,${Buffer.from(
-	FAKE_SVG,
-).toString("base64")}" alt="">`;
+const RENDERED_SVG = renderToHtml(Buffer.from(FAKE_SVG), "svg");
 
 beforeEach(() => {
 	vi.clearAllMocks();
@@ -86,14 +85,14 @@ function makeTree(children: HastChild[]): HastRoot {
 }
 
 async function runPlugin(tree: HastRoot): Promise<HastRoot> {
-	const transformer = rehypeLilypondPlugin();
+	const transformer = rehypePlugin();
 	await transformer(tree);
 	return tree;
 }
 
-describe("rehypeLilypondPlugin", () => {
+describe("rehypePlugin", () => {
 	it("returns a transformer function", () => {
-		expect(typeof rehypeLilypondPlugin()).toBe("function");
+		expect(typeof rehypePlugin()).toBe("function");
 	});
 
 	it("transforms <pre><code.language-lilypond> to a raw img node", async () => {
@@ -156,7 +155,7 @@ describe("rehypeLilypondPlugin", () => {
 	});
 
 	it("prepends \\version when the version option is set", async () => {
-		const transformer = rehypeLilypondPlugin({ version: "2.24.0" });
+		const transformer = rehypePlugin({ version: "2.24.0" });
 		const tree = makeTree([makeLilypondPre("\\score { }")]);
 
 		await transformer(tree);
@@ -170,7 +169,7 @@ describe("rehypeLilypondPlugin", () => {
 	});
 
 	it("does not prepend \\version when the block already declares it", async () => {
-		const transformer = rehypeLilypondPlugin({ version: "2.24.0" });
+		const transformer = rehypePlugin({ version: "2.24.0" });
 		const value = '\\version "2.22.0"\n\\score { }';
 		const tree = makeTree([makeLilypondPre(value)]);
 
@@ -201,7 +200,7 @@ describe("rehypeLilypondPlugin", () => {
 	it("wraps png output in an img data URI", async () => {
 		const fakePng = Buffer.from([0x89, 0x50, 0x4e, 0x47]);
 		mockRender.mockResolvedValue(fakePng);
-		const transformer = rehypeLilypondPlugin({ format: "png" });
+		const transformer = rehypePlugin({ format: "png" });
 		const tree = makeTree([makeLilypondPre("\\score { }")]);
 
 		await transformer(tree);
@@ -220,7 +219,7 @@ describe("rehypeLilypondPlugin", () => {
 	it("passes resolution DPI when resolution is set", async () => {
 		const fakePng = Buffer.from([0x89, 0x50, 0x4e, 0x47]);
 		mockRender.mockResolvedValue(fakePng);
-		const transformer = rehypeLilypondPlugin({
+		const transformer = rehypePlugin({
 			format: "png",
 			resolution: 300,
 		});
@@ -240,7 +239,7 @@ describe("rehypeLilypondPlugin", () => {
 	});
 
 	it("passes crop: false to render when the crop option is set to false", async () => {
-		const transformer = rehypeLilypondPlugin({ crop: false });
+		const transformer = rehypePlugin({ crop: false });
 		const tree = makeTree([makeLilypondPre("\\score { }")]);
 
 		await transformer(tree);

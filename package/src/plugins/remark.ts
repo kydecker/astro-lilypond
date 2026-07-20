@@ -1,19 +1,19 @@
 import type { Html, Root } from "mdast";
 import type { Plugin } from "unified";
 import { visit } from "unist-util-visit";
-import { defaultOptions, render } from "./render.js";
-import type { LilypondPluginOptions } from "./util.js";
+import { defaultOptions, render } from "../render.js";
 import {
 	includePathsFor,
 	isLilypondLang,
 	prependVersion,
 	renderToHtml,
 	sourceNameFor,
-} from "./util.js";
+} from "../utils/index.js";
+import type { PluginOptions } from "./types.js";
 
-export type RemarkPluginOptions = LilypondPluginOptions;
+export type RemarkPluginOptions = PluginOptions;
 
-export const remarkLilypondPlugin: Plugin<[RemarkPluginOptions?], Root> = (
+export const remarkPlugin: Plugin<[RemarkPluginOptions?], Root> = (
 	options = {},
 ) => {
 	return async (tree, file) => {
@@ -33,6 +33,7 @@ export const remarkLilypondPlugin: Plugin<[RemarkPluginOptions?], Root> = (
 				format,
 				resolution: options.resolution,
 				crop: options.crop,
+				timeout: options.timeout,
 				includePaths,
 				sourceName,
 			}).then((buf): void => {

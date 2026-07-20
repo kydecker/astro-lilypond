@@ -21,7 +21,7 @@
 	},
 	"files": [
 		"dist",
-		"components"
+		"components/*.astro"
 	],
 	"scripts": {
 		"build": "tsc --project tsconfig.json",

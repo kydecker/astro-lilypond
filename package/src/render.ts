@@ -1,10 +1,8 @@
-import { execFile } from "node:child_process";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { basename, join } from "node:path";
-import { promisify } from "node:util";
-
-const execFileAsync = promisify(execFile);
+import { join } from "node:path";
+import { execLilyPond } from "./execLilyPond.js";
+import { readOutputFile, safeInputFileName } from "./readOutputFile.js";
 
 const FORMATS = ["png", "svg"] as const;
 
@@ -39,6 +37,13 @@ export interface RenderOptions {
 	 * `"input.ly"` when omitted or unsafe to use as a filename.
 	 */
 	sourceName?: string;
+
+	/**
+	 * Milliseconds to wait for a single `lilypond` invocation before
+	 * aborting it, so a pathological score can't hang the build forever.
+	 * Defaults to `60000` (60s).
+	 */
+	timeout?: number;
 }
 
 export const defaultOptions: Required<
@@ -48,6 +53,7 @@ export const defaultOptions: Required<
 	resolution: 144,
 	binaryPath: "lilypond",
 	crop: true,
+	timeout: 60_000,
 };
 
 export async function render(
@@ -59,6 +65,7 @@ export async function render(
 		resolution = defaultOptions.resolution,
 		binaryPath = defaultOptions.binaryPath,
 		crop = defaultOptions.crop,
+		timeout = defaultOptions.timeout,
 		includePaths = [],
 		sourceName,
 	} = options;
@@ -74,97 +81,19 @@ export async function render(
 	try {
 		await writeFile(inputPath, source, "utf8");
 
-		const args = [
-			// Render the correct format
-			`--format=${format}`,
-
-			// Define defaults — these can be overridden with the appropriate flags
-			// inside of individual .ly files
-
-			// Disable point-and-click behavior on SVGs when clicking noteheads
-			"--define-default=no-point-and-click",
-			// Use the `cairo` backend for graphics rendering; faster than the default `ps` backend
-			// https://lilypond.org/doc/v2.26/Documentation/usage/advanced-command_002dline-options-for-lilypond
-			"--define-default=backend=cairo",
-			// Resolution for generating PNGs (set in DPI)
-			`--define-default=resolution=${resolution}`,
-			// Set cropping
-			`--define-default=crop=${crop ? "#t" : "#f"}`,
-
-			// If the LilyPond file imports from others via \include, make sure those files are included
-			...includePaths.map((p) => `--include=${p}`),
-
-			"--output",
-			outputBase,
+		await execLilyPond({
+			binaryPath,
+			format,
+			resolution,
+			crop,
+			includePaths,
+			timeout,
 			inputPath,
-		];
-
-		// LilyPond writes its progress log, and any warnings/errors, to stderr
-		// even on success — surface it in the build output so it's visible,
-		// but let the exit code (not stderr content) decide pass/fail.
-		let stderr: string;
-		try {
-			({ stderr } = await execFileAsync(binaryPath, args));
-		} catch (err) {
-			const errStderr =
-				err && typeof err === "object" && "stderr" in err
-					? String((err as { stderr: unknown }).stderr)
-					: undefined;
-			if (errStderr) process.stderr.write(errStderr);
-			throw new Error(
-				errStderr || (err instanceof Error ? err.message : String(err)),
-			);
-		}
-		if (stderr) process.stderr.write(stderr);
+			outputBase,
+		});
 
 		return await readOutputFile(outputBase, format, crop);
 	} finally {
 		await rm(dir, { recursive: true, force: true });
-	}
-}
-
-/**
- * Resolves the base name to use for the temp input file. Strips any
- * directory components from `sourceName` (it may be a full path) and
- * rejects anything that isn't a plain, safe file name, falling back to
- * the generic `"input.ly"`.
- */
-function safeInputFileName(sourceName: string | undefined): string {
-	if (!sourceName) return "input.ly";
-	const base = basename(sourceName);
-	if (!base || base === "." || base === ".." || !/^[\w.-]+$/.test(base)) {
-		return "input.ly";
-	}
-	return base;
-}
-
-async function readOutputFile(
-	base: string,
-	format: Format,
-	crop: boolean,
-): Promise<Buffer> {
-	// --define-default crop writes <base>.cropped.<format> alongside <base>.<format>
-	if (crop) {
-		try {
-			return await readFile(`${base}.cropped.${format}`);
-		} catch (err) {
-			throw new Error(
-				`expected cropped output at ${base}.cropped.${format} but it was not found: ${
-					err instanceof Error ? err.message : String(err)
-				}`,
-			);
-		}
-	}
-
-	// Regular output: single page → <base>.<format>, multi-page →
-	// <base>-1.<format> (svg) or <base>-page1.<format> (png).
-	try {
-		return await readFile(`${base}.${format}`);
-	} catch {
-		try {
-			return await readFile(`${base}-1.${format}`);
-		} catch {
-			return await readFile(`${base}-page1.${format}`);
-		}
 	}
 }
