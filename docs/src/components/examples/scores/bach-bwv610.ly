@@ -1,46 +1,19 @@
 \version "2.26.0"
 
 \header {
+  title = "Jesu, meine Freude"
+  composer = "Johann Sebastian Bach"
   mutopiatitle = "Jesu, meine Freude"
   mutopiacomposer = "BachJS"
   poet = "BWV 610"
-  %mutopiaopus = "BWV 610"
   mutopiainstrument = "Organ"
-  date = ""
   source = "Bach-Album, Ernst H. Wolfram (editor), 6787, C. F. Peters, Leipzig"
   style = "Baroque"
   copyright = "Public Domain"
   maintainer = "Urs Metzger"
   maintainerEmail = "urs@ursmetzger.de"
   lastupdated = "2006/Mar/15"
-
-  title = "Jesu, meine Freude"
-  composer = "Johann Sebastian Bach"
-  %opus="BWV 610"
-
   footer = "Mutopia-2006/03/27-706"
-  tagline = \markup {
-    \override #'(baseline-skip . 2.2)
-    \center-column {
-      \abs-fontsize #8 \sans \bold
-      \with-url "http://www.MutopiaProject.org" {
-      "Mutopia"
-      "Project"
-      }
-    }
-    \override #'(baseline-skip . 0)
-    \column {
-      \with-color #grey
-      \filled-box #'( 0 . 1) #'(-2.5 . 1.4) #0
-    }
-    \override #'(baseline-skip . 2.2)
-    \column {
-      \abs-fontsize #8 \sans
-      \concat{"Typeset using " \with-url "http://www.lilypond.org" "LilyPond" " ©2006 by " \maintainer "." }
-      \abs-fontsize #8 \sans
-      \concat {"This work is licensed under a " \with-url "http://creativecommons.org/about/pdm" \copyright " license."}
-    }
-  }
 }
 
 \include "deutsch.ly"
