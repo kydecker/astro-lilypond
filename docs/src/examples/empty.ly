@@ -6,10 +6,23 @@
   ragged-last = ##f
 }
 
+upper = {
+  \clef treble
+  s1 s
+}
+
+lower = {
+  \clef bass
+  s1 s
+}
+
 \score {
-  \new Staff
+  \new PianoStaff
   \with {
     \omit TimeSignature
   }
-  { s1 s s s }
+  <<
+    \new Staff = "upper" \upper
+    \new Staff = "lower" \lower
+  >>
 }
