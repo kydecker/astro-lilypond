@@ -42,6 +42,12 @@ To display music on your site, you will need to install Astro, LilyPond, and thi
 
    See [Configuration](/configuration/) for available options.
 
+   :::caution
+
+   The `astro-lilypond` extension is intended for use on static sites and has not been tested with server-side rendering. Use caution if you have [`output: 'server'`](https://docs.astro.build/en/reference/configuration-reference/#output) in your Astro config or [`prerender = false`](https://docs.astro.build/en/reference/routing-reference/#prerender) in your file.
+
+   :::
+
 5. Start writing music! See [Usage](/usage/) for Markdown and component-based approaches.
 
 </Steps>

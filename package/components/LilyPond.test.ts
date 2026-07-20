@@ -41,7 +41,7 @@ describe("LilyPond.astro", () => {
 		expect(result).toContain('<img style="width: 50%"');
 	});
 
-	it("renders content pointing at a written asset file (not a data URI)", async () => {
+	it("renders content pointing at src file", async () => {
 		const container = await AstroContainer.create();
 		const result = await container.renderToString(LilyPond, {
 			props: {
