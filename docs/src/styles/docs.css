@@ -1,3 +1,7 @@
+:root {
+	--sl-font: "EB Garamond Variable", ui-serif, serif;
+}
+
 .lilypond {
 	/* From starlight-theme-flexoki */
 	background: var(--color-paper, #fffcf0);

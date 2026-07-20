@@ -24,10 +24,18 @@ export default defineConfig({
 				}),
 			],
 			disable404Route: true,
-			customCss: ["./src/styles/docs.css"],
+			customCss: [
+				"@fontsource-variable/eb-garamond/wght.css",
+				// "@fontsource-variable/eb-garamond/wght-italic.css",
+				"./src/styles/docs.css",
+			],
 			expressiveCode: {
 				shiki: {
 					langs: [lilypondGrammar],
+				},
+				styleOverrides: {
+					uiFontFamily:
+						"ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji'",
 				},
 			},
 			favicon: "/favicon.svg",
