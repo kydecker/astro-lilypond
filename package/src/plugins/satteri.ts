@@ -38,6 +38,7 @@ export function satteriPlugin(
 			const sourceName = sourceNameFor(ctx.fileURL);
 			const title = titleFor(sourceName);
 			const hash = contentHashFor({ source, format, resolution, crop });
+			const fileName = `${hash}.${title}.${format}`;
 			const url = await writeAsset({
 				hash,
 				title,
@@ -55,6 +56,15 @@ export function satteriPlugin(
 						sourceName,
 					}),
 			});
+
+			// Sätteri has no per-file "done" hook, so prune per block instead.
+			if (ctx.fileURL) {
+				const index = ctx.indexOf(node) ?? "root";
+				await options.pruneStaleAssets(`${ctx.fileURL.href}#${index}`, [
+					fileName,
+				]);
+			}
+
 			return { type: "html", value: imgTag(url) };
 		},
 	};

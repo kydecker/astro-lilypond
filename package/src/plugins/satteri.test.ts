@@ -29,6 +29,7 @@ const BASE_OPTIONS: SatteriPluginOptions = {
 	assetsDir: "/project/public/_lilypond",
 	assetsUrlBase: "/_lilypond",
 	trackAsset: vi.fn(),
+	pruneStaleAssets: vi.fn(),
 };
 
 beforeEach(() => {
@@ -214,6 +215,47 @@ describe("satteriPlugin", () => {
 			resolution: undefined,
 			crop: false,
 			includePaths: [],
+		});
+	});
+
+	describe("pruning stale assets", () => {
+		it("prunes keyed by fileURL and the block's position among siblings", async () => {
+			const pruneStaleAssets = vi.fn();
+			const plugin = satteriPlugin({ ...BASE_OPTIONS, pruneStaleAssets });
+			const node: Code = {
+				type: "code",
+				lang: "lilypond",
+				value: "\\score { }",
+			};
+			const ctx = {
+				fileURL: new URL("file:///project/docs/syntax.md"),
+				indexOf: vi.fn().mockReturnValue(2),
+			};
+
+			await plugin.code?.(node, ctx as never);
+
+			expect(pruneStaleAssets).toHaveBeenCalledTimes(1);
+			const [sourceKey, fileNames] = pruneStaleAssets.mock.calls[0] as [
+				string,
+				string[],
+			];
+			expect(sourceKey).toBe("file:///project/docs/syntax.md#2");
+			expect(fileNames).toHaveLength(1);
+			expect(fileNames[0]).toMatch(/^[0-9a-f]+\.syntax\.svg$/);
+		});
+
+		it("skips pruning when fileURL is unavailable", async () => {
+			const pruneStaleAssets = vi.fn();
+			const plugin = satteriPlugin({ ...BASE_OPTIONS, pruneStaleAssets });
+			const node: Code = {
+				type: "code",
+				lang: "lilypond",
+				value: "\\score { }",
+			};
+
+			await plugin.code?.(node, {} as never);
+
+			expect(pruneStaleAssets).not.toHaveBeenCalled();
 		});
 	});
 });

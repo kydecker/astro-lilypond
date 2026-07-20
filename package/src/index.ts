@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import type { AstroIntegration } from "astro";
 import type { Plugin } from "vite";
-import { DEV_ASSETS_DIR_ENV } from "./devAssetsEnvVar.js";
+import { pruneOrphanedAssets, pruneStaleAssets } from "./deleteAssets.js";
 import {
 	type PluginOptions,
 	type ResolvedPluginOptions,
@@ -12,7 +12,6 @@ import {
 	remarkPlugin,
 	satteriPlugin,
 } from "./plugins/index.js";
-import { pruneOrphanedAssets } from "./pruneOrphanedAssets.js";
 import { defaultOptions, render } from "./render.js";
 import {
 	assetsUrlBaseFor,
@@ -67,9 +66,10 @@ export interface LilypondOptions extends PluginOptions {
 
 	/**
 	 * Directory name, relative to Astro's `publicDir`, that rendered assets
-	 * are written into by `astro build`. Filenames are content-addressed, so
-	 * unchanged scores are reused across builds instead of being re-rendered,
-	 * and it's safe to commit this directory if you'd like faster rebuilds.
+	 * are written into by both `astro dev` and `astro build`. Filenames are
+	 * content-addressed, so unchanged scores are reused instead of being
+	 * re-rendered, and it's safe to commit this directory if you'd like
+	 * faster rebuilds.
 	 *
 	 * @default "_lilypond"
 	 */
@@ -92,6 +92,7 @@ function lyFilePlugin(options: ResolvedPluginOptions): Plugin {
 			const sourceName = sourceNameFor(id);
 			const title = titleFor(sourceName);
 			const hash = contentHashFor({ source: src, format, resolution, crop });
+			const fileName = `${hash}.${title}.${format}`;
 			const url = await writeAsset({
 				hash,
 				title,
@@ -109,6 +110,7 @@ function lyFilePlugin(options: ResolvedPluginOptions): Plugin {
 						sourceName,
 					}),
 			});
+			await options.pruneStaleAssets(id, [fileName]);
 			return {
 				code: `export default ${JSON.stringify(imgTag(url))}`,
 			};
@@ -120,18 +122,13 @@ export default function lilypond(
 	options: LilypondOptions = {},
 ): AstroIntegration {
 	const referencedAssets = new Set<string>();
+	const assetsBySource = new Map<string, Set<string>>();
 	let assetsDir: string | undefined;
 
 	return {
 		name: "astro-lilypond",
 		hooks: {
-			"astro:config:setup": async ({
-				command,
-				config,
-				updateConfig,
-				injectRoute,
-				logger,
-			}) => {
+			"astro:config:setup": async ({ config, updateConfig, logger }) => {
 				await execFileAsync("lilypond", ["--version"]).catch(
 					(err: NodeJS.ErrnoException) => {
 						if (err.code === "ENOENT") {
@@ -145,34 +142,30 @@ export default function lilypond(
 				const outputDirName = options.outputDir ?? "_lilypond";
 				const assetsUrlBase = assetsUrlBaseFor(config.base, outputDirName);
 
-				const isBuild = command === "build";
-				assetsDir = isBuild
-					? join(fileURLToPath(config.publicDir), outputDirName)
-					: join(
-							fileURLToPath(config.cacheDir),
-							"astro-lilypond",
-							outputDirName,
-						);
+				const resolvedAssetsDir = join(
+					fileURLToPath(config.publicDir),
+					outputDirName,
+				);
+				assetsDir = resolvedAssetsDir;
 
 				const resolvedOptions: ResolvedPluginOptions = {
 					...options,
 					assetsDir,
 					assetsUrlBase,
 					trackAsset: (fileName) => referencedAssets.add(fileName),
+					pruneStaleAssets: (sourceKey, fileNames) =>
+						pruneStaleAssets({
+							assetsBySource,
+							sourceKey,
+							fileNames,
+							outputDir: resolvedAssetsDir,
+							logger,
+						}),
 				};
 
 				updateConfig({
 					vite: { plugins: [lyFilePlugin(resolvedOptions)] },
 				});
-
-				if (!isBuild) {
-					process.env[DEV_ASSETS_DIR_ENV] = assetsDir;
-					injectRoute({
-						pattern: `/${outputDirName}/[fileName]`,
-						entrypoint: new URL("./devAssetEndpoint.js", import.meta.url),
-						prerender: false,
-					});
-				}
 
 				const existingProcessor = config.markdown?.processor;
 
