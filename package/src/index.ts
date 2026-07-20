@@ -139,10 +139,6 @@ export default function lilypond(
 				const outputDirName = options.outputDir ?? "_lilypond";
 				const assetsUrlBase = assetsUrlBaseFor(config.base, outputDirName);
 
-				// Written under publicDir in both dev and build, so Astro/Vite's
-				// existing static-file serving (already responsible for the rest
-				// of publicDir) picks up newly rendered assets with no separate
-				// dev-only serving path to keep in sync.
 				assetsDir = join(fileURLToPath(config.publicDir), outputDirName);
 
 				const resolvedOptions: ResolvedPluginOptions = {
