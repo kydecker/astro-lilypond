@@ -5,6 +5,7 @@
 	"packageManager": "pnpm@11.15.1",
 	"scripts": {
 		"dev:docs": "pnpm --filter docs dev",
+		"deploy:docs": "pnpm --filter docs run deploy",
 		"build": "pnpm --filter astro-lilypond build",
 		"test": "pnpm --filter astro-lilypond test",
 		"release": "changeset publish",
