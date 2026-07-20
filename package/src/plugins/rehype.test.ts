@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../render", () => ({
 	render: vi.fn(),
+	FORMATS: ["png", "svg"],
 	defaultOptions: {
 		format: "svg",
 		resolution: 144,

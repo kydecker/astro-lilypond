@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import type { AstroIntegration } from "astro";
 import type { Plugin } from "vite";
-import { devAssetServerPlugin } from "./devAssetServer.js";
+import { DEV_ASSETS_DIR_ENV } from "./devAssetsEnvVar.js";
 import {
 	type PluginOptions,
 	type ResolvedPluginOptions,
@@ -129,6 +129,7 @@ export default function lilypond(
 				command,
 				config,
 				updateConfig,
+				injectRoute,
 				logger,
 			}) => {
 				await execFileAsync("lilypond", ["--version"]).catch(
@@ -161,15 +162,21 @@ export default function lilypond(
 				};
 
 				updateConfig({
-					vite: {
-						plugins: [
-							lyFilePlugin(resolvedOptions),
-							...(isBuild
-								? []
-								: [devAssetServerPlugin(assetsDir, assetsUrlBase)]),
-						],
-					},
+					vite: { plugins: [lyFilePlugin(resolvedOptions)] },
 				});
+
+				// Serve dev assets via an injected Astro route rather than a
+				// hand-rolled Vite middleware, so Astro's router handles `base`
+				// and path-segment matching for us instead of us reimplementing
+				// both (and getting them wrong).
+				if (!isBuild) {
+					process.env[DEV_ASSETS_DIR_ENV] = assetsDir;
+					injectRoute({
+						pattern: `/${outputDirName}/[fileName]`,
+						entrypoint: new URL("./devAssetEndpoint.js", import.meta.url),
+						prerender: false,
+					});
+				}
 
 				const existingProcessor = config.markdown?.processor;
 

@@ -1,10 +1,11 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 // Without this, the vite plugin transform tests below would invoke the real
 // `lilypond` binary (since transform() calls render() for .ly/.lilypond/.ily
 // files) — leaking its compile log to stderr on every CI run.
 vi.mock("./render.js", () => ({
 	render: vi.fn().mockRejectedValue(new Error("mock render failure")),
+	FORMATS: ["png", "svg"],
 	defaultOptions: {
 		format: "svg",
 		resolution: 144,
@@ -18,6 +19,7 @@ vi.mock("./pruneOrphanedAssets.js", () => ({
 	pruneOrphanedAssets: vi.fn(),
 }));
 
+import { DEV_ASSETS_DIR_ENV } from "./devAssetsEnvVar.js";
 import lilypond from "./index.js";
 import { pruneOrphanedAssets } from "./pruneOrphanedAssets.js";
 
@@ -76,10 +78,12 @@ describe("lilypond integration", () => {
 			}));
 			const integration = lilypond(opts);
 			await integration.hooks["astro:config:setup"]?.({
+				command: "build",
 				config: baseConfig({
 					markdown: { processor: { name: "satteri", options: {} } },
 				}),
 				updateConfig,
+				injectRoute: vi.fn(),
 				logger: { info: vi.fn(), warn: vi.fn() },
 			} as never);
 			vi.doUnmock("@astrojs/markdown-satteri");
@@ -132,8 +136,10 @@ describe("lilypond integration", () => {
 
 		const integration = lilypond();
 		await integration.hooks["astro:config:setup"]?.({
+			command: "build",
 			config,
 			updateConfig,
+			injectRoute: vi.fn(),
 			logger,
 		} as never);
 
@@ -162,8 +168,10 @@ describe("lilypond integration", () => {
 
 		const integration = lilypond();
 		await integration.hooks["astro:config:setup"]?.({
+			command: "build",
 			config,
 			updateConfig,
+			injectRoute: vi.fn(),
 			logger,
 		} as never);
 
@@ -191,8 +199,10 @@ describe("lilypond integration", () => {
 		const integration = lilypond();
 		await expect(
 			integration.hooks["astro:config:setup"]?.({
+				command: "build",
 				config: baseConfig({ markdown: {} }),
 				updateConfig,
+				injectRoute: vi.fn(),
 				logger,
 			} as never),
 		).rejects.toThrow("processor-based");
@@ -236,10 +246,12 @@ describe("lilypond integration", () => {
 		const integration = lilypond();
 		await expect(
 			integration.hooks["astro:config:setup"]?.({
+				command: "build",
 				config: baseConfig({
 					markdown: { processor: { name: "custom-proc" } },
 				}),
 				updateConfig,
+				injectRoute: vi.fn(),
 				logger,
 			} as never),
 		).rejects.toThrow("custom-proc");
@@ -273,6 +285,7 @@ describe("lilypond integration", () => {
 					markdown: { processor: { name: "satteri", options: {} } },
 				}),
 				updateConfig: vi.fn(),
+				injectRoute: vi.fn(),
 				logger,
 			} as never);
 			vi.doUnmock("@astrojs/markdown-satteri");
@@ -300,6 +313,7 @@ describe("lilypond integration", () => {
 					markdown: { processor: { name: "satteri", options: {} } },
 				}),
 				updateConfig: vi.fn(),
+				injectRoute: vi.fn(),
 				logger,
 			} as never);
 			vi.doUnmock("@astrojs/markdown-satteri");
@@ -313,6 +327,10 @@ describe("lilypond integration", () => {
 	});
 
 	describe("dev vs. build assets directory", () => {
+		afterEach(() => {
+			delete process.env[DEV_ASSETS_DIR_ENV];
+		});
+
 		async function setupWithCommand(command: "dev" | "build") {
 			vi.doMock("@astrojs/markdown-satteri", () => ({
 				satteri: vi.fn((o: unknown) => ({ name: "satteri", options: o })),
@@ -320,6 +338,7 @@ describe("lilypond integration", () => {
 			}));
 
 			const updateConfig = vi.fn();
+			const injectRoute = vi.fn();
 			const integration = lilypond();
 			await integration.hooks["astro:config:setup"]?.({
 				command,
@@ -327,6 +346,7 @@ describe("lilypond integration", () => {
 					markdown: { processor: { name: "satteri", options: {} } },
 				}),
 				updateConfig,
+				injectRoute,
 				logger: { info: vi.fn(), warn: vi.fn() },
 			} as never);
 			vi.doUnmock("@astrojs/markdown-satteri");
@@ -334,14 +354,20 @@ describe("lilypond integration", () => {
 			const { plugins } = (
 				updateConfig.mock.calls[0][0] as { vite: { plugins: unknown[] } }
 			).vite;
-			return plugins;
+			return { plugins, injectRoute };
 		}
 
-		it("writes into cacheDir (not publicDir) for `astro dev`, and mounts a dev asset server", async () => {
-			const plugins = await setupWithCommand("dev");
-			expect(plugins).toHaveLength(2);
-			expect((plugins[1] as { name: string }).name).toBe(
-				"vite-plugin-astro-lilypond-dev-assets",
+		it("injects a dev asset route and sets the dev assets dir env var for `astro dev`", async () => {
+			const { plugins, injectRoute } = await setupWithCommand("dev");
+
+			expect(plugins).toHaveLength(1);
+			expect(injectRoute).toHaveBeenCalledWith({
+				pattern: "/_lilypond/[fileName]",
+				entrypoint: expect.any(URL),
+				prerender: false,
+			});
+			expect(process.env[DEV_ASSETS_DIR_ENV]).toBe(
+				"/project/node_modules/.astro/astro-lilypond/_lilypond",
 			);
 		});
 
@@ -359,6 +385,7 @@ describe("lilypond integration", () => {
 					markdown: { processor: { name: "satteri", options: {} } },
 				}),
 				updateConfig: vi.fn(),
+				injectRoute: vi.fn(),
 				logger,
 			} as never);
 			vi.doUnmock("@astrojs/markdown-satteri");
@@ -372,9 +399,10 @@ describe("lilypond integration", () => {
 			);
 		});
 
-		it("writes into publicDir for `astro build`, without a dev asset server", async () => {
-			const plugins = await setupWithCommand("build");
+		it("writes into publicDir for `astro build`, without injecting a dev asset route", async () => {
+			const { plugins, injectRoute } = await setupWithCommand("build");
 			expect(plugins).toHaveLength(1);
+			expect(injectRoute).not.toHaveBeenCalled();
 		});
 	});
 });

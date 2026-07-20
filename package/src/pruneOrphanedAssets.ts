@@ -1,7 +1,6 @@
 import { readdir, unlink } from "node:fs/promises";
 import { join, relative } from "node:path";
-
-const OWN_ASSET_NAME = /^[0-9a-f]+\.[a-zA-Z0-9_-]+\.(?:svg|png)$/;
+import { isOwnAssetFileName } from "./utils/index.js";
 
 export interface PruneOrphanedAssetsOptions {
 	/** Absolute filesystem path to the assets output directory. */
@@ -33,7 +32,7 @@ export async function pruneOrphanedAssets(
 	}
 
 	const orphaned = entries.filter(
-		(name) => OWN_ASSET_NAME.test(name) && !referenced.has(name),
+		(name) => isOwnAssetFileName(name) && !referenced.has(name),
 	);
 
 	await Promise.all(orphaned.map((name) => unlink(join(dir, name))));
