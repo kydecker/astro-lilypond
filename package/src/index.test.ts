@@ -1,8 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-// Without this, the vite plugin transform tests below would invoke the real
-// `lilypond` binary (since transform() calls render() for .ly/.lilypond/.ily
-// files) — leaking its compile log to stderr on every CI run.
 vi.mock("./render.js", () => ({
 	render: vi.fn().mockRejectedValue(new Error("mock render failure")),
 	FORMATS: ["png", "svg"],

@@ -5,14 +5,8 @@ import { DEV_ASSETS_DIR_ENV } from "./devAssetsEnvVar.js";
 import { contentTypeFor } from "./utils/index.js";
 
 /**
- * Injected as an Astro route (see `index.ts`) to serve rendered assets from
- * the untracked dev cache directory during `astro dev` — Astro's own
- * routing resolves `base` and traversal-safety for us, so this doesn't need
- * to reimplement either (unlike a hand-rolled Vite dev-server middleware
- * would). `assetsDir` is threaded in via an env var set once in
- * `astro:config:setup`, since this module is loaded through Vite's SSR
- * module graph — a separate module instance from the integration's own —
- * so it can't share in-memory state with `index.ts` directly.
+ * Serve rendered assets from the untracked dev cache directory
+ * during `astro dev`.
  */
 export const GET: APIRoute = async ({ params }) => {
 	const fileName = params.fileName;

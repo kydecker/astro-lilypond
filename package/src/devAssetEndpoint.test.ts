@@ -18,7 +18,7 @@ afterEach(async () => {
 });
 
 function contextWith(fileName: string | undefined) {
-	return { params: { fileName } } as Parameters<typeof GET>[0];
+	return { params: { fileName } } as unknown as Parameters<typeof GET>[0];
 }
 
 describe("devAssetEndpoint GET", () => {

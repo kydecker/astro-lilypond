@@ -165,10 +165,6 @@ export default function lilypond(
 					vite: { plugins: [lyFilePlugin(resolvedOptions)] },
 				});
 
-				// Serve dev assets via an injected Astro route rather than a
-				// hand-rolled Vite middleware, so Astro's router handles `base`
-				// and path-segment matching for us instead of us reimplementing
-				// both (and getting them wrong).
 				if (!isBuild) {
 					process.env[DEV_ASSETS_DIR_ENV] = assetsDir;
 					injectRoute({
