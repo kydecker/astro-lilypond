@@ -1,4 +1,4 @@
-![Astro LilyPond. Text to SVG music notation for Astro.](docs/public/preview.png)
+![Astro LilyPond. Text to image music notation for Astro.](docs/public/preview.png)
 
 # astro-lilypond
 
@@ -6,7 +6,7 @@ An [Astro](https://astro.build) integration for rendering [LilyPond](https://lil
 
 - Render LilyPond via Markdown or with a `<LilyPond>` component
 - Works with both `unified()` and `satteri()` Markdown processors
-- All build-time compilation—zero JavaScript!
+- Zero runtime JavaScript!
 - Supports all LilyPond syntax
 
 Docs: https://lilypond.ky.fyi

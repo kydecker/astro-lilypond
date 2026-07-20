@@ -4,25 +4,24 @@ An [Astro](https://astro.build) integration for rendering [LilyPond](https://lil
 
 - Render LilyPond via Markdown or with a `<LilyPond>` component
 - Works with both `unified()` and `satteri()` Markdown processors
+- Zero runtime JavaScript!
 - Supports all LilyPond syntax
 
 Docs: https://lilypond.ky.fyi
 
 ## Quick Start
 
-### Prerequisites
+### 1. Install LilyPond
 
 Install the LilyPond binary directly from [lilypond.org](https://lilypond.org/download.html) or with `brew install lilypond` (Mac) or `apt install lilypond` (Linux).
 
-### Installation
-
-#### 1. Install `astro-lilypond`
+### 2. Install `astro-lilypond`
 
 ```sh
 pnpm add astro-lilypond
 ```
 
-#### 2. Add the integration to your Astro config
+### 3. Add the integration to your Astro config
 
 ```js
 // astro.config.mjs
@@ -34,9 +33,9 @@ export default defineConfig({
 });
 ```
 
-#### 3. Write your music
+### 4. Write your music
 
-Write LilyPond code within fenced code blocks with the `lilypond` or `ly` language tag.
+Write LilyPond code within fenced code blocks with the `lilypond`, `ly`, or `ily` language tag.
 
 ````md
 ```lilypond
@@ -45,3 +44,9 @@ Write LilyPond code within fenced code blocks with the `lilypond` or `ly` langua
 ````
 
 Your score will be built to `.svg` or `.png` and display alongside the rest of your content.
+
+---
+
+For more info, refer to the docs: https://lilypond.ky.fyi
+
+Happy notating!
