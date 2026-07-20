@@ -113,7 +113,7 @@ describe("render", () => {
 	});
 
 	it("passes --define-default=crop=#t when crop is true", async () => {
-		await render("\\score { }", { crop: true });
+		await render("\\score { }", { defaults: { crop: true } });
 		const [, args] = mockExecFile.mock.calls[0] as unknown as [
 			string,
 			string[],
@@ -122,7 +122,7 @@ describe("render", () => {
 	});
 
 	it("passes --define-default=crop=#f when crop is false", async () => {
-		await render("\\score { }", { crop: false });
+		await render("\\score { }", { defaults: { crop: false } });
 		const [, args] = mockExecFile.mock.calls[0] as unknown as [
 			string,
 			string[],
@@ -130,8 +130,38 @@ describe("render", () => {
 		expect(args).toContain("--define-default=crop=#f");
 	});
 
-	it("crop is true by default", () => {
-		expect(defaultOptions.crop).toBe(true);
+	it("passes --define-default=staff-size=<n>", async () => {
+		await render("\\score { }", { defaults: { staffSize: 16 } });
+		const [, args] = mockExecFile.mock.calls[0] as unknown as [
+			string,
+			string[],
+		];
+		expect(args).toContain("--define-default=staff-size=16");
+	});
+
+	it("passes --define-default=paper-size=<name>", async () => {
+		await render("\\score { }", { defaults: { paperSize: "letter" } });
+		const [, args] = mockExecFile.mock.calls[0] as unknown as [
+			string,
+			string[],
+		];
+		expect(args).toContain("--define-default=paper-size=letter");
+	});
+
+	it("crop is false by default", () => {
+		expect(defaultOptions.defaults.crop).toBe(false);
+	});
+
+	it("staffSize is 20 by default", () => {
+		expect(defaultOptions.defaults.staffSize).toBe(20);
+	});
+
+	it("paperSize is a4 by default", () => {
+		expect(defaultOptions.defaults.paperSize).toBe("a4");
+	});
+
+	it("version is 2.26.0 by default", () => {
+		expect(defaultOptions.defaults.version).toBe("2.26.0");
 	});
 
 	it("throws when format is unsupported", async () => {
@@ -226,7 +256,7 @@ describe("render", () => {
 	it("reads the .cropped.svg file when crop is true", async () => {
 		mockReadFile.mockResolvedValueOnce(Buffer.from("<svg>cropped</svg>"));
 
-		const result = await render("\\score { }", { crop: true });
+		const result = await render("\\score { }", { defaults: { crop: true } });
 		expect(result.toString()).toBe("<svg>cropped</svg>");
 		const [path] = mockReadFile.mock.calls[0];
 		expect(String(path)).toMatch(/\.cropped\.svg$/);
@@ -235,9 +265,9 @@ describe("render", () => {
 	it("throws if the cropped file is missing when crop is true", async () => {
 		mockReadFile.mockRejectedValueOnce(new Error("ENOENT"));
 
-		await expect(render("\\score { }", { crop: true })).rejects.toThrow(
-			"expected cropped output",
-		);
+		await expect(
+			render("\\score { }", { defaults: { crop: true } }),
+		).rejects.toThrow("expected cropped output");
 	});
 
 	it("falls back to numbered output file when crop is off and direct read fails", async () => {
@@ -245,7 +275,7 @@ describe("render", () => {
 			.mockRejectedValueOnce(new Error("ENOENT"))
 			.mockResolvedValueOnce(Buffer.from("<svg>page1</svg>"));
 
-		const result = await render("\\score { }", { crop: false });
+		const result = await render("\\score { }", { defaults: { crop: false } });
 		expect(result.toString()).toBe("<svg>page1</svg>");
 		expect(mockReadFile).toHaveBeenCalledTimes(2);
 	});
@@ -256,7 +286,10 @@ describe("render", () => {
 			.mockRejectedValueOnce(new Error("ENOENT")) // output-1.png
 			.mockResolvedValueOnce(Buffer.from("fake-png-page1"));
 
-		const result = await render("\\score { }", { format: "png", crop: false });
+		const result = await render("\\score { }", {
+			format: "png",
+			defaults: { crop: false },
+		});
 		expect(result.toString()).toBe("fake-png-page1");
 		expect(mockReadFile).toHaveBeenCalledTimes(3);
 		const [path] = mockReadFile.mock.calls[2] as unknown as [string];

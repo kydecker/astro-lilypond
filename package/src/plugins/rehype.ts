@@ -6,6 +6,7 @@ import {
 	includePathsFor,
 	isLilypondLang,
 	prependVersion,
+	resolveDefaults,
 	sourceNameFor,
 	titleFor,
 } from "../utils/index.js";
@@ -59,13 +60,18 @@ export function rehypePlugin(
 				.map((c) => c.value)
 				.join("");
 
-			const source = options.version
-				? prependVersion(raw, options.version)
-				: raw;
+			const { version, resolution, crop, staffSize, paperSize } =
+				resolveDefaults(options.defaults);
+			const source = version ? prependVersion(raw, version) : raw;
 			const format = options.format ?? defaultOptions.format;
-			const resolution = options.resolution ?? defaultOptions.resolution;
-			const crop = options.crop ?? defaultOptions.crop;
-			const hash = contentHashFor({ source, format, resolution, crop });
+			const hash = contentHashFor({
+				source,
+				format,
+				resolution,
+				crop,
+				staffSize,
+				paperSize,
+			});
 			fileNames.push(`${hash}.${title}.${format}`);
 
 			const promise = writeAsset({
@@ -78,8 +84,7 @@ export function rehypePlugin(
 				getBuffer: () =>
 					render(source, {
 						format,
-						resolution: options.resolution,
-						crop: options.crop,
+						defaults: options.defaults,
 						timeout: options.timeout,
 						includePaths,
 						sourceName,

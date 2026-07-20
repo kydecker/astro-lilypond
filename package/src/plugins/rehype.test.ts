@@ -5,9 +5,14 @@ vi.mock("../render", () => ({
 	FORMATS: ["png", "svg"],
 	defaultOptions: {
 		format: "svg",
-		resolution: 144,
 		binaryPath: "lilypond",
-		crop: true,
+		timeout: 60_000,
+		defaults: {
+			resolution: 144,
+			crop: true,
+			staffSize: 20,
+			paperSize: "a4",
+		},
 	},
 }));
 
@@ -122,8 +127,7 @@ describe("rehypePlugin", () => {
 
 		expect(mockRender).toHaveBeenCalledWith("\\score { }", {
 			format: "svg",
-			resolution: undefined,
-			crop: undefined,
+			defaults: undefined,
 			includePaths: [],
 		});
 		expect(mockWriteAsset).toHaveBeenCalledWith(
@@ -149,8 +153,7 @@ describe("rehypePlugin", () => {
 
 		expect(mockRender).toHaveBeenCalledWith("\\score { }", {
 			format: "svg",
-			resolution: undefined,
-			crop: undefined,
+			defaults: undefined,
 			includePaths: [],
 		});
 	});
@@ -162,8 +165,7 @@ describe("rehypePlugin", () => {
 
 		expect(mockRender).toHaveBeenCalledWith("\\score { }", {
 			format: "svg",
-			resolution: undefined,
-			crop: undefined,
+			defaults: undefined,
 			includePaths: [],
 		});
 	});
@@ -189,12 +191,14 @@ describe("rehypePlugin", () => {
 	it("prepends \\version when the version option is set", async () => {
 		const tree = makeTree([makeLilypondPre("\\score { }")]);
 
-		await runPlugin(tree, { ...BASE_OPTIONS, version: "2.24.0" });
+		await runPlugin(tree, {
+			...BASE_OPTIONS,
+			defaults: { version: "2.24.0" },
+		});
 
 		expect(mockRender).toHaveBeenCalledWith('\\version "2.24.0"\n\\score { }', {
 			format: "svg",
-			resolution: undefined,
-			crop: undefined,
+			defaults: { version: "2.24.0" },
 			includePaths: [],
 		});
 	});
@@ -203,12 +207,14 @@ describe("rehypePlugin", () => {
 		const value = '\\version "2.22.0"\n\\score { }';
 		const tree = makeTree([makeLilypondPre(value)]);
 
-		await runPlugin(tree, { ...BASE_OPTIONS, version: "2.24.0" });
+		await runPlugin(tree, {
+			...BASE_OPTIONS,
+			defaults: { version: "2.24.0" },
+		});
 
 		expect(mockRender).toHaveBeenCalledWith(value, {
 			format: "svg",
-			resolution: undefined,
-			crop: undefined,
+			defaults: { version: "2.24.0" },
 			includePaths: [],
 		});
 	});
@@ -232,8 +238,7 @@ describe("rehypePlugin", () => {
 
 		expect(mockRender).toHaveBeenCalledWith("\\score { }", {
 			format: "png",
-			resolution: undefined,
-			crop: undefined,
+			defaults: undefined,
 			includePaths: [],
 		});
 		expect((tree.children[0] as HastRaw).value).toBe(
@@ -246,12 +251,15 @@ describe("rehypePlugin", () => {
 		mockRender.mockResolvedValue(fakePng);
 		const tree = makeTree([makeLilypondPre("\\score { }")]);
 
-		await runPlugin(tree, { ...BASE_OPTIONS, format: "png", resolution: 300 });
+		await runPlugin(tree, {
+			...BASE_OPTIONS,
+			format: "png",
+			defaults: { resolution: 300 },
+		});
 
 		expect(mockRender).toHaveBeenCalledWith("\\score { }", {
 			format: "png",
-			resolution: 300,
-			crop: undefined,
+			defaults: { resolution: 300 },
 			includePaths: [],
 		});
 	});
@@ -259,12 +267,11 @@ describe("rehypePlugin", () => {
 	it("passes crop: false to render when the crop option is set to false", async () => {
 		const tree = makeTree([makeLilypondPre("\\score { }")]);
 
-		await runPlugin(tree, { ...BASE_OPTIONS, crop: false });
+		await runPlugin(tree, { ...BASE_OPTIONS, defaults: { crop: false } });
 
 		expect(mockRender).toHaveBeenCalledWith("\\score { }", {
 			format: "svg",
-			resolution: undefined,
-			crop: false,
+			defaults: { crop: false },
 			includePaths: [],
 		});
 	});

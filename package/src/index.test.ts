@@ -5,10 +5,14 @@ vi.mock("./render.js", () => ({
 	FORMATS: ["png", "svg"],
 	defaultOptions: {
 		format: "svg",
-		resolution: 144,
 		binaryPath: "lilypond",
-		crop: true,
 		timeout: 60_000,
+		defaults: {
+			resolution: 144,
+			crop: true,
+			staffSize: 20,
+			paperSize: "a4",
+		},
 	},
 }));
 

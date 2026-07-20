@@ -7,6 +7,7 @@ import {
 	includePathsFor,
 	isLilypondLang,
 	prependVersion,
+	resolveDefaults,
 	sourceNameFor,
 	titleFor,
 } from "../utils/index.js";
@@ -28,16 +29,21 @@ export function satteriPlugin(
 			ctx: MdastVisitorContext,
 		): Promise<Html | undefined> {
 			if (!isLilypondLang(node.lang)) return undefined;
-			const source = options.version
-				? prependVersion(node.value, options.version)
-				: node.value;
+			const { version, resolution, crop, staffSize, paperSize } =
+				resolveDefaults(options.defaults);
+			const source = version ? prependVersion(node.value, version) : node.value;
 			const format = options.format ?? defaultOptions.format;
-			const resolution = options.resolution ?? defaultOptions.resolution;
-			const crop = options.crop ?? defaultOptions.crop;
 			const includePaths = includePathsFor(ctx.fileURL);
 			const sourceName = sourceNameFor(ctx.fileURL);
 			const title = titleFor(sourceName);
-			const hash = contentHashFor({ source, format, resolution, crop });
+			const hash = contentHashFor({
+				source,
+				format,
+				resolution,
+				crop,
+				staffSize,
+				paperSize,
+			});
 			const fileName = `${hash}.${title}.${format}`;
 			const url = await writeAsset({
 				hash,
@@ -49,8 +55,7 @@ export function satteriPlugin(
 				getBuffer: () =>
 					render(source, {
 						format,
-						resolution: options.resolution,
-						crop: options.crop,
+						defaults: options.defaults,
 						timeout: options.timeout,
 						includePaths,
 						sourceName,

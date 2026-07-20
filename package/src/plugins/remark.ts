@@ -8,6 +8,7 @@ import {
 	includePathsFor,
 	isLilypondLang,
 	prependVersion,
+	resolveDefaults,
 	sourceNameFor,
 	titleFor,
 } from "../utils/index.js";
@@ -27,13 +28,18 @@ export const remarkPlugin: Plugin<[RemarkPluginOptions], Root> = (options) => {
 		visit(tree, "code", (node, index, parent) => {
 			if (!isLilypondLang(node.lang) || index === undefined || !parent) return;
 
-			const source = options.version
-				? prependVersion(node.value, options.version)
-				: node.value;
+			const { version, resolution, crop, staffSize, paperSize } =
+				resolveDefaults(options.defaults);
+			const source = version ? prependVersion(node.value, version) : node.value;
 			const format = options.format ?? defaultOptions.format;
-			const resolution = options.resolution ?? defaultOptions.resolution;
-			const crop = options.crop ?? defaultOptions.crop;
-			const hash = contentHashFor({ source, format, resolution, crop });
+			const hash = contentHashFor({
+				source,
+				format,
+				resolution,
+				crop,
+				staffSize,
+				paperSize,
+			});
 			fileNames.push(`${hash}.${title}.${format}`);
 
 			const promise = writeAsset({
@@ -46,8 +52,7 @@ export const remarkPlugin: Plugin<[RemarkPluginOptions], Root> = (options) => {
 				getBuffer: () =>
 					render(source, {
 						format,
-						resolution: options.resolution,
-						crop: options.crop,
+						defaults: options.defaults,
 						timeout: options.timeout,
 						includePaths,
 						sourceName,

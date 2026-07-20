@@ -3,10 +3,6 @@
 	background: var(--color-paper, #fffcf0);
 }
 
-[data-theme="dark"] .lilypond {
-	padding: 5%;
-}
-
 .sl-steps li:last-child::after {
 	display: none;
 }

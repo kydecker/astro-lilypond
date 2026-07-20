@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import type { PaperSize } from "../paperSizes.js";
 import type { Format } from "../render.js";
 
 const HASH_LENGTH = 6;
@@ -8,6 +9,8 @@ export interface ContentHashInput {
 	format: Format;
 	resolution: number;
 	crop: boolean;
+	staffSize: number;
+	paperSize: PaperSize;
 }
 
 /**
@@ -22,9 +25,11 @@ export interface ContentHashInput {
  * to force a full re-render after either.
  */
 export function contentHashFor(input: ContentHashInput): string {
-	const { source, format, resolution, crop } = input;
+	const { source, format, resolution, crop, staffSize, paperSize } = input;
 	return createHash("sha256")
-		.update(JSON.stringify([source, format, resolution, crop]))
+		.update(
+			JSON.stringify([source, format, resolution, crop, staffSize, paperSize]),
+		)
 		.digest("hex")
 		.slice(0, HASH_LENGTH);
 }

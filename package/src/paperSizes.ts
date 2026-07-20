@@ -1,0 +1,112 @@
+export const PAPER_SIZES = [
+	// ISO 216, A series
+	"a10",
+	"a9",
+	"a8",
+	"a7",
+	"a6",
+	"a5",
+	"a4",
+	"a3",
+	"a2",
+	"a1",
+	"a0",
+	// DIN 476 extended sizes
+	"2a0",
+	"4a0",
+	// ISO 216, B series
+	"b10",
+	"b9",
+	"b8",
+	"b7",
+	"b6",
+	"b5",
+	"b4",
+	"b3",
+	"b2",
+	"b1",
+	"b0",
+	// ISO 269, C series
+	"c10",
+	"c9",
+	"c8",
+	"c7",
+	"c6",
+	"c5",
+	"c4",
+	"c3",
+	"c2",
+	"c1",
+	"c0",
+	// North American
+	"junior-legal",
+	"legal",
+	"ledger",
+	"17x11",
+	"letter",
+	"tabloid",
+	"11x17",
+	// IEEE PWG
+	"government-letter",
+	"government-legal",
+	"philippine-legal",
+	// ANSI
+	"ansi a",
+	"ansi b",
+	"ansi c",
+	"ansi d",
+	"ansi e",
+	"engineering f",
+	// Architectural
+	"arch a",
+	"arch b",
+	"arch c",
+	"arch d",
+	"arch e",
+	"arch e1",
+	// Antique/UK
+	"statement",
+	"half letter",
+	"quarto",
+	"octavo",
+	"executive",
+	"monarch",
+	"foolscap",
+	"folio",
+	"super-b",
+	"post",
+	"crown",
+	"large post",
+	"demy",
+	"medium",
+	"broadsheet",
+	"royal",
+	"elephant",
+	"double demy",
+	"quad demy",
+	"atlas",
+	"imperial",
+	"antiquarian",
+	// PA4-based
+	"pa10",
+	"pa9",
+	"pa8",
+	"pa7",
+	"pa6",
+	"pa5",
+	"pa4",
+	"pa3",
+	"pa2",
+	"pa1",
+	"pa0",
+	// Southeast Asia / Australia
+	"f4",
+] as const;
+
+export type PredefinedPaperSize = (typeof PAPER_SIZES)[number];
+
+/**
+ * A LilyPond paper size name.
+ * @see https://lilypond.org/doc/v2.26/Documentation/notation/predefined-paper-sizes
+ */
+export type PaperSize = PredefinedPaperSize | (string & {});

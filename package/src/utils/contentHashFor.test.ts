@@ -6,6 +6,8 @@ const BASE = {
 	format: "svg" as const,
 	resolution: 144,
 	crop: true,
+	staffSize: 20,
+	paperSize: "a4",
 };
 
 describe("contentHashFor", () => {
@@ -39,6 +41,18 @@ describe("contentHashFor", () => {
 	it("changes when crop changes", () => {
 		expect(contentHashFor(BASE)).not.toBe(
 			contentHashFor({ ...BASE, crop: false }),
+		);
+	});
+
+	it("changes when staffSize changes", () => {
+		expect(contentHashFor(BASE)).not.toBe(
+			contentHashFor({ ...BASE, staffSize: 16 }),
+		);
+	});
+
+	it("changes when paperSize changes", () => {
+		expect(contentHashFor(BASE)).not.toBe(
+			contentHashFor({ ...BASE, paperSize: "letter" }),
 		);
 	});
 });

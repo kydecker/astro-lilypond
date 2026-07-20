@@ -1,8 +1,8 @@
+import type { LilypondDefaults } from "../render.js";
+
 export interface PluginOptions {
-	version?: string;
 	format?: "svg" | "png";
-	resolution?: number;
-	crop?: boolean;
+	defaults?: LilypondDefaults;
 	timeout?: number;
 }
 

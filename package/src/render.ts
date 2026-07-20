@@ -2,28 +2,75 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { execLilyPond } from "./execLilyPond.js";
+import type { PaperSize } from "./paperSizes.js";
 import { readOutputFile, safeInputFileName } from "./readOutputFile.js";
 
 export const FORMATS = ["png", "svg"] as const;
 
 export type Format = (typeof FORMATS)[number];
 
-export interface RenderOptions {
-	/** Output format. Defaults to `"svg"`. */
-	format?: Format;
+/**
+ * Defaults passed to each score for rendering.
+ * Individual `.ly` files can still override.
+ */
+export interface LilypondDefaults {
+	/**
+	 * LilyPond version to use for every block that
+	 * doesn't already declare `\version`.
+	 * @default "2.26.0"
+	 */
+	version?: string;
 
-	/** Resolution in DPI (only applies to PNG). Defaults to `144`. */
+	/**
+	 * Resolution in DPI (only applies to PNG).
+	 * @default 144
+	 */
 	resolution?: number;
-
-	/** Path to the `lilypond` binary. Defaults to `"lilypond"`. */
-	binaryPath?: string;
 
 	/**
 	 * Crop the output tightly to the content bounding box.
-	 * Disable if full-page renders are preferred.
-	 * Defaults to `true`.
+	 * Enable to trim full-page margins from the output.
+	 * @default false
 	 */
 	crop?: boolean;
+
+	/**
+	 * Global staff size, in points.
+	 * @default 20
+	 */
+	staffSize?: number;
+
+	/**
+	 * Named paper size.
+	 * @default "a4"
+	 */
+	paperSize?: PaperSize;
+}
+
+/**
+ * The subset of `LilypondDefaults` passed to the `lilypond` binary itself
+ * via `--define-default=<key>=<value>`. Excludes `version`, which is
+ * applied earlier by prepending it to the source text.
+ */
+export type LilypondDefines = Omit<LilypondDefaults, "version">;
+
+export interface RenderOptions {
+	/**
+	 * Output format.
+	 * @default "svg"
+	 */
+	format?: Format;
+
+	/**
+	 * Defaults for rendering each score.
+	 */
+	defaults?: LilypondDefaults;
+
+	/**
+	 * Path to the `lilypond` binary.
+	 * @default "lilypond"
+	 */
+	binaryPath?: string;
 
 	/**
 	 * Extra directories LilyPond should search for `\include`d files.
@@ -41,19 +88,24 @@ export interface RenderOptions {
 	/**
 	 * Milliseconds to wait for a single `lilypond` invocation before
 	 * aborting it, so a pathological score can't hang the build forever.
-	 * Defaults to `60000` (60s).
+	 * @default 60000
 	 */
 	timeout?: number;
 }
 
 export const defaultOptions: Required<
-	Omit<RenderOptions, "includePaths" | "sourceName">
-> = {
+	Omit<RenderOptions, "includePaths" | "sourceName" | "defaults">
+> & { defaults: Required<LilypondDefaults> } = {
 	format: "svg",
-	resolution: 144,
 	binaryPath: "lilypond",
-	crop: true,
 	timeout: 60_000,
+	defaults: {
+		version: "2.26.0",
+		resolution: 144,
+		crop: false,
+		staffSize: 20,
+		paperSize: "a4",
+	},
 };
 
 export async function render(
@@ -62,13 +114,20 @@ export async function render(
 ): Promise<Buffer> {
 	const {
 		format = defaultOptions.format,
-		resolution = defaultOptions.resolution,
 		binaryPath = defaultOptions.binaryPath,
-		crop = defaultOptions.crop,
 		timeout = defaultOptions.timeout,
 		includePaths = [],
 		sourceName,
 	} = options;
+
+	const defaults: Required<LilypondDefines> = {
+		resolution:
+			options.defaults?.resolution ?? defaultOptions.defaults.resolution,
+		crop: options.defaults?.crop ?? defaultOptions.defaults.crop,
+		staffSize: options.defaults?.staffSize ?? defaultOptions.defaults.staffSize,
+		paperSize: options.defaults?.paperSize ?? defaultOptions.defaults.paperSize,
+	};
+	const { crop } = defaults;
 
 	if (!FORMATS.includes(format)) {
 		throw new Error(`${format} is not a supported format`);
@@ -84,8 +143,7 @@ export async function render(
 		await execLilyPond({
 			binaryPath,
 			format,
-			resolution,
-			crop,
+			defaults,
 			includePaths,
 			timeout,
 			inputPath,

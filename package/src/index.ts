@@ -5,6 +5,7 @@ import { promisify } from "node:util";
 import type { AstroIntegration } from "astro";
 import type { Plugin } from "vite";
 import { pruneOrphanedAssets, pruneStaleAssets } from "./deleteAssets.js";
+import type { PaperSize } from "./paperSizes.js";
 import {
 	type PluginOptions,
 	type ResolvedPluginOptions,
@@ -12,13 +13,14 @@ import {
 	remarkPlugin,
 	satteriPlugin,
 } from "./plugins/index.js";
-import { defaultOptions, render } from "./render.js";
+import { defaultOptions, type LilypondDefaults, render } from "./render.js";
 import {
 	assetsUrlBaseFor,
 	contentHashFor,
 	imgTag,
 	includePathsFor,
 	prependVersion,
+	resolveDefaults,
 	sourceNameFor,
 	titleFor,
 } from "./utils/index.js";
@@ -28,17 +30,13 @@ const execFileAsync = promisify(execFile);
 
 const LY_EXTENSIONS = [".ly", ".lilypond", ".ily"] as const;
 
-export type { PluginOptions as LilypondPluginOptions };
+export type {
+	LilypondDefaults,
+	PaperSize,
+	PluginOptions as LilypondPluginOptions,
+};
 
 export interface LilypondOptions extends PluginOptions {
-	/**
-	 * LilyPond version string to prepend automatically to every block that
-	 * doesn't already declare `\version`. Example: `"2.24.0"`.
-	 *
-	 * When omitted, blocks must include `\version` themselves.
-	 */
-	version?: string;
-
 	/**
 	 * Output format to be written to a file under `outputDir`.
 	 * @default "svg"
@@ -46,16 +44,11 @@ export interface LilypondOptions extends PluginOptions {
 	format?: "svg" | "png";
 
 	/**
-	 * Resolution in DPI. Only applies when "format" is "png".
-	 * @default 144
+	 * Defaults passed to each score — `version`, `resolution`, `crop`,
+	 * `staffSize`, `paperSize`. Each can still be overridden by an
+	 * individual `.ly` file.
 	 */
-	resolution?: number;
-
-	/**
-	 * Crop the output tightly to the content bounding box.
-	 * @default true
-	 */
-	crop?: boolean;
+	defaults?: LilypondDefaults;
 
 	/**
 	 * Milliseconds to wait for a single `lilypond` invocation before
@@ -82,16 +75,21 @@ function lyFilePlugin(options: ResolvedPluginOptions): Plugin {
 		enforce: "pre",
 		async transform(source, id) {
 			if (!LY_EXTENSIONS.some((ext) => id.endsWith(ext))) return;
-			const src = options.version
-				? prependVersion(source, options.version)
-				: source;
+			const { version, resolution, crop, staffSize, paperSize } =
+				resolveDefaults(options.defaults);
+			const src = version ? prependVersion(source, version) : source;
 			const format = options.format ?? defaultOptions.format;
-			const resolution = options.resolution ?? defaultOptions.resolution;
-			const crop = options.crop ?? defaultOptions.crop;
 			const includePaths = includePathsFor(id);
 			const sourceName = sourceNameFor(id);
 			const title = titleFor(sourceName);
-			const hash = contentHashFor({ source: src, format, resolution, crop });
+			const hash = contentHashFor({
+				source: src,
+				format,
+				resolution,
+				crop,
+				staffSize,
+				paperSize,
+			});
 			const fileName = `${hash}.${title}.${format}`;
 			const url = await writeAsset({
 				hash,
@@ -103,8 +101,7 @@ function lyFilePlugin(options: ResolvedPluginOptions): Plugin {
 				getBuffer: () =>
 					render(src, {
 						format,
-						resolution: options.resolution,
-						crop: options.crop,
+						defaults: options.defaults,
 						timeout: options.timeout,
 						includePaths,
 						sourceName,

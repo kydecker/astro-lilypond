@@ -5,5 +5,6 @@ export { includePathsFor } from "./includePathsFor.js";
 export { isLilypondLang } from "./isLilypondLang.js";
 export { contentTypeFor, isOwnAssetFileName } from "./ownAssetFileName.js";
 export { prependVersion } from "./prependVersion.js";
+export { resolveDefaults } from "./resolveDefaults.js";
 export { sourceNameFor } from "./sourceNameFor.js";
 export { titleFor } from "./titleFor.js";
