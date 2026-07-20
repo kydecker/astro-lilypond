@@ -60,6 +60,10 @@ export default defineConfig({
 				"lilypond-syntax",
 				"examples",
 				"resources",
+				{
+					label: "Changelog",
+					link: "https://github.com/kydecker/astro-lilypond/releases",
+				},
 			],
 			editLink: {
 				baseUrl: "https://github.com/kydecker/astro-lilypond/edit/main/docs/",
