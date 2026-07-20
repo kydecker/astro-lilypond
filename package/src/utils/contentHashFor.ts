@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import type { Format } from "../render.js";
 
-const HASH_LENGTH = 8;
+const HASH_LENGTH = 6;
 
 export interface ContentHashInput {
 	source: string;

@@ -9,9 +9,9 @@ const BASE = {
 };
 
 describe("contentHashFor", () => {
-	it("returns an 8-character lowercase hex string", () => {
+	it("returns a 6-character lowercase hex string", () => {
 		const hash = contentHashFor(BASE);
-		expect(hash).toMatch(/^[0-9a-f]{8}$/);
+		expect(hash).toMatch(/^[0-9a-f]{6}$/);
 	});
 
 	it("is deterministic for identical input", () => {
