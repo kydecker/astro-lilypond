@@ -7,6 +7,7 @@
 		"dev": "astro dev",
 		"build": "astro build",
 		"preview": "astro preview",
+		"deploy": "wrangler deploy",
 		"generate-types": "wrangler types"
 	},
 	"dependencies": {
