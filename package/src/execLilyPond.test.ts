@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 type ExecFileCb = (
 	err: unknown,
@@ -40,9 +40,24 @@ const baseOptions = {
 	outputBase: "/tmp/dir/output",
 };
 
+// lilypond writes its progress log (and any warnings/errors) to stderr even
+// on success, and execLilyPond.ts deliberately mirrors that to
+// process.stderr for build visibility. Silence it here so
+// intentionally-simulated errors/warnings in the tests below don't pollute
+// CI output — tests that specifically assert on what gets written use this
+// same spy.
+let stderrWriteSpy: ReturnType<typeof vi.spyOn>;
+
 beforeEach(() => {
 	vi.clearAllMocks();
 	mockExecFileResult((cb) => cb(null, { stdout: "", stderr: "" }));
+	stderrWriteSpy = vi
+		.spyOn(process.stderr, "write")
+		.mockImplementation(() => true);
+});
+
+afterEach(() => {
+	stderrWriteSpy.mockRestore();
 });
 
 describe("execLilyPond", () => {
@@ -143,9 +158,6 @@ describe("execLilyPond", () => {
 	});
 
 	it("writes stderr to process.stderr for visibility even on success", async () => {
-		const writeSpy = vi
-			.spyOn(process.stderr, "write")
-			.mockImplementation(() => true);
 		mockExecFileResult((cb) =>
 			cb(null, {
 				stdout: "",
@@ -153,19 +165,14 @@ describe("execLilyPond", () => {
 			}),
 		);
 		await execLilyPond(baseOptions);
-		expect(writeSpy).toHaveBeenCalledWith(
+		expect(stderrWriteSpy).toHaveBeenCalledWith(
 			"Success: compilation successfully completed",
 		);
-		writeSpy.mockRestore();
 	});
 
 	it("does not write to process.stderr when there is no stderr output", async () => {
-		const writeSpy = vi
-			.spyOn(process.stderr, "write")
-			.mockImplementation(() => true);
 		await execLilyPond(baseOptions);
-		expect(writeSpy).not.toHaveBeenCalled();
-		writeSpy.mockRestore();
+		expect(stderrWriteSpy).not.toHaveBeenCalled();
 	});
 
 	it("throws using the child's stderr when lilypond exits with a non-zero status", async () => {

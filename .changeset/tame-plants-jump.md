@@ -1,5 +1,5 @@
 ---
-"astro-lilypond": minor
+"astro-lilypond": patch
 ---
 
-Add a `timeout` option to abort a hung `lilypond` invocation instead of stalling the build indefinitely.
+`lilypond` invocations now time out after 60 seconds instead of potentially stalling the build indefinitely.

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // execFile supports both `(file, args, callback)` and
 // `(file, args, options, callback)` — render.ts now always passes options
@@ -68,10 +68,24 @@ function mockExecFileResult(handler: (cb: ExecFileCb) => void) {
 	}) as typeof execFile);
 }
 
+// lilypond writes its progress log (and any warnings/errors) to stderr even
+// on success, and render.ts deliberately mirrors that to process.stderr for
+// build visibility. Silence it here so intentionally-simulated
+// errors/warnings in the tests below don't pollute CI output — tests that
+// specifically assert on what gets written use this same spy.
+let stderrWriteSpy: ReturnType<typeof vi.spyOn>;
+
 beforeEach(() => {
 	vi.clearAllMocks();
 	mockExecFileResult((cb) => cb(null, { stdout: "", stderr: "" }));
 	mockReadFile.mockResolvedValue(Buffer.from("<svg>fake</svg>"));
+	stderrWriteSpy = vi
+		.spyOn(process.stderr, "write")
+		.mockImplementation(() => true);
+});
+
+afterEach(() => {
+	stderrWriteSpy.mockRestore();
 });
 
 describe("render", () => {
@@ -149,9 +163,6 @@ describe("render", () => {
 	});
 
 	it("writes stderr to process.stderr for visibility even on success", async () => {
-		const writeSpy = vi
-			.spyOn(process.stderr, "write")
-			.mockImplementation(() => true);
 		mockExecFileResult((cb) =>
 			cb(null, {
 				stdout: "",
@@ -160,10 +171,9 @@ describe("render", () => {
 			}),
 		);
 		await render("\\score { }");
-		expect(writeSpy).toHaveBeenCalledWith(
+		expect(stderrWriteSpy).toHaveBeenCalledWith(
 			"Processing `input.ly'\nSuccess: compilation successfully completed",
 		);
-		writeSpy.mockRestore();
 	});
 
 	it("passes signal and maxBuffer options to execFile", async () => {
