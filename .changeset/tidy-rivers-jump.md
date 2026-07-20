@@ -16,7 +16,9 @@ lilypond({
 })
 ```
 
-Compiled images are regenerated automatically and use content-addressable hashes, meaning that filenames will not change if the content has not changed. You can safely check generated files into your repository, if you want.
+Compiled images are regenerated automatically and use content-addressable hashes, meaning that filenames will not change if the content has not changed. You can safely commit generated files to your repository, if you want.
+
+Comitting generated files will make rebuilds and startup faster, since LilyPond does not have to regenerate files from scratch. However, it will increase the size of your repository, which can pose issues if you have many scores, or if you use use `png` output with high `resolution`.
 
 If you would prefer that generated scores not show up in your git repository or history, update `.gitignore`:
 
@@ -24,5 +26,3 @@ If you would prefer that generated scores not show up in your git repository or 
 # ignore generated LilyPond scores
 public/_lilypond
 ```
-
-Comitting built scores will make rebuilds and startup faster since LilyPond does not have to rerun each time. Of course, it will increase the size of your repository. Be cautious if you are outputting `png` files with high `resolution`.
