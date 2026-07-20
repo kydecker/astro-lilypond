@@ -124,3 +124,15 @@ export default defineConfig({
   ],
 });
 ```
+
+:::note
+Output files will be built, pruned, and rebuilt as needed. If you prefer not to have built images from `astro-lilypond` clutter up your repository or show up in diffs, add the output directory to your `.gitignore`:
+
+```.gitignore title=".gitignore"
+# exclude generated LilyPond images
+public/_lilypond
+```
+
+Alternatively, you can commit the generated files to cut down on build times. If the score hasn't changed, `astro-lilypond` will skip regenerating the image.
+
+:::
