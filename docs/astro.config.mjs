@@ -23,6 +23,7 @@ export default defineConfig({
 					accentColor: "green",
 				}),
 			],
+			disable404Route: true,
 			customCss: ["./src/styles/docs.css"],
 			expressiveCode: {
 				shiki: {
