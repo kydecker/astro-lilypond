@@ -1,7 +1,7 @@
 import type { Code, Html, Paragraph, Root, Text } from "mdast";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("../../src/render", () => ({
+vi.mock("../render", () => ({
 	render: vi.fn(),
 	defaultOptions: {
 		format: "svg",
@@ -11,18 +11,17 @@ vi.mock("../../src/render", () => ({
 	},
 }));
 
+import { render } from "../render";
+import { renderToHtml } from "../utils/index.js";
 import {
-	remarkLilypondPlugin as _remarkLilypondPlugin,
+	remarkPlugin as _remarkLilypondPlugin,
 	type RemarkPluginOptions,
-} from "../../src/remark-plugin.js";
-import { render } from "../../src/render";
+} from "./remark.js";
 
 const mockRender = vi.mocked(render);
 
 const FAKE_SVG = "<svg xmlns='http://www.w3.org/2000/svg'><g>fake</g></svg>";
-const RENDERED_SVG = `<img class="lilypond" src="data:image/svg+xml;base64,${Buffer.from(
-	FAKE_SVG,
-).toString("base64")}" alt="">`;
+const RENDERED_SVG = renderToHtml(Buffer.from(FAKE_SVG), "svg");
 
 type SimpleTransformer = (tree: Root, file: { path: string }) => Promise<void>;
 type SimplePlugin = (opts?: RemarkPluginOptions) => SimpleTransformer;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isLilypondLang } from "../../src/util.js";
+import { isLilypondLang } from "./isLilypondLang.js";
 
 describe("isLilypondLang", () => {
 	it.each(["lilypond", "ly", "ily"])("returns true for '%s'", (lang) => {

@@ -1,18 +1,18 @@
 import type { Code, Html } from "mdast";
 import type { MdastPluginDefinition, MdastVisitorContext } from "satteri";
-import { defaultOptions, render } from "./render.js";
-import type { LilypondPluginOptions } from "./util.js";
+import { defaultOptions, render } from "../render.js";
 import {
 	includePathsFor,
 	isLilypondLang,
 	prependVersion,
 	renderToHtml,
 	sourceNameFor,
-} from "./util.js";
+} from "../utils/index.js";
+import type { PluginOptions } from "./types.js";
 
-export type SatteriPluginOptions = LilypondPluginOptions;
+export type SatteriPluginOptions = PluginOptions;
 
-export function satteriLilypondPlugin(
+export function satteriPlugin(
 	options: SatteriPluginOptions = {},
 ): MdastPluginDefinition {
 	return {
@@ -35,6 +35,7 @@ export function satteriLilypondPlugin(
 				format,
 				resolution: options.resolution,
 				crop: options.crop,
+				timeout: options.timeout,
 				includePaths,
 				sourceName,
 			});

@@ -1,13 +1,28 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+// execFile supports both `(file, args, callback)` and
+// `(file, args, options, callback)` — render.ts now always passes options
+// (for `signal`/`maxBuffer`), so the mock must accept either arity.
+function normalizeExecFileCb<T>(
+	maybeOptions: T | ((...args: never[]) => void),
+	maybeCb?: (...args: never[]) => void,
+) {
+	return typeof maybeOptions === "function" ? maybeOptions : maybeCb;
+}
+
 vi.mock("child_process", () => ({
 	execFile: vi.fn(
 		(
 			_bin: string,
 			_args: string[],
-			cb: (err: null, result: { stdout: string; stderr: string }) => void,
+			optionsOrCb: unknown,
+			cb?: (err: null, result: { stdout: string; stderr: string }) => void,
 		) => {
-			cb(null, { stdout: "", stderr: "" });
+			const callback = normalizeExecFileCb(
+				optionsOrCb as never,
+				cb as never,
+			) as (err: null, result: { stdout: string; stderr: string }) => void;
+			callback(null, { stdout: "", stderr: "" });
 		},
 	),
 }));
@@ -25,18 +40,37 @@ vi.mock("fs/promises", async (importOriginal) => {
 
 import { execFile } from "node:child_process";
 import { readFile } from "node:fs/promises";
-import { defaultOptions, render } from "../../src/render.js";
+import { defaultOptions, render } from "./render.js";
 
 const mockExecFile = vi.mocked(execFile);
 const mockReadFile = vi.mocked(readFile);
 
-beforeEach(() => {
-	vi.clearAllMocks();
+type ExecFileCb = (
+	err: unknown,
+	res?: { stdout: string; stderr: string },
+) => void;
+
+// Sets up execFile's mocked implementation to call `handler` with the
+// normalized callback, regardless of whether render.ts called it with or
+// without an options argument.
+function mockExecFileResult(handler: (cb: ExecFileCb) => void) {
 	mockExecFile.mockImplementation(((
 		_bin: string,
 		_args: string[],
-		cb: (err: null, res: { stdout: string; stderr: string }) => void,
-	) => cb(null, { stdout: "", stderr: "" })) as typeof execFile);
+		optionsOrCb: unknown,
+		cb?: ExecFileCb,
+	) => {
+		const callback = normalizeExecFileCb(
+			optionsOrCb as never,
+			cb as never,
+		) as ExecFileCb;
+		handler(callback);
+	}) as typeof execFile);
+}
+
+beforeEach(() => {
+	vi.clearAllMocks();
+	mockExecFileResult((cb) => cb(null, { stdout: "", stderr: "" }));
 	mockReadFile.mockResolvedValue(Buffer.from("<svg>fake</svg>"));
 });
 
@@ -94,29 +128,23 @@ describe("render", () => {
 	});
 
 	it("throws when lilypond exits with a non-zero status", async () => {
-		mockExecFile.mockImplementation(((
-			_bin: string,
-			_args: string[],
-			cb: (err: Error & { stderr?: string }) => void,
-		) =>
+		mockExecFileResult((cb) =>
 			cb(
 				Object.assign(new Error("Command failed"), {
 					stderr: "fatal error: bad input",
 				}),
-			)) as typeof execFile);
+			),
+		);
 		await expect(render("bad")).rejects.toThrow("fatal error: bad input");
 	});
 
 	it("does not throw when lilypond writes warnings to stderr but exits zero", async () => {
-		mockExecFile.mockImplementation(((
-			_bin: string,
-			_args: string[],
-			cb: (err: null, res: { stdout: string; stderr: string }) => void,
-		) =>
+		mockExecFileResult((cb) =>
 			cb(null, {
 				stdout: "",
 				stderr: "warning: some other unexpected warning",
-			})) as typeof execFile);
+			}),
+		);
 		await expect(render("\\score { }")).resolves.toBeInstanceOf(Buffer);
 	});
 
@@ -124,21 +152,47 @@ describe("render", () => {
 		const writeSpy = vi
 			.spyOn(process.stderr, "write")
 			.mockImplementation(() => true);
-		mockExecFile.mockImplementation(((
-			_bin: string,
-			_args: string[],
-			cb: (err: null, res: { stdout: string; stderr: string }) => void,
-		) =>
+		mockExecFileResult((cb) =>
 			cb(null, {
 				stdout: "",
 				stderr:
 					"Processing `input.ly'\nSuccess: compilation successfully completed",
-			})) as typeof execFile);
+			}),
+		);
 		await render("\\score { }");
 		expect(writeSpy).toHaveBeenCalledWith(
 			"Processing `input.ly'\nSuccess: compilation successfully completed",
 		);
 		writeSpy.mockRestore();
+	});
+
+	it("passes signal and maxBuffer options to execFile", async () => {
+		await render("\\score { }");
+		const [, , options] = mockExecFile.mock.calls[0] as unknown as [
+			string,
+			string[],
+			{ signal: AbortSignal; maxBuffer: number },
+		];
+		expect(options.signal).toBeInstanceOf(AbortSignal);
+		expect(options.maxBuffer).toBeGreaterThan(1024 * 1024);
+	});
+
+	it("throws a clear message when lilypond times out", async () => {
+		mockExecFile.mockImplementation(((
+			_bin: string,
+			_args: string[],
+			_options: unknown,
+			cb: ExecFileCb,
+		) => {
+			cb(
+				Object.assign(new Error("The operation was aborted"), {
+					name: "AbortError",
+				}),
+			);
+		}) as typeof execFile);
+		await expect(render("\\score { }", { timeout: 5000 })).rejects.toThrow(
+			"lilypond timed out after 5000ms",
+		);
 	});
 
 	it("passes --include for each includePaths entry so \\include can find sibling files", async () => {

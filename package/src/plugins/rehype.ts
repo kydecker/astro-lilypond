@@ -1,13 +1,13 @@
 import { visit } from "unist-util-visit";
-import { defaultOptions, render } from "./render.js";
-import type { LilypondPluginOptions } from "./util.js";
+import { defaultOptions, render } from "../render.js";
 import {
 	includePathsFor,
 	isLilypondLang,
 	prependVersion,
 	renderToHtml,
 	sourceNameFor,
-} from "./util.js";
+} from "../utils/index.js";
+import type { PluginOptions } from "./types.js";
 
 // Raw node type — an Astro/rehype extension not in the standard @types/hast
 interface RawNode {
@@ -15,11 +15,11 @@ interface RawNode {
 	value: string;
 }
 
-export type RehypePluginOptions = LilypondPluginOptions;
+export type RehypePluginOptions = PluginOptions;
 
 // Typed loosely so it's assignable to both RehypePlugin and the unified
 // Plugin generic regardless of which @types/hast version the host project pins.
-export function rehypeLilypondPlugin(
+export function rehypePlugin(
 	options: RehypePluginOptions = {},
 	// biome-ignore lint/suspicious/noExplicitAny: see above
 ): (tree: any, file?: { path?: string }) => Promise<void> {
@@ -63,6 +63,7 @@ export function rehypeLilypondPlugin(
 				format,
 				resolution: options.resolution,
 				crop: options.crop,
+				timeout: options.timeout,
 				includePaths,
 				sourceName,
 			}).then((buf): void => {

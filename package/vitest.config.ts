@@ -7,14 +7,14 @@ export default getViteConfig({
 				extends: true,
 				test: {
 					name: "unit",
-					include: ["tests/unit/**/*.test.ts"],
+					include: ["src/**/*.test.ts", "components/**/*.test.ts"],
 				},
 			},
 			{
 				extends: true,
 				test: {
 					name: "integration",
-					include: ["tests/integration/**/*.test.ts"],
+					include: ["tests/*.test.ts"],
 					testTimeout: 60_000,
 					hookTimeout: 60_000,
 					maxConcurrency: 10,

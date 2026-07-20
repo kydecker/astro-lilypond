@@ -2,25 +2,27 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import type { AstroIntegration } from "astro";
 import type { Plugin } from "vite";
-import { rehypeLilypondPlugin } from "./rehype-plugin.js";
-import { remarkLilypondPlugin } from "./remark-plugin.js";
+import {
+	type PluginOptions,
+	rehypePlugin,
+	remarkPlugin,
+	satteriPlugin,
+} from "./plugins/index.js";
 import { defaultOptions, render } from "./render.js";
-import { satteriLilypondPlugin } from "./satteri-plugin.js";
-import type { LilypondPluginOptions } from "./util.js";
 import {
 	includePathsFor,
 	prependVersion,
 	renderToHtml,
 	sourceNameFor,
-} from "./util.js";
+} from "./utils/index.js";
 
 const execFileAsync = promisify(execFile);
 
 const LY_EXTENSIONS = [".ly", ".lilypond", ".ily"] as const;
 
-export type { LilypondPluginOptions };
+export type { PluginOptions as LilypondPluginOptions };
 
-export interface LilypondOptions extends LilypondPluginOptions {
+export interface LilypondOptions extends PluginOptions {
 	/**
 	 * LilyPond version string to prepend automatically to every block that
 	 * doesn't already declare `\version`. Example: `"2.24.0"`.
@@ -43,6 +45,11 @@ export interface LilypondOptions extends LilypondPluginOptions {
 	 * Crop the output tightly to the content bounding box. Defaults to `true`.
 	 */
 	crop?: boolean;
+	/**
+	 * Milliseconds to wait for a single `lilypond` invocation before
+	 * aborting it. Defaults to `60000` (60s).
+	 */
+	timeout?: number;
 }
 
 function lyFilePlugin(options: LilypondOptions): Plugin {
@@ -59,6 +66,7 @@ function lyFilePlugin(options: LilypondOptions): Plugin {
 				format,
 				resolution: options.resolution,
 				crop: options.crop,
+				timeout: options.timeout,
 				includePaths: includePathsFor(id),
 				sourceName: sourceNameFor(id),
 			});
@@ -111,7 +119,7 @@ export default function lilypond(
 								...existingOptions,
 								mdastPlugins: [
 									...(existingOptions.mdastPlugins ?? []),
-									satteriLilypondPlugin(options),
+									satteriPlugin(options),
 								],
 							}),
 						},
@@ -139,11 +147,11 @@ export default function lilypond(
 								...existingOptions,
 								remarkPlugins: [
 									...(existingOptions.remarkPlugins ?? []),
-									[remarkLilypondPlugin, options],
+									[remarkPlugin, options],
 								],
 								rehypePlugins: [
 									...(existingOptions.rehypePlugins ?? []),
-									[rehypeLilypondPlugin, options],
+									[rehypePlugin, options],
 								],
 							}),
 						},
