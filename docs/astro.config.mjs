@@ -39,6 +39,14 @@ export default defineConfig({
 						content: "/preview.png",
 					},
 				},
+				{
+					tag: "script",
+					attrs: {
+						src: "https://cdn.usefathom.com/script.js",
+						"data-site": "ZRLAYFME",
+						defer: true,
+					},
+				},
 			],
 			social: [
 				{
