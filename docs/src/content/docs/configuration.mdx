@@ -130,7 +130,14 @@ export default defineConfig({
 
 Output files will be built, pruned, and rebuilt as needed. You can commit the generated files to cut down on build times; if the score hasn't changed, `astro-lilypond` will skip regenerating the image.
 
-If you prefer to exclude generated images from your repository and build them from scratch each time, add the output directory to your `.gitignore`:
+If you choose to commit the generated files, it's recommended to mark the output directory as [generated](https://docs.github.com/en/repositories/working-with-files/managing-files/customizing-how-changed-files-appear-on-github) in a `.gitattributes` file:
+
+```ini title=".gitattributes"
+# exclude generated files from diff counts and language stats
+public/_lilypond/* linguist-generated
+```
+
+If you prefer to exclude generated images from your repository, they will be built from scratch each time. Add the output directory to your `.gitignore`:
 
 ```ini title=".gitignore"
 # exclude generated LilyPond images
