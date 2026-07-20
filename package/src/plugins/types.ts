@@ -8,9 +8,7 @@ export interface PluginOptions {
 
 /**
  * `PluginOptions` plus the filesystem/URL details resolved once from Astro's
- * config in `astro:config:setup`, threaded into each markdown plugin so it
- * can write rendered assets to disk and reference them by URL. Internal
- * only — not part of the package's public API.
+ * config in `astro:config:setup`. Internal only.
  */
 export interface ResolvedPluginOptions extends PluginOptions {
 	/** Absolute filesystem path assets are written into. */

@@ -40,8 +40,8 @@ const remarkLilypondPlugin = _remarkLilypondPlugin as unknown as SimplePlugin;
 beforeEach(() => {
 	vi.clearAllMocks();
 	mockRender.mockResolvedValue(Buffer.from(FAKE_SVG));
-	// Simulates a cache miss: invokes the deferred render (so tests can still
-	// assert on render()'s call args) and returns a predictable URL.
+
+	// Simulate a cache miss; invoke the render function
 	mockWriteAsset.mockImplementation(async (opts) => {
 		await opts.getBuffer();
 		return `/_lilypond/mock-hash.${opts.title}.${opts.format}`;
