@@ -2,7 +2,7 @@
 	"name": "astro-lilypond-workspace",
 	"private": true,
 	"type": "module",
-	"packageManager": "pnpm@11.13.0",
+	"packageManager": "pnpm@11.15.1",
 	"scripts": {
 		"dev:docs": "pnpm --filter docs dev",
 		"build": "pnpm --filter astro-lilypond build",
