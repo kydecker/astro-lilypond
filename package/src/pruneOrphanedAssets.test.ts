@@ -59,6 +59,16 @@ describe("pruneOrphanedAssets", () => {
 		);
 	});
 
+	it("logs a path relative to the current working directory, not the absolute cwd prefix", async () => {
+		await writeFile(join(dir, "aaaa.score.svg"), "orphaned");
+		const logger = { info: vi.fn() };
+
+		await pruneOrphanedAssets({ dir, referenced: new Set(), logger });
+
+		const [message] = logger.info.mock.calls[0] as [string];
+		expect(message).not.toContain(process.cwd());
+	});
+
 	it("does not log when nothing is pruned", async () => {
 		await writeFile(join(dir, "aaaa.score.svg"), "kept");
 		const logger = { info: vi.fn() };

@@ -1,5 +1,5 @@
 import { readdir, unlink } from "node:fs/promises";
-import { join } from "node:path";
+import { join, relative } from "node:path";
 
 const OWN_ASSET_NAME = /^[0-9a-f]+\.[a-zA-Z0-9_-]+\.(?:svg|png)$/;
 
@@ -39,8 +39,9 @@ export async function pruneOrphanedAssets(
 	await Promise.all(orphaned.map((name) => unlink(join(dir, name))));
 
 	if (orphaned.length > 0) {
+		const relativeDir = relative(process.cwd(), dir) || ".";
 		logger?.info(
-			`astro-lilypond: pruned ${orphaned.length} orphaned asset${orphaned.length === 1 ? "" : "s"} from ${dir}`,
+			`astro-lilypond: pruned ${orphaned.length} orphaned asset${orphaned.length === 1 ? "" : "s"} from ${relativeDir}`,
 		);
 	}
 }
