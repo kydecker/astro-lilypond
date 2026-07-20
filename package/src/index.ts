@@ -4,7 +4,6 @@ import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import type { AstroIntegration } from "astro";
 import type { Plugin } from "vite";
-import { DEV_ASSETS_DIR_ENV } from "./devAssetsEnvVar.js";
 import {
 	type PluginOptions,
 	type ResolvedPluginOptions,
@@ -67,9 +66,10 @@ export interface LilypondOptions extends PluginOptions {
 
 	/**
 	 * Directory name, relative to Astro's `publicDir`, that rendered assets
-	 * are written into by `astro build`. Filenames are content-addressed, so
-	 * unchanged scores are reused across builds instead of being re-rendered,
-	 * and it's safe to commit this directory if you'd like faster rebuilds.
+	 * are written into by both `astro dev` and `astro build`. Filenames are
+	 * content-addressed, so unchanged scores are reused instead of being
+	 * re-rendered, and it's safe to commit this directory if you'd like
+	 * faster rebuilds.
 	 *
 	 * @default "_lilypond"
 	 */
@@ -125,13 +125,7 @@ export default function lilypond(
 	return {
 		name: "astro-lilypond",
 		hooks: {
-			"astro:config:setup": async ({
-				command,
-				config,
-				updateConfig,
-				injectRoute,
-				logger,
-			}) => {
+			"astro:config:setup": async ({ config, updateConfig, logger }) => {
 				await execFileAsync("lilypond", ["--version"]).catch(
 					(err: NodeJS.ErrnoException) => {
 						if (err.code === "ENOENT") {
@@ -145,14 +139,11 @@ export default function lilypond(
 				const outputDirName = options.outputDir ?? "_lilypond";
 				const assetsUrlBase = assetsUrlBaseFor(config.base, outputDirName);
 
-				const isBuild = command === "build";
-				assetsDir = isBuild
-					? join(fileURLToPath(config.publicDir), outputDirName)
-					: join(
-							fileURLToPath(config.cacheDir),
-							"astro-lilypond",
-							outputDirName,
-						);
+				// Written under publicDir in both dev and build, so Astro/Vite's
+				// existing static-file serving (already responsible for the rest
+				// of publicDir) picks up newly rendered assets with no separate
+				// dev-only serving path to keep in sync.
+				assetsDir = join(fileURLToPath(config.publicDir), outputDirName);
 
 				const resolvedOptions: ResolvedPluginOptions = {
 					...options,
@@ -164,15 +155,6 @@ export default function lilypond(
 				updateConfig({
 					vite: { plugins: [lyFilePlugin(resolvedOptions)] },
 				});
-
-				if (!isBuild) {
-					process.env[DEV_ASSETS_DIR_ENV] = assetsDir;
-					injectRoute({
-						pattern: `/${outputDirName}/[fileName]`,
-						entrypoint: new URL("./devAssetEndpoint.js", import.meta.url),
-						prerender: false,
-					});
-				}
 
 				const existingProcessor = config.markdown?.processor;
 

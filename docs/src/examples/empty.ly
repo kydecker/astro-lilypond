@@ -11,5 +11,5 @@
   \with {
     \omit TimeSignature
   }
-  { s1 s s \bar "|." }
+  { s1 s s s }
 }
