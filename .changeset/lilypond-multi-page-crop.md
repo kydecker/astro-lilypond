@@ -2,7 +2,7 @@
 "astro-lilypond": minor
 ---
 
-**BREAKING**: `<LilyPond>` `.ly` imports now support multi-page output, and no longer crop by default.
+**BREAKING**: `<LilyPond>` `.ly` imports now support multi-page output, and no longer crop all scores by default.
 
 Previously, every score rendered by `astro-lilypond` was cropped to a single, tightly-bounded image by default. Now:
 
@@ -13,7 +13,7 @@ Previously, every score rendered by `astro-lilypond` was cropped to a single, ti
 This is controlled by `defaults.crop`, which now accepts `true | false | "markdown-only"` (previously just `boolean`) and defaults to `"markdown-only"` (previously `true`):
 
 - `"markdown-only"` (new default): crop Markdown fences; leave `<LilyPond>` imports as full pages.
-- `true`: crop everywhere — matches the old default behavior.
+- `true`: crop everywhere (old default)
 - `false`: never crop by default.
 
 To upgrade:
