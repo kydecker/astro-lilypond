@@ -134,8 +134,8 @@ describe("render", () => {
 		expect(defaultOptions.defaults.crop).toBe(true);
 	});
 
-	it("has no default version, so blocks must declare \\version themselves unless configured", () => {
-		expect(defaultOptions.defaults.version).toBeUndefined();
+	it("version defaults to 2.26.0", () => {
+		expect(defaultOptions.defaults.version).toBe("2.26.0");
 	});
 
 	it("throws when format is unsupported", async () => {

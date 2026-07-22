@@ -17,8 +17,8 @@ export type Format = (typeof FORMATS)[number];
 export interface LilypondDefaults {
 	/**
 	 * LilyPond version to use for every block that
-	 * doesn't already declare `\version`. When unset, blocks must
-	 * declare `\version` themselves.
+	 * doesn't already declare `\version`.
+	 * @default "2.26.0"
 	 */
 	version?: LilypondVersion;
 
@@ -86,13 +86,12 @@ export interface RenderOptions {
 
 export const defaultOptions: Required<
 	Omit<RenderOptions, "includePaths" | "sourceName" | "defaults">
-> & {
-	defaults: Required<LilypondDefines> & Pick<LilypondDefaults, "version">;
-} = {
+> & { defaults: Required<LilypondDefaults> } = {
 	format: "svg",
 	binaryPath: "lilypond",
 	timeout: 60_000,
 	defaults: {
+		version: "2.26.0",
 		resolution: 144,
 		crop: true,
 	},
