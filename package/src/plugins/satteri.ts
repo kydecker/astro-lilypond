@@ -1,6 +1,6 @@
 import type { Code, Html } from "mdast";
 import type { MdastPluginDefinition, MdastVisitorContext } from "satteri";
-import { defaultOptions, render } from "../render.js";
+import { defaultOptions, render, resolveCrop } from "../render.js";
 import {
 	contentHashFor,
 	includePathsFor,
@@ -39,8 +39,7 @@ export function satteriPlugin(
 			const includePaths = includePathsFor(ctx.fileURL);
 			const sourceName = sourceNameFor(ctx.fileURL);
 			const title = titleFor(sourceName);
-			// Markdown fences crop unless `defaults.crop` is explicitly `false`.
-			const crop = cropSetting !== false;
+			const crop = resolveCrop(cropSetting, "markdown");
 			const hash = contentHashFor({ source, format, resolution, crop });
 			const assets = await writeAssets({
 				hash,

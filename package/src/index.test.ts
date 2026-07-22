@@ -3,6 +3,8 @@ import { describe, expect, it, vi } from "vitest";
 vi.mock("./render.js", () => ({
 	render: vi.fn().mockRejectedValue(new Error("mock render failure")),
 	FORMATS: ["png", "svg"],
+	resolveCrop: (cropSetting: unknown, context: "markdown" | "component") =>
+		context === "markdown" ? cropSetting !== false : cropSetting === true,
 	defaultOptions: {
 		format: "svg",
 		crop: true,

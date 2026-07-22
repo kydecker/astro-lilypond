@@ -23,6 +23,30 @@ export type Format = (typeof FORMATS)[number];
 export type CropSetting = boolean | "markdown-only";
 
 /**
+ * Which kind of consumer is asking `resolveCrop` to interpret a
+ * `CropSetting` — see `resolveCrop`.
+ */
+export type CropContext = "markdown" | "component";
+
+/**
+ * Resolves the three-way `CropSetting` into the plain boolean a given
+ * consumer needs. This is the single definition of the truth table
+ * `CropSetting` encodes, shared by every plugin that reads `defaults.crop`
+ * (Markdown fences and `<LilyPond>` `.ly` imports), instead of each one
+ * re-deriving it independently.
+ *
+ * - `"markdown"` — crop unless `cropSetting` is explicitly `false`.
+ * - `"component"` — crop only when `cropSetting` is explicitly `true`;
+ *   `"markdown-only"` (the default) and `false` both mean uncropped.
+ */
+export function resolveCrop(
+	cropSetting: CropSetting,
+	context: CropContext,
+): boolean {
+	return context === "markdown" ? cropSetting !== false : cropSetting === true;
+}
+
+/**
  * Defaults passed to each score for rendering.
  * Individual `.ly` files can still override.
  */
@@ -48,6 +72,15 @@ export interface LilypondDefaults {
 	crop?: CropSetting;
 }
 
+/**
+ * The subset of `LilypondDefaults` that `render()` itself reads. `version`
+ * is applied earlier — prepended to source text before it reaches
+ * `render()` — and `crop`'s three-way markdown/component semantics are
+ * resolved by the caller (via `resolveCrop`) into the plain `crop` option
+ * below. Both are excluded here since `render()` ignores them if present.
+ */
+export type RenderDefaults = Omit<LilypondDefaults, "version" | "crop">;
+
 export interface RenderOptions {
 	/**
 	 * Output format.
@@ -64,11 +97,10 @@ export interface RenderOptions {
 	crop?: boolean;
 
 	/**
-	 * Defaults for rendering each score. `version` is not read here — it's
-	 * applied earlier, by prepending it to the source text before it
-	 * reaches `render()`.
+	 * Defaults for rendering each score. `version` and `crop` aren't read
+	 * here — see `RenderDefaults`.
 	 */
-	defaults?: LilypondDefaults;
+	defaults?: RenderDefaults;
 
 	/**
 	 * Path to the `lilypond` binary.

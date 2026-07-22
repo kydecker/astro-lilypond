@@ -12,11 +12,17 @@ import {
 	remarkPlugin,
 	satteriPlugin,
 } from "./plugins/index.js";
-import { defaultOptions, type LilypondDefaults, render } from "./render.js";
+import {
+	defaultOptions,
+	type LilypondDefaults,
+	render,
+	resolveCrop,
+} from "./render.js";
 import {
 	assetsUrlBaseFor,
 	contentHashFor,
 	includePathsFor,
+	parseLyImportQuery,
 	prependVersion,
 	renderedHtml,
 	resolveDefaults,
@@ -39,8 +45,8 @@ export interface LilypondOptions extends PluginOptions {
 	format?: "svg" | "png";
 
 	/**
-	 * Defaults passed to each score — `version`, `resolution`.
-	 * Each can still be overridden by an individual `.ly` file.
+	 * Defaults passed to each score.
+	 * Defaults can still be overridden by individual `.ly` files.
 	 */
 	defaults?: LilypondDefaults;
 
@@ -68,34 +74,20 @@ function lyFilePlugin(options: ResolvedPluginOptions): Plugin {
 		name: "vite-plugin-astro-lilypond-ly",
 		enforce: "pre",
 		async transform(source, id) {
-			const queryIndex = id.indexOf("?");
-			const pathname = queryIndex === -1 ? id : id.slice(0, queryIndex);
-			if (!LY_EXTENSIONS.some((ext) => pathname.endsWith(ext))) return;
-
 			// Only claim imports whose query params we recognize — anything
 			// else (Vite's built-in `?raw`, `?url`, etc.) isn't ours to
 			// render, so let it fall through to whichever plugin owns it.
-			const params = new URLSearchParams(
-				queryIndex === -1 ? "" : id.slice(queryIndex + 1),
-			);
-			if ([...params.keys()].some((key) => key !== "crop" && key !== "nocrop"))
-				return;
+			const query = parseLyImportQuery(id);
+			if (!query) return;
+			const { pathname, cropOverride } = query;
+			if (!LY_EXTENSIONS.some((ext) => pathname.endsWith(ext))) return;
 
 			const {
 				version,
 				resolution,
 				crop: cropSetting,
 			} = resolveDefaults(options.defaults);
-			// Component imports crop only when `defaults.crop` is explicitly
-			// `true` — `"markdown-only"` (the default) and `false` both mean
-			// uncropped — unless the import itself opts in (`?crop`) or out
-			// (`?nocrop`).
-			const defaultCrop = cropSetting === true;
-			const crop = params.has("crop")
-				? true
-				: params.has("nocrop")
-					? false
-					: defaultCrop;
+			const crop = cropOverride ?? resolveCrop(cropSetting, "component");
 			const src = version ? prependVersion(source, version) : source;
 			const format = options.format ?? defaultOptions.format;
 			const includePaths = includePathsFor(pathname);

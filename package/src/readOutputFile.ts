@@ -22,6 +22,19 @@ function byPageNumber(a: RegExpMatchArray, b: RegExpMatchArray): number {
 	return Number(a[1]) - Number(b[1]);
 }
 
+/**
+ * Multi-page naming convention LilyPond uses for each output format: SVG
+ * (and PDF/PS/EPS, should they be added to `FORMATS`) number pages as
+ * `<base>-1.<ext>`; PNG numbers them as `<base>-page1.<ext>`. Declared
+ * explicitly per format so adding a format means stating its convention
+ * here, rather than trying every known pattern in turn and hoping exactly
+ * one happens to match.
+ */
+const PAGE_NUMBER_INFIX: Record<Format, string> = {
+	svg: "-",
+	png: "-page",
+};
+
 export async function readOutputFile(
 	base: string,
 	format: Format,
@@ -42,9 +55,10 @@ export async function readOutputFile(
 
 	// Regular output: single page → <base>.<format>, multi-page →
 	// <base>-1.<format>, <base>-2.<format>, ... (svg/pdf) or
-	// <base>-page1.<format>, <base>-page2.<format>, ... (png). List the
-	// directory once rather than probing candidate paths one at a time, so
-	// the full page count is known up front instead of guessed at.
+	// <base>-page1.<format>, <base>-page2.<format>, ... (png), per
+	// `PAGE_NUMBER_INFIX`. List the directory once rather than probing
+	// candidate paths one at a time, so the full page count is known up
+	// front instead of guessed at.
 	const dir = dirname(base);
 	const prefix = basename(base);
 	const entries = await readdir(dir);
@@ -53,22 +67,15 @@ export async function readOutputFile(
 		return [await readFile(join(dir, `${prefix}.${format}`))];
 	}
 
-	const numberedPattern = new RegExp(`^${prefix}-(\\d+)\\.${format}$`);
-	const numbered = entries
-		.map((name) => name.match(numberedPattern))
+	const pagePattern = new RegExp(
+		`^${prefix}${PAGE_NUMBER_INFIX[format]}(\\d+)\\.${format}$`,
+	);
+	const pages = entries
+		.map((name) => name.match(pagePattern))
 		.filter((match): match is RegExpMatchArray => match !== null)
 		.sort(byPageNumber);
-	if (numbered.length > 0) {
-		return Promise.all(numbered.map((match) => readFile(join(dir, match[0]))));
-	}
-
-	const pagedPattern = new RegExp(`^${prefix}-page(\\d+)\\.${format}$`);
-	const paged = entries
-		.map((name) => name.match(pagedPattern))
-		.filter((match): match is RegExpMatchArray => match !== null)
-		.sort(byPageNumber);
-	if (paged.length > 0) {
-		return Promise.all(paged.map((match) => readFile(join(dir, match[0]))));
+	if (pages.length > 0) {
+		return Promise.all(pages.map((match) => readFile(join(dir, match[0]))));
 	}
 
 	throw new Error(`no ${format} output found in ${dir}`);

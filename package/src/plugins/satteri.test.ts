@@ -4,6 +4,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("../render.js", () => ({
 	render: vi.fn(),
 	FORMATS: ["png", "svg"],
+	resolveCrop: (cropSetting: unknown, context: "markdown" | "component") =>
+		context === "markdown" ? cropSetting !== false : cropSetting === true,
 	defaultOptions: {
 		format: "svg",
 		crop: true,

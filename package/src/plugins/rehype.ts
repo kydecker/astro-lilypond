@@ -1,5 +1,5 @@
 import { visit } from "unist-util-visit";
-import { defaultOptions, render } from "../render.js";
+import { defaultOptions, render, resolveCrop } from "../render.js";
 import {
 	contentHashFor,
 	includePathsFor,
@@ -67,8 +67,7 @@ export function rehypePlugin(
 			} = resolveDefaults(options.defaults);
 			const source = version ? prependVersion(raw, version) : raw;
 			const format = options.format ?? defaultOptions.format;
-			// Markdown fences crop unless `defaults.crop` is explicitly `false`.
-			const crop = cropSetting !== false;
+			const crop = resolveCrop(cropSetting, "markdown");
 			const hash = contentHashFor({ source, format, resolution, crop });
 
 			const promise = writeAssets({
