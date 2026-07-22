@@ -6,7 +6,7 @@
 
 To upgrade, relocate `crop`, `resolution`, and `version` options inside of `defaults`:
 
-```diff lang="js"
+```diff
 // astro.config.mjs
 export default defineConfig({
   integrations: [
