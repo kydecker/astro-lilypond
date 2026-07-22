@@ -68,7 +68,7 @@ describe("LilyPond.astro", () => {
 		expect(result).toContain("&lt;script&gt;");
 	});
 
-	it("applies class and style to every page of multi-page content", async () => {
+	it("applies class and style to the <ol> wrapper of multi-page content", async () => {
 		const container = await AstroContainer.create();
 		const result = await container.renderToString(LilyPond, {
 			props: {
@@ -81,7 +81,11 @@ describe("LilyPond.astro", () => {
 				style: "width: 50%",
 			},
 		});
-		expect(result.match(/class="lilypond extra"/g)).toHaveLength(2);
-		expect(result.match(/style="width: 50%"/g)).toHaveLength(2);
+		const olTag = result.match(/<ol[^>]*>/)?.[0] ?? "";
+		expect(olTag).toContain('class="lilypond-pages extra"');
+		expect(olTag).toContain('style="width: 50%"');
+		expect(result.match(/class="lilypond extra"/g)).toBeNull();
+		expect(result.match(/<img[^>]*style="width: 50%"/g)).toBeNull();
+		expect(result.match(/class="lilypond"/g)).toHaveLength(2);
 	});
 });

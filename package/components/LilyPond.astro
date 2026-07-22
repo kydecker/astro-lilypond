@@ -21,11 +21,15 @@ const { content, class: className, style } = Astro.props;
 
 let html = content;
 // Multi-page output nests several `<img class="lilypond">` inside an
-// `<ol>` — apply class/style to every page, not just the first.
+// `<ol class="lilypond-pages">` — class/style apply only to that outermost
+// wrapper, not to every page's `<img>`.
 if (className)
-	html = html.replace(/class="lilypond"/g, `class="lilypond ${className}"`);
+	html = html.replace(
+		/class="(lilypond(?:-pages)?)"/,
+		`class="$1 ${className}"`,
+	);
 if (style)
-	html = html.replace(/<(svg|img)\b/g, `<$1 style="${escapeHtml(style)}"`);
+	html = html.replace(/<(ol|svg|img)\b/, `<$1 style="${escapeHtml(style)}"`);
 ---
 
 <Fragment set:html={html} />
