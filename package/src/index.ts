@@ -74,9 +74,8 @@ function lyFilePlugin(options: ResolvedPluginOptions): Plugin {
 		name: "vite-plugin-astro-lilypond-ly",
 		enforce: "pre",
 		async transform(source, id) {
-			// Only claim imports whose query params we recognize — anything
-			// else (Vite's built-in `?raw`, `?url`, etc.) isn't ours to
-			// render, so let it fall through to whichever plugin owns it.
+			// undefined means an unrecognized query param (e.g. Vite's `?raw`,
+			// `?url`) — not ours to render, so let it fall through.
 			const query = parseLyImportQuery(id);
 			if (!query) return;
 			const { pathname, cropOverride } = query;

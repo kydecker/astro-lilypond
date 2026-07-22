@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { access, mkdir, readdir, rename, writeFile } from "node:fs/promises";
+import { access, mkdir, rename, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { Format } from "./render.js";
 
@@ -53,6 +53,34 @@ function pageFileName(
 		: `${hash}.${title}-p${page}.${format}`;
 }
 
+async function exists(path: string): Promise<boolean> {
+	return access(path).then(
+		() => true,
+		() => false,
+	);
+}
+
+/**
+ * Finds every already-written sibling page after page 1, stopping at the
+ * first missing page number — pages are written contiguously, so a gap
+ * means the end. Costs one `access()` per actual page (typically 0-2)
+ * rather than listing the whole (potentially large, shared) `outputDir`.
+ */
+async function existingSiblingPages(
+	outputDir: string,
+	hash: string,
+	title: string,
+	format: Format,
+): Promise<string[]> {
+	const siblings: string[] = [];
+	for (let page = 2; ; page++) {
+		const fileName = pageFileName(hash, title, format, page);
+		if (!(await exists(join(outputDir, fileName)))) break;
+		siblings.push(fileName);
+	}
+	return siblings;
+}
+
 /**
  * Persists rendered pages to content-addressed files under `outputDir`,
  * skipping the render entirely if page 1 already exists on disk, and returns
@@ -66,28 +94,15 @@ export async function writeAssets(
 	const page1Name = pageFileName(hash, title, format, 1);
 	const page1Path = join(outputDir, page1Name);
 
-	const alreadyWritten = await access(page1Path).then(
-		() => true,
-		() => false,
-	);
+	const alreadyWritten = await exists(page1Path);
 
 	let fileNames: string[];
 
 	if (alreadyWritten) {
-		// The hash is a deterministic function of the render inputs, so if
-		// page 1 was written, every sibling page was too — list the
-		// directory once to find out how many there are, rather than
-		// probing page 2, 3, ... one at a time. `hash`/`title` are already
-		// restricted to `[a-zA-Z0-9_-]+` by `contentHashFor`/`titleFor`, so
-		// they're safe to interpolate directly into the pattern.
-		const pagePattern = new RegExp(`^${hash}\\.${title}-p(\\d+)\\.${format}$`);
-		const entries = await readdir(outputDir);
-		const laterPages = entries
-			.map((name) => name.match(pagePattern))
-			.filter((match): match is RegExpMatchArray => match !== null)
-			.sort((a, b) => Number(a[1]) - Number(b[1]))
-			.map((match) => match[0]);
-		fileNames = [page1Name, ...laterPages];
+		fileNames = [
+			page1Name,
+			...(await existingSiblingPages(outputDir, hash, title, format)),
+		];
 	} else {
 		const buffers = await getBuffers();
 		fileNames = buffers.map((_, i) => pageFileName(hash, title, format, i + 1));

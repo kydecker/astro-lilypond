@@ -22,22 +22,13 @@ export type Format = (typeof FORMATS)[number];
  */
 export type CropSetting = boolean | "markdown-only";
 
-/**
- * Which kind of consumer is asking `resolveCrop` to interpret a
- * `CropSetting` — see `resolveCrop`.
- */
+/** Which kind of consumer is resolving a `CropSetting` — see `resolveCrop`. */
 export type CropContext = "markdown" | "component";
 
 /**
  * Resolves the three-way `CropSetting` into the plain boolean a given
- * consumer needs. This is the single definition of the truth table
- * `CropSetting` encodes, shared by every plugin that reads `defaults.crop`
- * (Markdown fences and `<LilyPond>` `.ly` imports), instead of each one
- * re-deriving it independently.
- *
- * - `"markdown"` — crop unless `cropSetting` is explicitly `false`.
- * - `"component"` — crop only when `cropSetting` is explicitly `true`;
- *   `"markdown-only"` (the default) and `false` both mean uncropped.
+ * consumer needs, per the semantics documented on `CropSetting`. Shared by
+ * every plugin that reads `defaults.crop`, instead of each re-deriving it.
  */
 export function resolveCrop(
 	cropSetting: CropSetting,
@@ -74,10 +65,8 @@ export interface LilypondDefaults {
 
 /**
  * The subset of `LilypondDefaults` that `render()` itself reads. `version`
- * is applied earlier — prepended to source text before it reaches
- * `render()` — and `crop`'s three-way markdown/component semantics are
- * resolved by the caller (via `resolveCrop`) into the plain `crop` option
- * below. Both are excluded here since `render()` ignores them if present.
+ * and `crop` are resolved by the caller before reaching `render()`
+ * (`version` by prepending it to source text, `crop` via `resolveCrop`).
  */
 export type RenderDefaults = Omit<LilypondDefaults, "version" | "crop">;
 

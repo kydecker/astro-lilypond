@@ -23,12 +23,10 @@ function byPageNumber(a: RegExpMatchArray, b: RegExpMatchArray): number {
 }
 
 /**
- * Multi-page naming convention LilyPond uses for each output format: SVG
- * (and PDF/PS/EPS, should they be added to `FORMATS`) number pages as
- * `<base>-1.<ext>`; PNG numbers them as `<base>-page1.<ext>`. Declared
- * explicitly per format so adding a format means stating its convention
- * here, rather than trying every known pattern in turn and hoping exactly
- * one happens to match.
+ * Multi-page naming convention per format: SVG (and PDF/PS/EPS, should they
+ * be added to `FORMATS`) uses `<base>-1.<ext>`; PNG uses `<base>-page1.<ext>`.
+ * Listed explicitly so adding a format means stating its convention here,
+ * not guessing among known patterns.
  */
 const PAGE_NUMBER_INFIX: Record<Format, string> = {
 	svg: "-",
@@ -53,12 +51,9 @@ export async function readOutputFile(
 		}
 	}
 
-	// Regular output: single page → <base>.<format>, multi-page →
-	// <base>-1.<format>, <base>-2.<format>, ... (svg/pdf) or
-	// <base>-page1.<format>, <base>-page2.<format>, ... (png), per
-	// `PAGE_NUMBER_INFIX`. List the directory once rather than probing
-	// candidate paths one at a time, so the full page count is known up
-	// front instead of guessed at.
+	// Regular output: single page → <base>.<format>; multi-page → numbered
+	// per `PAGE_NUMBER_INFIX`. List the directory once so the full page
+	// count is known up front, rather than probing paths one at a time.
 	const dir = dirname(base);
 	const prefix = basename(base);
 	const entries = await readdir(dir);
