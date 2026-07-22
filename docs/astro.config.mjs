@@ -12,9 +12,7 @@ export default defineConfig({
 		imageService: "passthrough",
 	}),
 	integrations: [
-		lilypond({
-			version: "2.26.0",
-		}),
+		lilypond(),
 		starlight({
 			title: "Astro LilyPond",
 			description: "Render LilyPond music notation to images with Astro.",

@@ -1,6 +1,8 @@
 ---
 title: Configuration
 description: Options available when calling lilypond() in your Astro config.
+tableOfContents:
+  maxHeadingLevel: 4
 ---
 
 import FencedLilypond from "../../components/FencedLilypond.astro";
@@ -16,7 +18,13 @@ import lilypond from 'astro-lilypond';
 export default defineConfig({
   integrations: [
     lilypond({
-      // config
+      defaults: {
+        crop: true,
+        resolution: 144,
+        version: "2.26.0",
+      },
+      format: "svg",
+      outputDir: "_lilypond"
     }),
   ],
 });
@@ -24,31 +32,71 @@ export default defineConfig({
 
 ## Options
 
-### `version`
+### `defaults`
 
-**Type:** `string`  
-**Default:** `undefined`
+**Type:** `object`
 
-All LilyPond content must specify `\version` at the start so that the compiler knows how to output the score.
-
-<FencedLilypond code={versionExample} />
-
-Specify `version` in the config to apply it to all LilyPond blocks by default:
+Default settings applied when rendering each score. Any individual `.ly` file can still override them with its own settings.
 
 ```js
-// astro.config.mjs  
+// astro.config.mjs
 export default defineConfig({
-   integrations: [
+  integrations: [
     lilypond({
-      version: "2.24.0"
+      format: "png",
+      defaults: {
+        version: "2.24.0", // Default to an older version
+        resolution: 300,   // Increase resolution
+        crop: false,       // Don't crop by default
+      }
     }),
   ],
 });
 ```
 
-With `version` set in the config, blocks can omit it.
+#### `defaults.crop`
 
-Blocks with an explicit `\version` declaration will always use that version, regardless of the global config.
+**Type:** `boolean`  
+**Default:** `true`
+
+When `true`, the margins are removed and the page is cropped to fit the rendered staves. Set to `false` to preserve full page dimensions.
+
+#### `defaults.resolution`
+
+**Type:** `number`  
+**Default:** `144`
+
+Resolution to render `.png` files, in DPI. Only applies when `format` is set to `png`.
+
+#### `defaults.version`
+
+**Type:** `string`  
+**Default:** `"2.26.0"`
+
+To know how to output text, LilyPond needs to know a `version` to use for compilation. This is usually defined at the start of each `.ly` file:
+
+<FencedLilypond code={versionExample} />
+
+By default, `astro-lilypond` will prepend this version for you, so you don't need to write it yourself, which is helpful if you are writing a lot of small, inline music examples.
+
+To pin your examples to a different default release, specify `version`:
+
+```js {5-7}
+// astro.config.mjs
+export default defineConfig({
+  integrations: [
+    lilypond({
+      defaults: {
+        version: "2.27.1" // Use the development release
+      }
+    }),
+  ],
+});
+```
+
+Blocks with an explicit `\version` declaration always use that version, regardless of the global config.
+
+Information about the latest releases can be found on the [LilyPond news](https://lilypond.org/news.html) page.
 
 ### `format`
 
@@ -57,51 +105,12 @@ Blocks with an explicit `\version` declaration will always use that version, reg
 
 The output format passed to the LilyPond binary. Controls how the rendered output is embedded in the page.
 
-```js
+```js {5}
 // astro.config.mjs
 export default defineConfig({
   integrations: [
     lilypond({
       format: "png"
-    }),
-  ],
-});
-```
-
-### `resolution`
-
-**Type:** `number`  
-**Default:** `144`
-
-Resolution to render `.png` files, in DPI. Only works when `format` is set to `png`.
-
-```js
-// astro.config.mjs
-export default defineConfig({
-  integrations: [
-    lilypond({
-      format: "png",
-      resolution: 300
-    }),
-  ],
-});
-```
-
-### `crop`
-
-**Type:** `boolean`  
-**Default:** `true`
-
-When `true`, the margins are removed and the page is cropped to fit the rendered staves.
-
-Set to `false` to preserve full page dimensions:
-
-```js
-// astro.config.mjs
-export default defineConfig({
-  integrations: [
-    lilypond({
-      crop: false
     }),
   ],
 });
@@ -114,12 +123,11 @@ export default defineConfig({
 
 Directory name that rendered scores are written to, relative to Astro's [`publicDir`](https://docs.astro.build/en/reference/configuration-reference/#publicdir) (`./public` by default). Files in this directory are served at `/` during dev and copied to your build directory during build.
 
-```js
+```js {5}
 // astro.config.mjs
 export default defineConfig({
   integrations: [
     lilypond({
-      // change output from `public/_lilypond` to `public/scores`
       outputDir: "scores"
     }),
   ],

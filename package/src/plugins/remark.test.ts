@@ -6,9 +6,12 @@ vi.mock("../render", () => ({
 	FORMATS: ["png", "svg"],
 	defaultOptions: {
 		format: "svg",
-		resolution: 144,
 		binaryPath: "lilypond",
-		crop: true,
+		timeout: 60_000,
+		defaults: {
+			resolution: 144,
+			crop: true,
+		},
 	},
 }));
 
@@ -78,8 +81,7 @@ describe("remarkLilypondPlugin", () => {
 
 		expect(mockRender).toHaveBeenCalledWith("\\score { }", {
 			format: "svg",
-			resolution: undefined,
-			crop: undefined,
+			defaults: undefined,
 			includePaths: ["."],
 			sourceName: "test.md",
 		});
@@ -119,8 +121,7 @@ describe("remarkLilypondPlugin", () => {
 
 		expect(mockRender).toHaveBeenCalledWith("\\score { }", {
 			format: "svg",
-			resolution: undefined,
-			crop: undefined,
+			defaults: undefined,
 			includePaths: ["."],
 			sourceName: "test.md",
 		});
@@ -135,8 +136,7 @@ describe("remarkLilypondPlugin", () => {
 
 		expect(mockRender).toHaveBeenCalledWith("\\score { }", {
 			format: "svg",
-			resolution: undefined,
-			crop: undefined,
+			defaults: undefined,
 			includePaths: ["."],
 			sourceName: "test.md",
 		});
@@ -170,7 +170,7 @@ describe("remarkLilypondPlugin", () => {
 	});
 
 	it("prepends \\version when the version option is set", async () => {
-		const options = { ...BASE_OPTIONS, version: "2.24.0" };
+		const options = { ...BASE_OPTIONS, defaults: { version: "2.24.0" } };
 		const plugin = remarkLilypondPlugin(
 			options,
 		) as unknown as SimpleTransformer;
@@ -182,15 +182,14 @@ describe("remarkLilypondPlugin", () => {
 
 		expect(mockRender).toHaveBeenCalledWith('\\version "2.24.0"\n\\score { }', {
 			format: "svg",
-			resolution: undefined,
-			crop: undefined,
+			defaults: { version: "2.24.0" },
 			includePaths: ["."],
 			sourceName: "test.md",
 		});
 	});
 
 	it("does not prepend \\version when the block already declares it", async () => {
-		const options = { ...BASE_OPTIONS, version: "2.24.0" };
+		const options = { ...BASE_OPTIONS, defaults: { version: "2.24.0" } };
 		const plugin = remarkLilypondPlugin(
 			options,
 		) as unknown as SimpleTransformer;
@@ -201,8 +200,7 @@ describe("remarkLilypondPlugin", () => {
 
 		expect(mockRender).toHaveBeenCalledWith(value, {
 			format: "svg",
-			resolution: undefined,
-			crop: undefined,
+			defaults: { version: "2.24.0" },
 			includePaths: ["."],
 			sourceName: "test.md",
 		});
@@ -235,8 +233,7 @@ describe("remarkLilypondPlugin", () => {
 
 		expect(mockRender).toHaveBeenCalledWith("\\score { }", {
 			format: "png",
-			resolution: undefined,
-			crop: undefined,
+			defaults: undefined,
 			includePaths: ["."],
 			sourceName: "test.md",
 		});
@@ -251,7 +248,7 @@ describe("remarkLilypondPlugin", () => {
 		const options = {
 			...BASE_OPTIONS,
 			format: "png" as const,
-			resolution: 300,
+			defaults: { resolution: 300 },
 		};
 		const plugin = remarkLilypondPlugin(
 			options,
@@ -264,15 +261,14 @@ describe("remarkLilypondPlugin", () => {
 
 		expect(mockRender).toHaveBeenCalledWith("\\score { }", {
 			format: "png",
-			resolution: 300,
-			crop: undefined,
+			defaults: { resolution: 300 },
 			includePaths: ["."],
 			sourceName: "test.md",
 		});
 	});
 
 	it("passes crop: false to render when the crop option is set to false", async () => {
-		const options = { ...BASE_OPTIONS, crop: false };
+		const options = { ...BASE_OPTIONS, defaults: { crop: false } };
 		const plugin = remarkLilypondPlugin(
 			options,
 		) as unknown as SimpleTransformer;
@@ -284,8 +280,7 @@ describe("remarkLilypondPlugin", () => {
 
 		expect(mockRender).toHaveBeenCalledWith("\\score { }", {
 			format: "svg",
-			resolution: undefined,
-			crop: false,
+			defaults: { crop: false },
 			includePaths: ["."],
 			sourceName: "test.md",
 		});
