@@ -20,10 +20,12 @@ interface Props {
 const { content, class: className, style } = Astro.props;
 
 let html = content;
+// Multi-page output nests several `<img class="lilypond">` inside an
+// `<ol>` — apply class/style to every page, not just the first.
 if (className)
-	html = html.replace('class="lilypond"', `class="lilypond ${className}"`);
+	html = html.replace(/class="lilypond"/g, `class="lilypond ${className}"`);
 if (style)
-	html = html.replace(/<(svg|img)\b/, `<$1 style="${escapeHtml(style)}"`);
+	html = html.replace(/<(svg|img)\b/g, `<$1 style="${escapeHtml(style)}"`);
 ---
 
 <Fragment set:html={html} />

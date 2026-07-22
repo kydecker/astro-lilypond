@@ -1,6 +1,6 @@
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import type { Format, LilypondDefines } from "./render.js";
+import type { Format } from "./render.js";
 
 const execFileAsync = promisify(execFile);
 
@@ -9,7 +9,8 @@ const MAX_BUFFER = 16 * 1024 * 1024; // 16 MiB
 export interface ExecLilypondOptions {
 	binaryPath: string;
 	format: Format;
-	defaults: Required<LilypondDefines>;
+	crop: boolean;
+	resolution: number;
 	includePaths: string[];
 	timeout: number;
 	inputPath: string;
@@ -27,13 +28,13 @@ export async function execLilyPond(
 	const {
 		binaryPath,
 		format,
-		defaults,
+		crop,
+		resolution,
 		includePaths,
 		timeout,
 		inputPath,
 		outputBase,
 	} = options;
-	const { resolution, crop } = defaults;
 
 	const args = [
 		// Render the correct format

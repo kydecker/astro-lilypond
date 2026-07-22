@@ -11,6 +11,18 @@ export const FORMATS = ["png", "svg"] as const;
 export type Format = (typeof FORMATS)[number];
 
 /**
+ * Controls whether rendered output is cropped tightly to the content
+ * bounding box, or left as full, potentially multi-page, output.
+ *
+ * - `true` — crop everywhere: Markdown fences and `<LilyPond>` `.ly` imports.
+ * - `false` — never crop by default (a `.ly` import can still opt in with
+ *   `?crop`).
+ * - `"markdown-only"` — crop Markdown fences, but leave `<LilyPond>` `.ly`
+ *   imports uncropped unless the import opts in with `?crop`.
+ */
+export type CropSetting = boolean | "markdown-only";
+
+/**
  * Defaults passed to each score for rendering.
  * Individual `.ly` files can still override.
  */
@@ -29,19 +41,12 @@ export interface LilypondDefaults {
 	resolution?: number;
 
 	/**
-	 * Crop the output tightly to the content bounding box.
-	 * Disable if full-page renders are preferred.
-	 * @default true
+	 * Crop the output tightly to the content bounding box, producing one
+	 * continuous image instead of paginated output.
+	 * @default "markdown-only"
 	 */
-	crop?: boolean;
+	crop?: CropSetting;
 }
-
-/**
- * The subset of `LilypondDefaults` passed to the `lilypond` binary itself
- * via `--define-default=<key>=<value>`. Excludes `version`, which is
- * applied earlier by prepending it to the source text.
- */
-export type LilypondDefines = Omit<LilypondDefaults, "version">;
 
 export interface RenderOptions {
 	/**
@@ -51,11 +56,19 @@ export interface RenderOptions {
 	format?: Format;
 
 	/**
+	 * Crop the output tightly to the content bounding box, producing one
+	 * continuous image instead of paginated output. Disable for full-page,
+	 * potentially multi-page output.
+	 * @default true
+	 */
+	crop?: boolean;
+
+	/**
 	 * Defaults for rendering each score. `version` is not read here — it's
 	 * applied earlier, by prepending it to the source text before it
 	 * reaches `render()`.
 	 */
-	defaults?: LilypondDefines;
+	defaults?: LilypondDefaults;
 
 	/**
 	 * Path to the `lilypond` binary.
@@ -88,29 +101,30 @@ export const defaultOptions: Required<
 	Omit<RenderOptions, "includePaths" | "sourceName" | "defaults">
 > & { defaults: Required<LilypondDefaults> } = {
 	format: "svg",
+	crop: true,
 	binaryPath: "lilypond",
 	timeout: 60_000,
 	defaults: {
 		version: "2.26.0",
 		resolution: 144,
-		crop: true,
+		crop: "markdown-only",
 	},
 };
 
 export async function render(
 	source: string,
 	options: RenderOptions = {},
-): Promise<Buffer> {
+): Promise<Buffer[]> {
 	const {
 		format = defaultOptions.format,
+		crop = defaultOptions.crop,
 		binaryPath = defaultOptions.binaryPath,
 		timeout = defaultOptions.timeout,
 		includePaths = [],
 		sourceName,
 	} = options;
 
-	const { resolution, crop } = resolveDefaults(options.defaults);
-	const defaults: Required<LilypondDefines> = { resolution, crop };
+	const { resolution } = resolveDefaults(options.defaults);
 
 	if (!FORMATS.includes(format)) {
 		throw new Error(`${format} is not a supported format`);
@@ -126,7 +140,8 @@ export async function render(
 		await execLilyPond({
 			binaryPath,
 			format,
-			defaults,
+			crop,
+			resolution,
 			includePaths,
 			timeout,
 			inputPath,

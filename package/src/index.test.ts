@@ -5,11 +5,12 @@ vi.mock("./render.js", () => ({
 	FORMATS: ["png", "svg"],
 	defaultOptions: {
 		format: "svg",
+		crop: true,
 		binaryPath: "lilypond",
 		timeout: 60_000,
 		defaults: {
 			resolution: 144,
-			crop: true,
+			crop: "markdown-only",
 		},
 	},
 }));
@@ -21,8 +22,10 @@ vi.mock("./deleteAssets.js", () => ({
 
 import { pruneOrphanedAssets } from "./deleteAssets.js";
 import lilypond from "./index.js";
+import { render } from "./render.js";
 
 const mockPruneOrphanedAssets = vi.mocked(pruneOrphanedAssets);
+const mockRender = vi.mocked(render);
 
 const FAKE_PUBLIC_DIR = new URL("file:///project/public/");
 
@@ -110,6 +113,83 @@ describe("lilypond integration", () => {
 				);
 			},
 		);
+
+		describe("crop", () => {
+			it("renders uncropped by default (defaults.crop defaults to markdown-only)", async () => {
+				const plugin = await getVitePlugin();
+				await plugin.transform("", "score.ly").catch(() => {});
+				expect(mockRender.mock.calls.at(-1)?.[1]).toMatchObject({
+					crop: false,
+				});
+			});
+
+			it("renders uncropped when defaults.crop is explicitly false", async () => {
+				const plugin = await getVitePlugin({ defaults: { crop: false } });
+				await plugin.transform("", "score.ly").catch(() => {});
+				expect(mockRender.mock.calls.at(-1)?.[1]).toMatchObject({
+					crop: false,
+				});
+			});
+
+			it("renders cropped by default when defaults.crop is explicitly true", async () => {
+				const plugin = await getVitePlugin({ defaults: { crop: true } });
+				await plugin.transform("", "score.ly").catch(() => {});
+				expect(mockRender.mock.calls.at(-1)?.[1]).toMatchObject({
+					crop: true,
+				});
+			});
+
+			it("forces cropped output when the import has a ?crop query param, overriding defaults.crop", async () => {
+				const plugin = await getVitePlugin();
+				await plugin.transform("", "score.ly?crop").catch(() => {});
+				expect(mockRender.mock.calls.at(-1)?.[1]).toMatchObject({ crop: true });
+			});
+
+			it("forces uncropped output when the import has a ?nocrop query param, overriding a defaults.crop of true", async () => {
+				const plugin = await getVitePlugin({ defaults: { crop: true } });
+				await plugin.transform("", "score.ly?nocrop").catch(() => {});
+				expect(mockRender.mock.calls.at(-1)?.[1]).toMatchObject({
+					crop: false,
+				});
+			});
+
+			it("still recognizes the extension when a query string is present", async () => {
+				const plugin = await getVitePlugin();
+				const skipped = await plugin
+					.transform("", "score.ly?crop")
+					.catch((err: Error) => err);
+				expect(skipped).toBeInstanceOf(Error);
+			});
+
+			it("still recognizes the extension when a ?nocrop query string is present", async () => {
+				const plugin = await getVitePlugin();
+				const skipped = await plugin
+					.transform("", "score.ly?nocrop")
+					.catch((err: Error) => err);
+				expect(skipped).toBeInstanceOf(Error);
+			});
+
+			it("leaves ?raw (and other query params it doesn't own) to Vite's built-in handling", async () => {
+				const plugin = await getVitePlugin();
+				mockRender.mockClear();
+
+				const result = await plugin.transform("", "score.ly?raw");
+
+				expect(result).toBeUndefined();
+				expect(mockRender).not.toHaveBeenCalled();
+			});
+
+			it("strips the query string before deriving sourceName/includePaths", async () => {
+				const plugin = await getVitePlugin();
+				await plugin.transform("", "/docs/src/score.ly?crop").catch(() => {});
+				const [, options] = mockRender.mock.calls.at(-1) as [
+					string,
+					{ sourceName?: string; includePaths?: string[] },
+				];
+				expect(options.sourceName).toBe("score.ly");
+				expect(options.includePaths).toEqual(["/docs/src"]);
+			});
+		});
 	});
 
 	it("registers the Sätteri mdast plugin when processor is satteri", async () => {

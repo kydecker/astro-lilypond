@@ -3,15 +3,15 @@ import type { MdastPluginDefinition, MdastVisitorContext } from "satteri";
 import { defaultOptions, render } from "../render.js";
 import {
 	contentHashFor,
-	imgTag,
 	includePathsFor,
 	isLilypondLang,
 	prependVersion,
+	renderedHtml,
 	resolveDefaults,
 	sourceNameFor,
 	titleFor,
 } from "../utils/index.js";
-import { writeAsset } from "../writeAsset.js";
+import { writeAssets } from "../writeAsset.js";
 import type { ResolvedPluginOptions } from "./types.js";
 
 export type SatteriPluginOptions = ResolvedPluginOptions;
@@ -29,24 +29,30 @@ export function satteriPlugin(
 			ctx: MdastVisitorContext,
 		): Promise<Html | undefined> {
 			if (!isLilypondLang(node.lang)) return undefined;
-			const { version, resolution, crop } = resolveDefaults(options.defaults);
+			const {
+				version,
+				resolution,
+				crop: cropSetting,
+			} = resolveDefaults(options.defaults);
 			const source = version ? prependVersion(node.value, version) : node.value;
 			const format = options.format ?? defaultOptions.format;
 			const includePaths = includePathsFor(ctx.fileURL);
 			const sourceName = sourceNameFor(ctx.fileURL);
 			const title = titleFor(sourceName);
+			// Markdown fences crop unless `defaults.crop` is explicitly `false`.
+			const crop = cropSetting !== false;
 			const hash = contentHashFor({ source, format, resolution, crop });
-			const fileName = `${hash}.${title}.${format}`;
-			const url = await writeAsset({
+			const assets = await writeAssets({
 				hash,
 				title,
 				format,
 				outputDir: options.assetsDir,
 				urlBase: options.assetsUrlBase,
 				trackAsset: options.trackAsset,
-				getBuffer: () =>
+				getBuffers: () =>
 					render(source, {
 						format,
+						crop,
 						defaults: options.defaults,
 						timeout: options.timeout,
 						includePaths,
@@ -57,12 +63,16 @@ export function satteriPlugin(
 			// Sätteri has no per-file "done" hook, so prune per block instead.
 			if (ctx.fileURL) {
 				const index = ctx.indexOf(node) ?? "root";
-				await options.pruneStaleAssets(`${ctx.fileURL.href}#${index}`, [
-					fileName,
-				]);
+				await options.pruneStaleAssets(
+					`${ctx.fileURL.href}#${index}`,
+					assets.map((asset) => asset.fileName),
+				);
 			}
 
-			return { type: "html", value: imgTag(url) };
+			return {
+				type: "html",
+				value: renderedHtml(assets.map((asset) => asset.url)),
+			};
 		},
 	};
 }

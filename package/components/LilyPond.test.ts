@@ -67,4 +67,21 @@ describe("LilyPond.astro", () => {
 		expect(result).not.toContain("<script>alert(1)</script>");
 		expect(result).toContain("&lt;script&gt;");
 	});
+
+	it("applies class and style to every page of multi-page content", async () => {
+		const container = await AstroContainer.create();
+		const result = await container.renderToString(LilyPond, {
+			props: {
+				content:
+					'<ol class="lilypond-pages">' +
+					'<li><img class="lilypond" src="/_lilypond/a.svg" alt=""></li>' +
+					'<li><img class="lilypond" src="/_lilypond/a-p2.svg" alt=""></li>' +
+					"</ol>",
+				class: "extra",
+				style: "width: 50%",
+			},
+		});
+		expect(result.match(/class="lilypond extra"/g)).toHaveLength(2);
+		expect(result.match(/style="width: 50%"/g)).toHaveLength(2);
+	});
 });

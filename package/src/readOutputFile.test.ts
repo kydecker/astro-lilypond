@@ -4,17 +4,20 @@ vi.mock("fs/promises", async (importOriginal) => {
 	const actual = await importOriginal<typeof import("fs/promises")>();
 	return {
 		...actual,
+		readdir: vi.fn(async () => [] as string[]),
 		readFile: vi.fn(async () => Buffer.from("<svg>fake</svg>")),
 	};
 });
 
-import { readFile } from "node:fs/promises";
+import { readdir, readFile } from "node:fs/promises";
 import { readOutputFile, safeInputFileName } from "./readOutputFile.js";
 
+const mockReaddir = vi.mocked(readdir);
 const mockReadFile = vi.mocked(readFile);
 
 beforeEach(() => {
 	vi.clearAllMocks();
+	mockReaddir.mockResolvedValue([]);
 	mockReadFile.mockResolvedValue(Buffer.from("<svg>fake</svg>"));
 });
 
@@ -57,9 +60,11 @@ describe("readOutputFile", () => {
 
 		const result = await readOutputFile("/tmp/output", "svg", true);
 
-		expect(result.toString()).toBe("<svg>cropped</svg>");
+		expect(result).toHaveLength(1);
+		expect(result[0].toString()).toBe("<svg>cropped</svg>");
 		expect(mockReadFile).toHaveBeenCalledWith("/tmp/output.cropped.svg");
 		expect(mockReadFile).toHaveBeenCalledTimes(1);
+		expect(mockReaddir).not.toHaveBeenCalled();
 	});
 
 	it("throws a descriptive error when the cropped file is missing, with no fallback", async () => {
@@ -71,50 +76,69 @@ describe("readOutputFile", () => {
 		expect(mockReadFile).toHaveBeenCalledTimes(1);
 	});
 
-	it("reads <base>.<format> directly when crop is false and it exists", async () => {
+	it("reads <base>.<format> directly when crop is false and it's the only output", async () => {
+		mockReaddir.mockResolvedValue(["output.svg"]);
 		mockReadFile.mockResolvedValueOnce(Buffer.from("<svg>page</svg>"));
 
 		const result = await readOutputFile("/tmp/output", "svg", false);
 
-		expect(result.toString()).toBe("<svg>page</svg>");
+		expect(result).toHaveLength(1);
+		expect(result[0].toString()).toBe("<svg>page</svg>");
+		expect(mockReadFile).toHaveBeenCalledWith("/tmp/output.svg");
+	});
+
+	it("prefers the unsuffixed file even if numbered files are also present", async () => {
+		mockReaddir.mockResolvedValue(["output.svg", "output-1.svg"]);
+		mockReadFile.mockResolvedValueOnce(Buffer.from("<svg>page</svg>"));
+
+		const result = await readOutputFile("/tmp/output", "svg", false);
+
+		expect(result).toHaveLength(1);
 		expect(mockReadFile).toHaveBeenCalledWith("/tmp/output.svg");
 		expect(mockReadFile).toHaveBeenCalledTimes(1);
 	});
 
-	it("falls back to <base>-1.<format> when the direct read fails", async () => {
-		mockReadFile
-			.mockRejectedValueOnce(new Error("ENOENT"))
-			.mockResolvedValueOnce(Buffer.from("<svg>page1</svg>"));
+	it("reads every <base>-N.<format> page in numeric order for multi-page svg/pdf", async () => {
+		mockReaddir.mockResolvedValue([
+			"output-2.svg",
+			"output-1.svg",
+			"output-10.svg",
+			"output-3.svg",
+		]);
+		mockReadFile.mockImplementation(async (path) => {
+			return Buffer.from(`content:${String(path)}`);
+		});
 
 		const result = await readOutputFile("/tmp/output", "svg", false);
 
-		expect(result.toString()).toBe("<svg>page1</svg>");
-		expect(mockReadFile).toHaveBeenNthCalledWith(1, "/tmp/output.svg");
-		expect(mockReadFile).toHaveBeenNthCalledWith(2, "/tmp/output-1.svg");
-		expect(mockReadFile).toHaveBeenCalledTimes(2);
+		expect(result.map((buf) => buf.toString())).toEqual([
+			"content:/tmp/output-1.svg",
+			"content:/tmp/output-2.svg",
+			"content:/tmp/output-3.svg",
+			"content:/tmp/output-10.svg",
+		]);
 	});
 
-	it("falls back to <base>-page1.<format> for multi-page PNG, named differently than svg/pdf", async () => {
-		mockReadFile
-			.mockRejectedValueOnce(new Error("ENOENT")) // output.png
-			.mockRejectedValueOnce(new Error("ENOENT")) // output-1.png
-			.mockResolvedValueOnce(Buffer.from("fake-png-page1"));
+	it("reads every <base>-pageN.<format> page in numeric order for multi-page png, named differently than svg/pdf", async () => {
+		mockReaddir.mockResolvedValue(["output-page2.png", "output-page1.png"]);
+		mockReadFile.mockImplementation(async (path) => {
+			return Buffer.from(`content:${String(path)}`);
+		});
 
 		const result = await readOutputFile("/tmp/output", "png", false);
 
-		expect(result.toString()).toBe("fake-png-page1");
-		expect(mockReadFile).toHaveBeenNthCalledWith(1, "/tmp/output.png");
-		expect(mockReadFile).toHaveBeenNthCalledWith(2, "/tmp/output-1.png");
-		expect(mockReadFile).toHaveBeenNthCalledWith(3, "/tmp/output-page1.png");
-		expect(mockReadFile).toHaveBeenCalledTimes(3);
+		expect(result.map((buf) => buf.toString())).toEqual([
+			"content:/tmp/output-page1.png",
+			"content:/tmp/output-page2.png",
+		]);
 	});
 
-	it("propagates the final rejection when every fallback fails", async () => {
-		mockReadFile.mockRejectedValue(new Error("ENOENT"));
+	it("throws a clear error when no matching output is found", async () => {
+		mockReaddir.mockResolvedValue(["unrelated-file.txt"]);
 
 		await expect(readOutputFile("/tmp/output", "png", false)).rejects.toThrow(
-			"ENOENT",
+			"no png output found in /tmp",
 		);
-		expect(mockReadFile).toHaveBeenCalledTimes(3);
+		expect(mockReadFile).not.toHaveBeenCalled();
 	});
 });

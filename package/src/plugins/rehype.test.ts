@@ -5,25 +5,26 @@ vi.mock("../render", () => ({
 	FORMATS: ["png", "svg"],
 	defaultOptions: {
 		format: "svg",
+		crop: true,
 		binaryPath: "lilypond",
 		timeout: 60_000,
 		defaults: {
 			resolution: 144,
-			crop: true,
+			crop: "markdown-only",
 		},
 	},
 }));
 
 vi.mock("../writeAsset.js", () => ({
-	writeAsset: vi.fn(),
+	writeAssets: vi.fn(),
 }));
 
 import { render } from "../render";
-import { writeAsset } from "../writeAsset.js";
+import { writeAssets } from "../writeAsset.js";
 import { type RehypePluginOptions, rehypePlugin } from "./rehype.js";
 
 const mockRender = vi.mocked(render);
-const mockWriteAsset = vi.mocked(writeAsset);
+const mockWriteAssets = vi.mocked(writeAssets);
 
 const FAKE_SVG = "<svg xmlns='http://www.w3.org/2000/svg'><g>fake</g></svg>";
 
@@ -36,10 +37,18 @@ const BASE_OPTIONS: RehypePluginOptions = {
 
 beforeEach(() => {
 	vi.clearAllMocks();
-	mockRender.mockResolvedValue(Buffer.from(FAKE_SVG));
-	mockWriteAsset.mockImplementation(async (opts) => {
-		await opts.getBuffer();
-		return `/_lilypond/mock-hash.${opts.title}.${opts.format}`;
+	mockRender.mockResolvedValue([Buffer.from(FAKE_SVG)]);
+	// Uses the real `opts.hash` (computed by the plugin from the block's
+	// content) so filename assertions can still check the real hash format.
+	mockWriteAssets.mockImplementation(async (opts) => {
+		const buffers = await opts.getBuffers();
+		return buffers.map((_, i) => {
+			const fileName =
+				i === 0
+					? `${opts.hash}.${opts.title}.${opts.format}`
+					: `${opts.hash}.${opts.title}-p${i + 1}.${opts.format}`;
+			return { fileName, url: `/_lilypond/${fileName}` };
+		});
 	});
 });
 
@@ -125,10 +134,11 @@ describe("rehypePlugin", () => {
 
 		expect(mockRender).toHaveBeenCalledWith("\\score { }", {
 			format: "svg",
+			crop: true,
 			defaults: undefined,
 			includePaths: [],
 		});
-		expect(mockWriteAsset).toHaveBeenCalledWith(
+		expect(mockWriteAssets).toHaveBeenCalledWith(
 			expect.objectContaining({
 				title: "score",
 				format: "svg",
@@ -137,11 +147,11 @@ describe("rehypePlugin", () => {
 				trackAsset: BASE_OPTIONS.trackAsset,
 			}),
 		);
-		expect(tree.children[0]).toEqual({
-			type: "raw",
-			value:
-				'<img class="lilypond" src="/_lilypond/mock-hash.score.svg" alt="">',
-		});
+		const raw = tree.children[0] as HastRaw;
+		expect(raw.type).toBe("raw");
+		expect(raw.value).toMatch(
+			/^<img class="lilypond" src="\/_lilypond\/[0-9a-f]+\.score\.svg" alt="">$/,
+		);
 	});
 
 	it("accepts 'ly' as an alternative language marker", async () => {
@@ -151,6 +161,7 @@ describe("rehypePlugin", () => {
 
 		expect(mockRender).toHaveBeenCalledWith("\\score { }", {
 			format: "svg",
+			crop: true,
 			defaults: undefined,
 			includePaths: [],
 		});
@@ -163,6 +174,7 @@ describe("rehypePlugin", () => {
 
 		expect(mockRender).toHaveBeenCalledWith("\\score { }", {
 			format: "svg",
+			crop: true,
 			defaults: undefined,
 			includePaths: [],
 		});
@@ -175,7 +187,7 @@ describe("rehypePlugin", () => {
 		await runPlugin(tree);
 
 		expect(mockRender).not.toHaveBeenCalled();
-		expect(mockWriteAsset).not.toHaveBeenCalled();
+		expect(mockWriteAssets).not.toHaveBeenCalled();
 		expect(tree.children[0]).toBe(pre);
 	});
 
@@ -196,6 +208,7 @@ describe("rehypePlugin", () => {
 
 		expect(mockRender).toHaveBeenCalledWith('\\version "2.24.0"\n\\score { }', {
 			format: "svg",
+			crop: true,
 			defaults: { version: "2.24.0" },
 			includePaths: [],
 		});
@@ -209,6 +222,7 @@ describe("rehypePlugin", () => {
 
 		expect(mockRender).toHaveBeenCalledWith(value, {
 			format: "svg",
+			crop: true,
 			defaults: { version: "2.24.0" },
 			includePaths: [],
 		});
@@ -219,31 +233,32 @@ describe("rehypePlugin", () => {
 
 		await runPlugin(tree);
 
-		expect((tree.children[0] as HastRaw).value).toContain(
-			'src="/_lilypond/mock-hash.score.svg"',
+		expect((tree.children[0] as HastRaw).value).toMatch(
+			/src="\/_lilypond\/[0-9a-f]+\.score\.svg"/,
 		);
 	});
 
 	it("passes format: png through to render and writeAsset", async () => {
 		const fakePng = Buffer.from([0x89, 0x50, 0x4e, 0x47]);
-		mockRender.mockResolvedValue(fakePng);
+		mockRender.mockResolvedValue([fakePng]);
 		const tree = makeTree([makeLilypondPre("\\score { }")]);
 
 		await runPlugin(tree, { ...BASE_OPTIONS, format: "png" });
 
 		expect(mockRender).toHaveBeenCalledWith("\\score { }", {
 			format: "png",
+			crop: true,
 			defaults: undefined,
 			includePaths: [],
 		});
-		expect((tree.children[0] as HastRaw).value).toBe(
-			'<img class="lilypond" src="/_lilypond/mock-hash.score.png" alt="">',
+		expect((tree.children[0] as HastRaw).value).toMatch(
+			/^<img class="lilypond" src="\/_lilypond\/[0-9a-f]+\.score\.png" alt="">$/,
 		);
 	});
 
 	it("passes resolution DPI when resolution is set", async () => {
 		const fakePng = Buffer.from([0x89, 0x50, 0x4e, 0x47]);
-		mockRender.mockResolvedValue(fakePng);
+		mockRender.mockResolvedValue([fakePng]);
 		const tree = makeTree([makeLilypondPre("\\score { }")]);
 
 		await runPlugin(tree, {
@@ -254,20 +269,60 @@ describe("rehypePlugin", () => {
 
 		expect(mockRender).toHaveBeenCalledWith("\\score { }", {
 			format: "png",
+			crop: true,
 			defaults: { resolution: 300 },
 			includePaths: [],
 		});
 	});
 
-	it("passes crop: false to render when the crop option is set to false", async () => {
+	it("renders cropped by default (defaults.crop unset)", async () => {
+		const tree = makeTree([makeLilypondPre("\\score { }")]);
+
+		await runPlugin(tree);
+
+		expect(mockRender).toHaveBeenCalledWith(
+			"\\score { }",
+			expect.objectContaining({ crop: true }),
+		);
+	});
+
+	it("follows defaults.crop when configured — markdown fences have no per-block override", async () => {
 		const tree = makeTree([makeLilypondPre("\\score { }")]);
 
 		await runPlugin(tree, { ...BASE_OPTIONS, defaults: { crop: false } });
 
-		expect(mockRender).toHaveBeenCalledWith("\\score { }", {
-			format: "svg",
-			defaults: { crop: false },
-			includePaths: [],
+		expect(mockRender).toHaveBeenCalledWith(
+			"\\score { }",
+			expect.objectContaining({ crop: false }),
+		);
+	});
+
+	describe("multi-page output", () => {
+		it("wraps multiple pages in an <ol><li> and prunes every page's filename", async () => {
+			mockRender.mockResolvedValue([
+				Buffer.from("page1"),
+				Buffer.from("page2"),
+			]);
+			const pruneStaleAssets = vi.fn();
+			const tree = makeTree([makeLilypondPre("\\score { }")]);
+
+			await runPlugin(
+				tree,
+				{ ...BASE_OPTIONS, pruneStaleAssets },
+				{ path: "test.md" },
+			);
+
+			const raw = tree.children[0] as HastRaw;
+			expect(raw.type).toBe("raw");
+			expect(raw.value).toMatch(/^<ol class="lilypond-pages">/);
+			expect(raw.value.match(/<li>/g)).toHaveLength(2);
+
+			expect(pruneStaleAssets).toHaveBeenCalledTimes(1);
+			const [, fileNames] = pruneStaleAssets.mock.calls[0] as [
+				string,
+				string[],
+			];
+			expect(fileNames).toHaveLength(2);
 		});
 	});
 

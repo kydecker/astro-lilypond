@@ -110,25 +110,29 @@ describe
 		});
 
 		describe("multi-page scores", () => {
-			it("renders the first page's SVG without throwing when crop is false", async () => {
+			it("renders every page's SVG when crop is false", async () => {
 				const result = await render(multiPageSvg, {
 					format: "svg",
-					defaults: { crop: false },
+					crop: false,
 				});
-				const svg = result.toString("utf-8");
-				expect(svg).toContain("<svg");
-				const { width, height } = svgDimensions(svg);
-				// A single uncropped US-letter page, not the tall merged image
-				// crop:true would produce for a 2-page score.
-				expect(height / width).toBeLessThan(2);
+				expect(result).toHaveLength(2);
+				for (const buf of result) {
+					const svg = buf.toString("utf-8");
+					expect(svg).toContain("<svg");
+					const { width, height } = svgDimensions(svg);
+					// Each is a single uncropped US-letter page, not the tall
+					// merged image crop:true would produce for a 2-page score.
+					expect(height / width).toBeLessThan(2);
+				}
 			});
 
 			it("merges all pages into one tall image when crop is true", async () => {
 				const result = await render(multiPageSvg, {
 					format: "svg",
-					defaults: { crop: true },
+					crop: true,
 				});
-				const svg = result.toString("utf-8");
+				expect(result).toHaveLength(1);
+				const svg = result[0].toString("utf-8");
 				const { width, height } = svgDimensions(svg);
 				// multi-page-svg.ly is a 2-page score; the cropped merge stacks
 				// systems from all pages into a single much-taller-than-wide image.
@@ -140,21 +144,25 @@ describe
 			it("renders valid PNG bytes", async () => {
 				const result = await render(multiPagePng, {
 					format: "png",
-					defaults: { crop: true },
+					crop: true,
 				});
-				const { width, height } = pngDimensions(result);
+				expect(result).toHaveLength(1);
+				const { width, height } = pngDimensions(result[0]);
 				expect(width).toBeGreaterThan(0);
 				expect(height).toBeGreaterThan(0);
 			});
 
-			it("renders a multi-page score to PNG when crop is false", async () => {
+			it("renders every page of a multi-page score to PNG when crop is false", async () => {
 				const result = await render(multiPagePng, {
 					format: "png",
-					defaults: { crop: false },
+					crop: false,
 				});
-				const { width, height } = pngDimensions(result);
-				expect(width).toBeGreaterThan(0);
-				expect(height).toBeGreaterThan(0);
+				expect(result).toHaveLength(2);
+				for (const buf of result) {
+					const { width, height } = pngDimensions(buf);
+					expect(width).toBeGreaterThan(0);
+					expect(height).toBeGreaterThan(0);
+				}
 			});
 		});
 
@@ -163,15 +171,17 @@ describe
 				const [low, high] = await Promise.all([
 					render(multiPagePng, {
 						format: "png",
-						defaults: { crop: true, resolution: 72 },
+						crop: true,
+						defaults: { resolution: 72 },
 					}),
 					render(multiPagePng, {
 						format: "png",
-						defaults: { crop: true, resolution: 288 },
+						crop: true,
+						defaults: { resolution: 288 },
 					}),
 				]);
-				const lowDim = pngDimensions(low);
-				const highDim = pngDimensions(high);
+				const lowDim = pngDimensions(low[0]);
+				const highDim = pngDimensions(high[0]);
 				const ratio = highDim.width / lowDim.width;
 				// resolution quadruples (72 -> 288); pixel width should scale
 				// with it, allowing slack for rounding at page-fitting time.
@@ -186,7 +196,7 @@ describe
 					.toString()
 					.trim();
 				const result = await render("{ c'4 d'4 e'4 f'4 }", { binaryPath });
-				expect(result.toString("utf-8")).toContain("<svg");
+				expect(result[0].toString("utf-8")).toContain("<svg");
 			});
 		});
 	});

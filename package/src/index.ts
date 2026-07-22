@@ -16,14 +16,14 @@ import { defaultOptions, type LilypondDefaults, render } from "./render.js";
 import {
 	assetsUrlBaseFor,
 	contentHashFor,
-	imgTag,
 	includePathsFor,
 	prependVersion,
+	renderedHtml,
 	resolveDefaults,
 	sourceNameFor,
 	titleFor,
 } from "./utils/index.js";
-import { writeAsset } from "./writeAsset.js";
+import { writeAssets } from "./writeAsset.js";
 
 const execFileAsync = promisify(execFile);
 
@@ -39,7 +39,7 @@ export interface LilypondOptions extends PluginOptions {
 	format?: "svg" | "png";
 
 	/**
-	 * Defaults passed to each score — `version`, `resolution`, `crop`.
+	 * Defaults passed to each score — `version`, `resolution`.
 	 * Each can still be overridden by an individual `.ly` file.
 	 */
 	defaults?: LilypondDefaults;
@@ -68,34 +68,65 @@ function lyFilePlugin(options: ResolvedPluginOptions): Plugin {
 		name: "vite-plugin-astro-lilypond-ly",
 		enforce: "pre",
 		async transform(source, id) {
-			if (!LY_EXTENSIONS.some((ext) => id.endsWith(ext))) return;
-			const { version, resolution, crop } = resolveDefaults(options.defaults);
+			const queryIndex = id.indexOf("?");
+			const pathname = queryIndex === -1 ? id : id.slice(0, queryIndex);
+			if (!LY_EXTENSIONS.some((ext) => pathname.endsWith(ext))) return;
+
+			// Only claim imports whose query params we recognize — anything
+			// else (Vite's built-in `?raw`, `?url`, etc.) isn't ours to
+			// render, so let it fall through to whichever plugin owns it.
+			const params = new URLSearchParams(
+				queryIndex === -1 ? "" : id.slice(queryIndex + 1),
+			);
+			if ([...params.keys()].some((key) => key !== "crop" && key !== "nocrop"))
+				return;
+
+			const {
+				version,
+				resolution,
+				crop: cropSetting,
+			} = resolveDefaults(options.defaults);
+			// Component imports crop only when `defaults.crop` is explicitly
+			// `true` — `"markdown-only"` (the default) and `false` both mean
+			// uncropped — unless the import itself opts in (`?crop`) or out
+			// (`?nocrop`).
+			const defaultCrop = cropSetting === true;
+			const crop = params.has("crop")
+				? true
+				: params.has("nocrop")
+					? false
+					: defaultCrop;
 			const src = version ? prependVersion(source, version) : source;
 			const format = options.format ?? defaultOptions.format;
-			const includePaths = includePathsFor(id);
-			const sourceName = sourceNameFor(id);
+			const includePaths = includePathsFor(pathname);
+			const sourceName = sourceNameFor(pathname);
 			const title = titleFor(sourceName);
 			const hash = contentHashFor({ source: src, format, resolution, crop });
-			const fileName = `${hash}.${title}.${format}`;
-			const url = await writeAsset({
+			const assets = await writeAssets({
 				hash,
 				title,
 				format,
 				outputDir: options.assetsDir,
 				urlBase: options.assetsUrlBase,
 				trackAsset: options.trackAsset,
-				getBuffer: () =>
+				getBuffers: () =>
 					render(src, {
 						format,
+						crop,
 						defaults: options.defaults,
 						timeout: options.timeout,
 						includePaths,
 						sourceName,
 					}),
 			});
-			await options.pruneStaleAssets(id, [fileName]);
+			// Keyed by the full id (including query) so `./score.ly` and
+			// `./score.ly?crop` are tracked as independent sources.
+			await options.pruneStaleAssets(
+				id,
+				assets.map((asset) => asset.fileName),
+			);
 			return {
-				code: `export default ${JSON.stringify(imgTag(url))}`,
+				code: `export default ${JSON.stringify(renderedHtml(assets.map((asset) => asset.url)))}`,
 			};
 		},
 	};
