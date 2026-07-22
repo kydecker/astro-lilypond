@@ -13,7 +13,9 @@ export default defineConfig({
 	}),
 	integrations: [
 		lilypond({
-			version: "2.26.0",
+			defaults: {
+				version: "2.26.0",
+			},
 		}),
 		starlight({
 			title: "Astro LilyPond",

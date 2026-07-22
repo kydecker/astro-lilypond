@@ -1,4 +1,4 @@
-\version "2.24.0"
+\version "2.26.0"
 \relative c' {
   c4 d e f | g2 e2 |
 }

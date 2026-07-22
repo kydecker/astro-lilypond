@@ -113,7 +113,7 @@ describe
 			it("renders the first page's SVG without throwing when crop is false", async () => {
 				const result = await render(multiPageSvg, {
 					format: "svg",
-					crop: false,
+					defaults: { crop: false },
 				});
 				const svg = result.toString("utf-8");
 				expect(svg).toContain("<svg");
@@ -126,7 +126,7 @@ describe
 			it("merges all pages into one tall image when crop is true", async () => {
 				const result = await render(multiPageSvg, {
 					format: "svg",
-					crop: true,
+					defaults: { crop: true },
 				});
 				const svg = result.toString("utf-8");
 				const { width, height } = svgDimensions(svg);
@@ -140,7 +140,7 @@ describe
 			it("renders valid PNG bytes", async () => {
 				const result = await render(multiPagePng, {
 					format: "png",
-					crop: true,
+					defaults: { crop: true },
 				});
 				const { width, height } = pngDimensions(result);
 				expect(width).toBeGreaterThan(0);
@@ -150,7 +150,7 @@ describe
 			it("renders a multi-page score to PNG when crop is false", async () => {
 				const result = await render(multiPagePng, {
 					format: "png",
-					crop: false,
+					defaults: { crop: false },
 				});
 				const { width, height } = pngDimensions(result);
 				expect(width).toBeGreaterThan(0);
@@ -161,8 +161,14 @@ describe
 		describe("resolution", () => {
 			it("increases PNG pixel dimensions roughly proportionally to resolution", async () => {
 				const [low, high] = await Promise.all([
-					render(multiPagePng, { format: "png", crop: true, resolution: 72 }),
-					render(multiPagePng, { format: "png", crop: true, resolution: 288 }),
+					render(multiPagePng, {
+						format: "png",
+						defaults: { crop: true, resolution: 72 },
+					}),
+					render(multiPagePng, {
+						format: "png",
+						defaults: { crop: true, resolution: 288 },
+					}),
 				]);
 				const lowDim = pngDimensions(low);
 				const highDim = pngDimensions(high);

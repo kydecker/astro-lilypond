@@ -4,7 +4,9 @@
 	"private": true,
 	"type": "module",
 	"scripts": {
+		"predev": "pnpm --filter astro-lilypond build",
 		"dev": "astro dev",
+		"prebuild": "pnpm --filter astro-lilypond build",
 		"build": "astro build",
 		"preview": "astro preview",
 		"deploy": "wrangler deploy",

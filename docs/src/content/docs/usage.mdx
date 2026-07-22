@@ -11,7 +11,7 @@ import usageExample from "../../examples/usage-example.ly?raw";
 
 ## Markdown
 
-Use a fenced code block with the `lilypond` (or `ly` / `ily`) language tag:
+Use a fenced code block with the `lilypond`, `ly`, or `ily` language tag:
 
 <FencedLilypond code={usageExample} />
 
@@ -25,7 +25,7 @@ The `<LilyPond>` component renders notation in any `.astro` file. Import a `.ly`
 
 <BachInventionExample />
 
-The `version`, `format`, and `crop` configured in your integration options apply automatically.
+The `format` and `defaults` configured in your integration options apply automatically.
 
 ### Props
 
@@ -40,7 +40,7 @@ The result of an imported `.ly` file. The output is resolved at build time accor
 
 **Type:** `string`
 
-Additional class name(s) merged onto the rendered `<svg>` or `<img>` element alongside the default `lilypond` class. See [Styling](/styling/) for how to use this for per-instance styles.
+Additional class name(s) merged onto the rendered `<img>` element alongside the default `lilypond` class. See [Styling](/styling/) for how to use this for per-instance styles.
 
 #### `style`
 

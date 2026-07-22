@@ -32,8 +32,10 @@ function mockExecFileResult(handler: (cb: ExecFileCb) => void) {
 const baseOptions = {
 	binaryPath: "lilypond",
 	format: "svg" as const,
-	resolution: 144,
-	crop: true,
+	defaults: {
+		resolution: 144,
+		crop: true,
+	},
 	includePaths: [] as string[],
 	timeout: 60_000,
 	inputPath: "/tmp/dir/input.ly",
@@ -90,7 +92,10 @@ describe("execLilyPond", () => {
 	});
 
 	it("passes the resolution as a DPI define", async () => {
-		await execLilyPond({ ...baseOptions, resolution: 300 });
+		await execLilyPond({
+			...baseOptions,
+			defaults: { ...baseOptions.defaults, resolution: 300 },
+		});
 		const [, args] = mockExecFile.mock.calls[0] as unknown as [
 			string,
 			string[],
@@ -99,7 +104,10 @@ describe("execLilyPond", () => {
 	});
 
 	it("passes crop=#t when crop is true", async () => {
-		await execLilyPond({ ...baseOptions, crop: true });
+		await execLilyPond({
+			...baseOptions,
+			defaults: { ...baseOptions.defaults, crop: true },
+		});
 		const [, args] = mockExecFile.mock.calls[0] as unknown as [
 			string,
 			string[],
@@ -108,7 +116,10 @@ describe("execLilyPond", () => {
 	});
 
 	it("passes crop=#f when crop is false", async () => {
-		await execLilyPond({ ...baseOptions, crop: false });
+		await execLilyPond({
+			...baseOptions,
+			defaults: { ...baseOptions.defaults, crop: false },
+		});
 		const [, args] = mockExecFile.mock.calls[0] as unknown as [
 			string,
 			string[],
