@@ -70,16 +70,14 @@ Resolution to render `.png` files, in DPI. Only applies when `format` is set to 
 
 #### `defaults.version`
 
-**Type:** `string`  
-**Default:** `"2.26.0"`
+**Type:** `string` of the shape `"2.<number>.<number>"`  
+**Default:** `undefined`
 
-To know how to output text, LilyPond needs to know a `version` to use for compilation. This is usually defined at the start of each `.ly` file:
+All LilyPond content must specify `\version` at the start so that the compiler knows how to output the score:
 
 <FencedLilypond code={versionExample} />
 
-By default, `astro-lilypond` will prepend this version for you, so you don't need to write it yourself, which is helpful if you are writing a lot of small, inline music examples.
-
-To pin your examples to a different default release, specify `version`:
+Specify `version` to prepend it to every block automatically instead, which is helpful if you are writing a lot of small, inline music examples:
 
 ```js {5-7}
 // astro.config.mjs
@@ -94,13 +92,13 @@ export default defineConfig({
 });
 ```
 
-Blocks with an explicit `\version` declaration always use that version, regardless of the global config.
+With `version` set, blocks can omit `\version` entirely. Blocks with an explicit `\version` declaration always use that version, regardless of the global config.
 
 Information about the latest releases can be found on the [LilyPond news](https://lilypond.org/news.html) page.
 
 ### `format`
 
-**Type:** `"svg" | "png"`  
+**Type:** `"svg"` or `"png"`  
 **Default:** `"svg"`
 
 The output format passed to the LilyPond binary. Controls how the rendered output is embedded in the page.

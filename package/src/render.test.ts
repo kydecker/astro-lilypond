@@ -134,6 +134,10 @@ describe("render", () => {
 		expect(defaultOptions.defaults.crop).toBe(true);
 	});
 
+	it("has no default version, so blocks must declare \\version themselves unless configured", () => {
+		expect(defaultOptions.defaults.version).toBeUndefined();
+	});
+
 	it("throws when format is unsupported", async () => {
 		await expect(
 			// biome-ignore lint/suspicious/noExplicitAny: testing invalid input

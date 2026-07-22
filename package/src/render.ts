@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { execLilyPond } from "./execLilyPond.js";
 import { readOutputFile, safeInputFileName } from "./readOutputFile.js";
 import type { LilypondVersion } from "./types/lilypondVersion.js";
+import { resolveDefaults } from "./utils/resolveDefaults.js";
 
 export const FORMATS = ["png", "svg"] as const;
 
@@ -16,8 +17,8 @@ export type Format = (typeof FORMATS)[number];
 export interface LilypondDefaults {
 	/**
 	 * LilyPond version to use for every block that
-	 * doesn't already declare `\version`.
-	 * @default "2.26.0"
+	 * doesn't already declare `\version`. When unset, blocks must
+	 * declare `\version` themselves.
 	 */
 	version?: LilypondVersion;
 
@@ -50,9 +51,11 @@ export interface RenderOptions {
 	format?: Format;
 
 	/**
-	 * Defaults for rendering each score.
+	 * Defaults for rendering each score. `version` is not read here — it's
+	 * applied earlier, by prepending it to the source text before it
+	 * reaches `render()`.
 	 */
-	defaults?: LilypondDefaults;
+	defaults?: LilypondDefines;
 
 	/**
 	 * Path to the `lilypond` binary.
@@ -83,12 +86,13 @@ export interface RenderOptions {
 
 export const defaultOptions: Required<
 	Omit<RenderOptions, "includePaths" | "sourceName" | "defaults">
-> & { defaults: Required<LilypondDefaults> } = {
+> & {
+	defaults: Required<LilypondDefines> & Pick<LilypondDefaults, "version">;
+} = {
 	format: "svg",
 	binaryPath: "lilypond",
 	timeout: 60_000,
 	defaults: {
-		version: "2.26.0",
 		resolution: 144,
 		crop: true,
 	},
@@ -106,12 +110,8 @@ export async function render(
 		sourceName,
 	} = options;
 
-	const defaults: Required<LilypondDefines> = {
-		resolution:
-			options.defaults?.resolution ?? defaultOptions.defaults.resolution,
-		crop: options.defaults?.crop ?? defaultOptions.defaults.crop,
-	};
-	const { crop } = defaults;
+	const { resolution, crop } = resolveDefaults(options.defaults);
+	const defaults: Required<LilypondDefines> = { resolution, crop };
 
 	if (!FORMATS.includes(format)) {
 		throw new Error(`${format} is not a supported format`);
