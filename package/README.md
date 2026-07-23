@@ -2,12 +2,12 @@
 
 An [Astro](https://astro.build) integration for rendering [LilyPond](https://lilypond.org) music notation to images.
 
-- Render LilyPond via Markdown or with a `<LilyPond>` component
-- Works with both `unified()` and `satteri()` Markdown processors
-- Zero runtime JavaScript!
-- Supports all LilyPond syntax
+- Render musical scores via Markdown or with an Astro component.
+- Works with remark, rehype and satteri Markdown processors out-of-the-box.
+- Zero client-side JavaScript! Images are compiled at build time.
+- Automatic `alt` text generated from the score’s title and composer. (Or supply your own.)
 
-Docs: https://lilypond.ky.fyi
+Read the docs: https://lilypond.ky.fyi
 
 ## Quick Start
 
