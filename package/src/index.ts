@@ -23,6 +23,7 @@ import {
 	assetsUrlBaseFor,
 	contentHashFor,
 	includePathsFor,
+	lyTypeDeclarationsFor,
 	parseLyHeader,
 	parseLyImportQuery,
 	prependVersion,
@@ -267,18 +268,12 @@ export default function lilypond(
 			},
 
 			"astro:config:done": ({ injectTypes }) => {
-				const suffixes = [
-					"",
-					...RECOGNIZED_QUERY_PARAMS.map((param) => `?${param}`),
-				];
 				injectTypes({
 					filename: "ly-types.d.ts",
-					content: LY_EXTENSIONS.flatMap((ext) =>
-						suffixes.map(
-							(suffix) =>
-								`declare module "*${ext}${suffix}" {\n  const content: import("astro-lilypond").LilypondContent;\n  export default content;\n}`,
-						),
-					).join("\n"),
+					content: lyTypeDeclarationsFor(
+						LY_EXTENSIONS,
+						RECOGNIZED_QUERY_PARAMS,
+					),
 				});
 			},
 
