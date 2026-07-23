@@ -1,5 +1,11 @@
 # astro-lilypond
 
+## 0.10.1
+
+### Patch Changes
+
+- b319aa6: Fix `Cannot find module` TypeScript errors on `.ly`/`.lilypond`/`.ily` imports using the `?crop` or `?nocrop` query suffix.
+
 ## 0.10.0
 
 ### Minor Changes
