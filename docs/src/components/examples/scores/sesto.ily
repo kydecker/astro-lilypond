@@ -17,10 +17,12 @@
 %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 sesto = {
-  R1*6 |
+  R1*4 |
+  %{ R1*2 |
   r4 r8 g' c''  ees''16[ d''] c''8 c'' |
   c'' g' ees''4 ~ 8 d''16 ees'' f''8 aes' |
   aes' g' r c'' c''  b'16[ c''] d''8 g' |
+  }%
 
 %{
   %%10
@@ -81,11 +83,13 @@ violinoI = {
   aes' g' r c'' c''8.^\trill b'32 c'' d''8 g' |
   f'4. d''8 ees'' d''16 c'' b'4 |
   %%5
+  %{
   c''16 g'' f'' g'' ees'' g'' f'' g'' ees'' g'' f'' g'' ees'' g'' f'' g'' |
   c'' g'' f'' g'' ees'' g'' f'' g'' aes''8 g''16 f'' f''4^\trill |
   ees'' r8 g'_\p c'' ees''16 d'' c''8 c'' |
   c'' g' ees''4 ~ 8 d''16 ees'' f''8 aes' |
   aes' g' r c'' c'' b'16 c'' d''8 g' |
+  }%
 %{
   %%10
   f'4 r8 d'' ees'' d''16 c'' b'4 |
@@ -126,11 +130,12 @@ violinoII = {
   aes' g' r c'' c''8.^\trill b'32 c'' d''8 g' |
   f'4. d''8 ees'' d''16 c'' b'4 |
   %%5
-  c''16 ees'' d'' ees'' c'' ees'' d'' ees'' c'' ees'' d'' ees'' c'' ees'' d'' ees'' |
+  %{ c''16 ees'' d'' ees'' c'' ees'' d'' ees'' c'' ees'' d'' ees'' c'' ees'' d'' ees'' |
   c'' ees'' d'' ees'' c'' ees'' d'' ees'' d''8[ ees''] ees'' d'' |
   ees''4 r8 g' c'' ees''16 d'' c''8 c'' |
   c'' g' ees''4 ~ 8 d''16 ees'' f''8 aes' |
   aes' g' r c'' c'' b'16 c'' d''8 g' |
+  }%
 %{
   %%10
   f'4 r8 d'' ees'' d''16 c'' b'4 |
@@ -171,11 +176,12 @@ bassi = {
   ees ees, r c ees c g ees |
   aes f d' b c' f g g, |
   %%5
-  c4 r c'8 c bes bes, |
+  %{ c4 r c'8 c bes bes, |
   aes aes, g g, f ees bes bes, |
   ees4 r r r8 c_\p |
   c' ees'16 d' c'8 bes aes f bes bes, |
   ees ees, r c ees c g ees |
+  }%
 %{
   %%10
   aes f d' b c' f g g, |
