@@ -51,6 +51,26 @@ When cropped, margins are removed and the page is cropped to fit the rendered st
 
 A `<LilyPond>` `.ly` import can always override this per-instance with `?crop` or `?nocrop` — see [Cropping](/usage/#cropping).
 
+#### `defaults.cropScale`
+
+**Type:** `number`  
+**Default:** `1.5`
+
+Multiplies the `width`/`height` set on a cropped score's `<img>` tag, to compensate for LilyPond's internal size units (points/mm) appearing too small once converted to pixels. Only affects the `<img>` dimensions on the page — the rendered file itself is unchanged, and this has no effect on uncropped (paginated) output.
+
+```js {5-7}
+// astro.config.mjs
+export default defineConfig({
+  integrations: [
+    lilypond({
+      defaults: {
+        cropScale: 2
+      }
+    }),
+  ],
+});
+```
+
 #### `defaults.resolution`
 
 **Type:** `number`  
