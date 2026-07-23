@@ -3,5 +3,5 @@
 	"compilerOptions": {
 		"moduleResolution": "bundler"
 	},
-	"include": ["./worker-configuration.d.ts"]
+	"include": [".astro/types.d.ts", "**/*", "./worker-configuration.d.ts"]
 }

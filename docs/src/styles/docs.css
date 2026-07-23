@@ -3,22 +3,29 @@
 	background: var(--color-paper, #fffcf0);
 }
 
+[data-theme="dark"] [data-lilypond-image] {
+	padding: 5px;
+	border-radius: 5px;
+}
+
 [data-lilypond-group] {
-	list-style-type: none;
-	padding: 0;
 	display: flex;
-	overflow-x: auto;
 	gap: 1rem;
+	padding: 0;
+	overflow-x: auto;
+	list-style-type: none;
+	scroll-snap-type: x mandatory;
 
 	li {
 		flex-shrink: 0;
+		max-width: 80vw;
 		margin: 0;
 	}
 
 	img {
 		width: 100%;
-		border: 1px solid rgba(0, 0, 0, 0.1);
 		margin: 0;
+		border: 1px solid rgba(0, 0, 0, 0.1);
 	}
 }
 

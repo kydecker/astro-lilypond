@@ -1,5 +1,7 @@
 /** Query params `lyFilePlugin` recognizes as its own on a `.ly`-family import. */
-const RECOGNIZED_PARAMS = new Set(["crop", "nocrop"]);
+export const RECOGNIZED_QUERY_PARAMS = ["crop", "nocrop"] as const;
+
+const RECOGNIZED_PARAMS = new Set<string>(RECOGNIZED_QUERY_PARAMS);
 
 export interface LyImportQuery {
 	/** The import's module id with any query string stripped. */

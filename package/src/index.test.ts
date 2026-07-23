@@ -353,14 +353,16 @@ describe("lilypond integration", () => {
 		expect(injectTypes.mock.calls[0][0].filename).toBe("ly-types.d.ts");
 	});
 
-	it("injected types declare modules for .ly, .lilypond, and .ily", () => {
+	it("injected types declare modules for .ly, .lilypond, and .ily, including their ?crop/?nocrop query variants", () => {
 		const injectTypes = vi.fn();
 		const integration = lilypond();
 		integration.hooks["astro:config:done"]?.({ injectTypes } as never);
 		const { content } = injectTypes.mock.calls[0][0] as { content: string };
-		expect(content).toContain('declare module "*.ly"');
-		expect(content).toContain('declare module "*.lilypond"');
-		expect(content).toContain('declare module "*.ily"');
+		for (const ext of [".ly", ".lilypond", ".ily"]) {
+			expect(content).toContain(`declare module "*${ext}"`);
+			expect(content).toContain(`declare module "*${ext}?crop"`);
+			expect(content).toContain(`declare module "*${ext}?nocrop"`);
+		}
 	});
 
 	it("injected type declarations export a default LilypondContent value", () => {
@@ -368,8 +370,8 @@ describe("lilypond integration", () => {
 		const integration = lilypond();
 		integration.hooks["astro:config:done"]?.({ injectTypes } as never);
 		const { content } = injectTypes.mock.calls[0][0] as { content: string };
-		expect(content.match(/export default content/g)?.length).toBe(3);
-		expect(content.match(/LilypondContent/g)?.length).toBe(3);
+		expect(content.match(/export default content/g)?.length).toBe(9);
+		expect(content.match(/LilypondContent/g)?.length).toBe(9);
 	});
 
 	it("includes the detected processor name in the error", async () => {
