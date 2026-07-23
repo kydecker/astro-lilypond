@@ -27,8 +27,7 @@ export type CropContext = "markdown" | "component";
 
 /**
  * Resolves the three-way `CropSetting` into the plain boolean a given
- * consumer needs, per the semantics documented on `CropSetting`. Shared by
- * every plugin that reads `defaults.crop`, instead of each re-deriving it.
+ * consumer needs, per the semantics documented on `CropSetting`.
  */
 export function resolveCrop(
 	cropSetting: CropSetting,
@@ -39,7 +38,7 @@ export function resolveCrop(
 
 /**
  * Defaults passed to each score for rendering.
- * Individual `.ly` files can still override.
+ * Individual instances can override.
  */
 export interface LilypondDefaults {
 	/**
@@ -61,6 +60,16 @@ export interface LilypondDefaults {
 	 * @default "markdown-only"
 	 */
 	crop?: CropSetting;
+
+	/**
+	 * Multiplies the `width`/`height` on a cropped score's `<img>` tag.
+	 * Helps compensate for LilyPond's internal size units (points/mm)
+	 * appearing too small when converted to pixels. Only affects the `<img>`
+	 * dimensions on the page; rendered files are not affected.
+	 * Has no effect on uncropped (paginated) output.
+	 * @default 1.5
+	 */
+	cropScale?: number;
 }
 
 /**
@@ -129,6 +138,7 @@ export const defaultOptions: Required<
 		version: "2.26.0",
 		resolution: 144,
 		crop: "markdown-only",
+		cropScale: 1.5,
 	},
 };
 

@@ -38,12 +38,14 @@ const LY_EXTENSIONS = [".ly", ".lilypond", ".ily"] as const;
 
 export type { LilypondDefaults, PluginOptions as LilypondPluginOptions };
 
-/**
- * The default export of a `.ly`/`.lilypond`/`.ily` import — one URL per
- * rendered page, in order, for `<LilyPond>` to build markup from.
- */
+export interface LilypondPage {
+	src: string;
+	width?: number;
+	height?: number;
+}
+
 export interface LilypondContent {
-	srcs: string[];
+	pages: LilypondPage[];
 	alt?: string;
 }
 
@@ -84,8 +86,6 @@ function lyFilePlugin(options: ResolvedPluginOptions): Plugin {
 		name: "vite-plugin-astro-lilypond-ly",
 		enforce: "pre",
 		async transform(source, id) {
-			// undefined means an unrecognized query param (e.g. Vite's `?raw`,
-			// `?url`) — not ours to render, so let it fall through.
 			const query = parseLyImportQuery(id);
 			if (!query) return;
 			const { pathname, cropOverride } = query;
@@ -95,6 +95,7 @@ function lyFilePlugin(options: ResolvedPluginOptions): Plugin {
 				version,
 				resolution,
 				crop: cropSetting,
+				cropScale,
 			} = resolveDefaults(options.defaults);
 			const crop = cropOverride ?? resolveCrop(cropSetting, "component");
 			const src = version ? prependVersion(source, version) : source;
@@ -110,6 +111,7 @@ function lyFilePlugin(options: ResolvedPluginOptions): Plugin {
 				format,
 				outputDir: options.assetsDir,
 				urlBase: options.assetsUrlBase,
+				sizeScale: crop ? cropScale : 1,
 				trackAsset: options.trackAsset,
 				getBuffers: () =>
 					render(src, {
@@ -128,7 +130,11 @@ function lyFilePlugin(options: ResolvedPluginOptions): Plugin {
 				assets.map((asset) => asset.fileName),
 			);
 			const content: LilypondContent = {
-				srcs: assets.map((asset) => asset.url),
+				pages: assets.map((asset) => ({
+					src: asset.url,
+					width: asset.width,
+					height: asset.height,
+				})),
 				alt,
 			};
 			return {

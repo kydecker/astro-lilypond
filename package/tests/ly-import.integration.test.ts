@@ -31,7 +31,9 @@ interface VitePluginLike {
 	transform: (src: string, id: string) => Promise<{ code: string } | undefined>;
 }
 
-function contentOf(code: string | undefined): { srcs: string[] } {
+function contentOf(code: string | undefined): {
+	pages: { src: string; width?: number; height?: number }[];
+} {
 	return JSON.parse(code?.replace(/^export default /, "") ?? "null");
 }
 
@@ -81,7 +83,7 @@ describe.skipIf(!lilypondAvailable())(
 				join(projectDir, "score.ly"),
 			);
 
-			expect(contentOf(result?.code).srcs).toHaveLength(2);
+			expect(contentOf(result?.code).pages).toHaveLength(2);
 
 			const files = await readdir(join(publicDir, "_lilypond"));
 			expect(files.filter((f) => f.endsWith(".svg"))).toHaveLength(2);
@@ -94,7 +96,7 @@ describe.skipIf(!lilypondAvailable())(
 				`${join(projectDir, "score.ly")}?crop`,
 			);
 
-			expect(contentOf(result?.code).srcs).toHaveLength(1);
+			expect(contentOf(result?.code).pages).toHaveLength(1);
 
 			const files = await readdir(join(publicDir, "_lilypond"));
 			expect(files.filter((f) => f.endsWith(".svg"))).toHaveLength(1);
@@ -109,7 +111,7 @@ describe.skipIf(!lilypondAvailable())(
 				join(projectDir, "score.ly"),
 			);
 
-			expect(contentOf(result?.code).srcs).toHaveLength(1);
+			expect(contentOf(result?.code).pages).toHaveLength(1);
 
 			const files = await readdir(join(publicDir, "_lilypond"));
 			expect(files.filter((f) => f.endsWith(".svg"))).toHaveLength(1);
@@ -124,7 +126,7 @@ describe.skipIf(!lilypondAvailable())(
 				`${join(projectDir, "score.ly")}?nocrop`,
 			);
 
-			expect(contentOf(result?.code).srcs).toHaveLength(2);
+			expect(contentOf(result?.code).pages).toHaveLength(2);
 
 			const files = await readdir(join(publicDir, "_lilypond"));
 			expect(files.filter((f) => f.endsWith(".svg"))).toHaveLength(2);

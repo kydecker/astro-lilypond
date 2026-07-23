@@ -1,4 +1,12 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	type MockedFunction,
+	vi,
+} from "vitest";
 
 // execFile supports both `(file, args, callback)` and
 // `(file, args, options, callback)` — render.ts now always passes options
@@ -44,7 +52,9 @@ import { readdir, readFile } from "node:fs/promises";
 import { defaultOptions, render } from "./render.js";
 
 const mockExecFile = vi.mocked(execFile);
-const mockReaddir = vi.mocked(readdir);
+const mockReaddir = vi.mocked(readdir) as unknown as MockedFunction<
+	(dir: string) => Promise<string[]>
+>;
 const mockReadFile = vi.mocked(readFile);
 
 type ExecFileCb = (

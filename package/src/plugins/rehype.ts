@@ -65,6 +65,7 @@ export function rehypePlugin(
 				version,
 				resolution,
 				crop: cropSetting,
+				cropScale,
 			} = resolveDefaults(options.defaults);
 			const source = version ? prependVersion(raw, version) : raw;
 			const format = options.format ?? defaultOptions.format;
@@ -79,6 +80,7 @@ export function rehypePlugin(
 				outputDir: options.assetsDir,
 				urlBase: options.assetsUrlBase,
 				trackAsset: options.trackAsset,
+				sizeScale: crop ? cropScale : 1,
 				getBuffers: () =>
 					render(source, {
 						format,
@@ -92,10 +94,7 @@ export function rehypePlugin(
 				fileNames.push(...assets.map((asset) => asset.fileName));
 				const rawNode: RawNode = {
 					type: "raw",
-					value: renderedHtml(
-						assets.map((asset) => asset.url),
-						alt,
-					),
+					value: renderedHtml(assets, alt),
 				};
 				parent.children[index] = rawNode;
 			});

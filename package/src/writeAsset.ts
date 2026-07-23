@@ -1,7 +1,8 @@
 import { randomUUID } from "node:crypto";
-import { access, mkdir, rename, writeFile } from "node:fs/promises";
+import { access, mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { Format } from "./render.js";
+import { imageDimensionsFor } from "./utils/imageDimensions.js";
 
 export interface WriteAssetOptions {
 	/** Content hash — the first segment of the filename. */
@@ -31,6 +32,15 @@ export interface WriteAssetOptions {
 	 * skip it entirely when the content-addressed file(s) already exist.
 	 */
 	getBuffers: () => Promise<Buffer[]>;
+
+	/**
+	 * Multiplies the `width`/`height` reported on each `WrittenAsset`. The
+	 * written file's own bytes are never touched — this only affects the
+	 * dimensions handed back for sizing the `<img>` tag, so it's cheap to
+	 * change and applies even to a cache hit that skips `getBuffers`.
+	 * @default 1
+	 */
+	sizeScale?: number;
 }
 
 export interface WrittenAsset {
@@ -39,6 +49,14 @@ export interface WrittenAsset {
 
 	/** Public URL to reference the file by. */
 	url: string;
+
+	/**
+	 * Dimensions read back from the written file's own bytes, so `<img>`
+	 * tags can be sized upfront and avoid layout shift on load. Omitted if
+	 * they couldn't be determined (e.g. unrecognized/malformed content).
+	 */
+	width?: number;
+	height?: number;
 }
 
 /** Page 1 keeps the plain `<hash>.<title>.<format>` name; later pages get `-pN`. */
@@ -89,14 +107,25 @@ async function existingSiblingPages(
 export async function writeAssets(
 	options: WriteAssetOptions,
 ): Promise<WrittenAsset[]> {
-	const { hash, title, format, outputDir, urlBase, trackAsset, getBuffers } =
-		options;
+	const {
+		hash,
+		title,
+		format,
+		outputDir,
+		urlBase,
+		trackAsset,
+		getBuffers,
+		sizeScale = 1,
+	} = options;
 	const page1Name = pageFileName(hash, title, format, 1);
 	const page1Path = join(outputDir, page1Name);
 
 	const alreadyWritten = await exists(page1Path);
 
 	let fileNames: string[];
+	// Populated on a cache miss, so dimensions can be read from the buffers
+	// already in hand instead of reading each file back from disk.
+	let buffersByFileName: Map<string, Buffer> | undefined;
 
 	if (alreadyWritten) {
 		fileNames = [
@@ -106,6 +135,7 @@ export async function writeAssets(
 	} else {
 		const buffers = await getBuffers();
 		fileNames = buffers.map((_, i) => pageFileName(hash, title, format, i + 1));
+		buffersByFileName = new Map(fileNames.map((name, i) => [name, buffers[i]]));
 		await mkdir(outputDir, { recursive: true });
 		await Promise.all(
 			buffers.map(async (buf, i) => {
@@ -124,8 +154,18 @@ export async function writeAssets(
 
 	for (const fileName of fileNames) trackAsset?.(fileName);
 
-	return fileNames.map((fileName) => ({
-		fileName,
-		url: `${urlBase}/${fileName}`,
-	}));
+	return Promise.all(
+		fileNames.map(async (fileName) => {
+			const buf =
+				buffersByFileName?.get(fileName) ??
+				(await readFile(join(outputDir, fileName)));
+			const dimensions = imageDimensionsFor(format, buf);
+			return {
+				fileName,
+				url: `${urlBase}/${fileName}`,
+				width: dimensions ? dimensions.width * sizeScale : undefined,
+				height: dimensions ? dimensions.height * sizeScale : undefined,
+			};
+		}),
+	);
 }

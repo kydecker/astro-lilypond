@@ -109,7 +109,7 @@ import bachInvention from "./bach-invention.ly";
 
 #### `content`
 
-**Type:** `LilypondContent` (`{ srcs: string[] }`)  
+**Type:** `LilypondContent` (`{ pages: { src: string; width?: number; height?: number }[] }`)  
 **Required:** yes
 
 The result of an imported `.ly` or `.ily` file. The output is resolved at build time according to the `defaults` configured in your integration.
