@@ -19,7 +19,7 @@ export default defineConfig({
   integrations: [
     lilypond({
       defaults: {
-        crop: true,
+        crop: "markdown-only",
         resolution: 144,
         version: "2.26.0",
       },
@@ -38,28 +38,18 @@ export default defineConfig({
 
 Default settings applied when rendering each score. Any individual `.ly` file can still override them with its own settings.
 
-```js
-// astro.config.mjs
-export default defineConfig({
-  integrations: [
-    lilypond({
-      format: "png",
-      defaults: {
-        version: "2.24.0", // Default to an older version
-        resolution: 300,   // Increase resolution
-        crop: false,       // Don't crop by default
-      }
-    }),
-  ],
-});
-```
-
 #### `defaults.crop`
 
-**Type:** `boolean`  
-**Default:** `true`
+**Type:** `boolean | "markdown-only"`  
+**Default:** `"markdown-only"`
 
-When `true`, the margins are removed and the page is cropped to fit the rendered staves. Set to `false` to preserve full page dimensions.
+When cropped, margins are removed and the page is cropped to fit the rendered staves, producing a single image. When not cropped, the full page (or pages, for a multi-page score) is preserved.
+
+- `"markdown-only"` (default) crops [Markdown](/usage/#markdown) fences, but leaves [`<LilyPond>`](/usage/#component) components full-page.
+- `true` crops everywhere.
+- `false` never crops by default.
+
+A `<LilyPond>` `.ly` import can always override this per-instance with `?crop` or `?nocrop` — see [Cropping](/usage/#cropping).
 
 #### `defaults.resolution`
 
@@ -100,7 +90,7 @@ Information about the latest releases can be found on the [LilyPond news](https:
 
 ### `format`
 
-**Type:** `"svg"` or `"png"`  
+**Type:** `"svg" | "png"`  
 **Default:** `"svg"`
 
 The output format passed to the LilyPond binary. Controls how the rendered output is embedded in the page.

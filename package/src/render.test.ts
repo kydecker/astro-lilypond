@@ -33,16 +33,18 @@ vi.mock("fs/promises", async (importOriginal) => {
 		...actual,
 		mkdtemp: vi.fn(async () => "/tmp/astro-lilypond-test"),
 		writeFile: vi.fn(async () => {}),
+		readdir: vi.fn(async () => ["output.svg"]),
 		readFile: vi.fn(async () => Buffer.from("<svg>fake</svg>")),
 		rm: vi.fn(async () => {}),
 	};
 });
 
 import { execFile } from "node:child_process";
-import { readFile } from "node:fs/promises";
+import { readdir, readFile } from "node:fs/promises";
 import { defaultOptions, render } from "./render.js";
 
 const mockExecFile = vi.mocked(execFile);
+const mockReaddir = vi.mocked(readdir);
 const mockReadFile = vi.mocked(readFile);
 
 type ExecFileCb = (
@@ -78,6 +80,7 @@ let stderrWriteSpy: ReturnType<typeof vi.spyOn>;
 beforeEach(() => {
 	vi.clearAllMocks();
 	mockExecFileResult((cb) => cb(null, { stdout: "", stderr: "" }));
+	mockReaddir.mockResolvedValue(["output.svg"]);
 	mockReadFile.mockResolvedValue(Buffer.from("<svg>fake</svg>"));
 	stderrWriteSpy = vi
 		.spyOn(process.stderr, "write")
@@ -89,9 +92,10 @@ afterEach(() => {
 });
 
 describe("render", () => {
-	it("resolves to a Buffer", async () => {
+	it("resolves to an array of Buffers", async () => {
 		const result = await render("\\score { }");
-		expect(Buffer.isBuffer(result)).toBe(true);
+		expect(Array.isArray(result)).toBe(true);
+		expect(result.every((buf) => Buffer.isBuffer(buf))).toBe(true);
 	});
 
 	it("passes --format=svg flag for svg format", async () => {
@@ -113,7 +117,7 @@ describe("render", () => {
 	});
 
 	it("passes --define-default=crop=#t when crop is true", async () => {
-		await render("\\score { }", { defaults: { crop: true } });
+		await render("\\score { }", { crop: true });
 		const [, args] = mockExecFile.mock.calls[0] as unknown as [
 			string,
 			string[],
@@ -122,7 +126,7 @@ describe("render", () => {
 	});
 
 	it("passes --define-default=crop=#f when crop is false", async () => {
-		await render("\\score { }", { defaults: { crop: false } });
+		await render("\\score { }", { crop: false });
 		const [, args] = mockExecFile.mock.calls[0] as unknown as [
 			string,
 			string[],
@@ -131,7 +135,7 @@ describe("render", () => {
 	});
 
 	it("crop is true by default", () => {
-		expect(defaultOptions.defaults.crop).toBe(true);
+		expect(defaultOptions.crop).toBe(true);
 	});
 
 	it("version defaults to 2.26.0", () => {
@@ -163,7 +167,8 @@ describe("render", () => {
 				stderr: "warning: some other unexpected warning",
 			}),
 		);
-		await expect(render("\\score { }")).resolves.toBeInstanceOf(Buffer);
+		const result = await render("\\score { }");
+		expect(result[0]).toBeInstanceOf(Buffer);
 	});
 
 	it("writes stderr to process.stderr for visibility even on success", async () => {
@@ -230,8 +235,9 @@ describe("render", () => {
 	it("reads the .cropped.svg file when crop is true", async () => {
 		mockReadFile.mockResolvedValueOnce(Buffer.from("<svg>cropped</svg>"));
 
-		const result = await render("\\score { }", { defaults: { crop: true } });
-		expect(result.toString()).toBe("<svg>cropped</svg>");
+		const result = await render("\\score { }", { crop: true });
+		expect(result).toHaveLength(1);
+		expect(result[0].toString()).toBe("<svg>cropped</svg>");
 		const [path] = mockReadFile.mock.calls[0];
 		expect(String(path)).toMatch(/\.cropped\.svg$/);
 	});
@@ -239,34 +245,35 @@ describe("render", () => {
 	it("throws if the cropped file is missing when crop is true", async () => {
 		mockReadFile.mockRejectedValueOnce(new Error("ENOENT"));
 
-		await expect(
-			render("\\score { }", { defaults: { crop: true } }),
-		).rejects.toThrow("expected cropped output");
+		await expect(render("\\score { }", { crop: true })).rejects.toThrow(
+			"expected cropped output",
+		);
 	});
 
-	it("falls back to numbered output file when crop is off and direct read fails", async () => {
-		mockReadFile
-			.mockRejectedValueOnce(new Error("ENOENT"))
-			.mockResolvedValueOnce(Buffer.from("<svg>page1</svg>"));
+	it("reads every numbered page when crop is off and the output spans multiple pages", async () => {
+		mockReaddir.mockResolvedValue(["output-1.svg", "output-2.svg"]);
+		mockReadFile.mockImplementation(async (path) =>
+			Buffer.from(`content:${String(path)}`),
+		);
 
-		const result = await render("\\score { }", { defaults: { crop: false } });
-		expect(result.toString()).toBe("<svg>page1</svg>");
-		expect(mockReadFile).toHaveBeenCalledTimes(2);
+		const result = await render("\\score { }", { crop: false });
+		expect(result.map((buf) => buf.toString())).toEqual([
+			"content:/tmp/astro-lilypond-test/output-1.svg",
+			"content:/tmp/astro-lilypond-test/output-2.svg",
+		]);
 	});
 
-	it("falls back to <base>-page1.<format> for multi-page PNG output, which lilypond names differently than svg/pdf", async () => {
-		mockReadFile
-			.mockRejectedValueOnce(new Error("ENOENT")) // output.png
-			.mockRejectedValueOnce(new Error("ENOENT")) // output-1.png
-			.mockResolvedValueOnce(Buffer.from("fake-png-page1"));
+	it("reads <base>-pageN.<format> pages for multi-page PNG output, which lilypond names differently than svg/pdf", async () => {
+		mockReaddir.mockResolvedValue(["output-page1.png"]);
+		mockReadFile.mockResolvedValueOnce(Buffer.from("fake-png-page1"));
 
 		const result = await render("\\score { }", {
 			format: "png",
-			defaults: { crop: false },
+			crop: false,
 		});
-		expect(result.toString()).toBe("fake-png-page1");
-		expect(mockReadFile).toHaveBeenCalledTimes(3);
-		const [path] = mockReadFile.mock.calls[2] as unknown as [string];
+		expect(result).toHaveLength(1);
+		expect(result[0].toString()).toBe("fake-png-page1");
+		const [path] = mockReadFile.mock.calls[0] as unknown as [string];
 		expect(String(path)).toMatch(/-page1\.png$/);
 	});
 });

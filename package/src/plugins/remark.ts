@@ -1,18 +1,18 @@
 import type { Html, Root } from "mdast";
 import type { Plugin } from "unified";
 import { visit } from "unist-util-visit";
-import { defaultOptions, render } from "../render.js";
+import { defaultOptions, render, resolveCrop } from "../render.js";
 import {
 	contentHashFor,
-	imgTag,
 	includePathsFor,
 	isLilypondLang,
 	prependVersion,
+	renderedHtml,
 	resolveDefaults,
 	sourceNameFor,
 	titleFor,
 } from "../utils/index.js";
-import { writeAsset } from "../writeAsset.js";
+import { writeAssets } from "../writeAsset.js";
 import type { ResolvedPluginOptions } from "./types.js";
 
 export type RemarkPluginOptions = ResolvedPluginOptions;
@@ -28,29 +28,38 @@ export const remarkPlugin: Plugin<[RemarkPluginOptions], Root> = (options) => {
 		visit(tree, "code", (node, index, parent) => {
 			if (!isLilypondLang(node.lang) || index === undefined || !parent) return;
 
-			const { version, resolution, crop } = resolveDefaults(options.defaults);
+			const {
+				version,
+				resolution,
+				crop: cropSetting,
+			} = resolveDefaults(options.defaults);
 			const source = version ? prependVersion(node.value, version) : node.value;
 			const format = options.format ?? defaultOptions.format;
+			const crop = resolveCrop(cropSetting, "markdown");
 			const hash = contentHashFor({ source, format, resolution, crop });
-			fileNames.push(`${hash}.${title}.${format}`);
 
-			const promise = writeAsset({
+			const promise = writeAssets({
 				hash,
 				title,
 				format,
 				outputDir: options.assetsDir,
 				urlBase: options.assetsUrlBase,
 				trackAsset: options.trackAsset,
-				getBuffer: () =>
+				getBuffers: () =>
 					render(source, {
 						format,
+						crop,
 						defaults: options.defaults,
 						timeout: options.timeout,
 						includePaths,
 						sourceName,
 					}),
-			}).then((url): void => {
-				const htmlNode: Html = { type: "html", value: imgTag(url) };
+			}).then((assets): void => {
+				fileNames.push(...assets.map((asset) => asset.fileName));
+				const htmlNode: Html = {
+					type: "html",
+					value: renderedHtml(assets.map((asset) => asset.url)),
+				};
 				parent.children[index] = htmlNode;
 			});
 

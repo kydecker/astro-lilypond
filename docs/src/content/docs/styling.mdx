@@ -1,29 +1,99 @@
 ---
 title: Styling
-description: Style LilyPond SVG output using the .lilypond CSS class.
+description: Style LilyPond SVG output using the data-lilypond-image attribute.
 ---
 
 import { Code } from "@astrojs/starlight/components";
+import BachInventionExample from "../../components/examples/BachInventionExample.astro";
 import StyledMusicExample from "../../components/examples/StyledMusicExample.astro";
 import StyledMusicExampleRaw from "../../components/examples/StyledMusicExample.astro?raw";
 
-Every rendered LilyPond block receives a `lilypond` class on an `<img>` element. Use this class as your CSS hook.
+Every image is output to the page with this basic markup:
+
+```html
+<img src="..." data-lilypond-image />
+```
 
 ## Global styles
 
-Target `.lilypond` in any global stylesheet to add a background or padding, for example:
+Target `[data-lilypond-image]` in any global stylesheet to modify global styles for the rendered images. For example, backgrounds are transparent by default, so you may want to apply a custom `background-color` if your site uses dark mode:
 
 ```css
-.lilypond {
-  background: ivory;
-  padding: 20px;
+[data-lilypond-image] {
+  background-color: white;
 }
 ```
 
 ## Scoped styles
 
-Pass a `class` prop to `<LilyPond>` to get a scoped handle.
+The `<LilyPond>` component allows you to pass a `class`. The `class` is scoped to that specific component instance.
 
 <Code code={StyledMusicExampleRaw} lang="astro" />
 
 <StyledMusicExample />
+
+## Multi-page groups
+
+When `crop` is false, long scores will output multiple pages. These pages render inside of an `<ol>` ordered list, and each `<img>` image is within a `<li>` list item.
+
+```html
+<ol data-lilypond-group>
+  <li>
+    <img data-lilypond-image src="page1.svg" />
+  </li>
+  <li>
+    <img data-lilypond-image src="page2.svg" />
+  </li>
+</ol>
+```
+
+### Basic styles
+
+`lilypond-astro` doesn't ship any styles of its own, so you may see bullets, padding, and margin around your multi-page groups. To prevent this, you can apply a reset to any global stylesheet:
+
+```css
+[data-lilypond-group] {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+
+  li {
+    margin: 0;
+  }
+
+  img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+  }
+}
+```
+
+### Side-scrolling group
+
+If you'd like to display multi-page scores in a horizontally-scrolling group like this...
+
+<BachInventionExample />
+
+...here's the CSS to use:
+
+```css
+[data-lilypond-group] {
+  list-style-type: none;
+  padding: 0;
+  display: flex;
+  overflow-x: auto;
+  gap: 1rem;
+
+  li {
+    flex-shrink: 0;
+    margin: 0;
+  }
+
+  img {
+    width: 100%;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    margin: 0;
+  }
+}
+```

@@ -6,7 +6,7 @@ describe("resolveDefaults", () => {
 		expect(resolveDefaults(undefined)).toEqual({
 			version: "2.26.0",
 			resolution: 144,
-			crop: true,
+			crop: "markdown-only",
 		});
 	});
 
@@ -14,13 +14,29 @@ describe("resolveDefaults", () => {
 		expect(resolveDefaults({ resolution: 300 })).toEqual({
 			version: "2.26.0",
 			resolution: 300,
-			crop: true,
+			crop: "markdown-only",
 		});
 	});
 
 	it("passes through an explicitly-set version", () => {
 		expect(resolveDefaults({ version: "2.24.0" })).toEqual({
 			version: "2.24.0",
+			resolution: 144,
+			crop: "markdown-only",
+		});
+	});
+
+	it("passes through an explicitly-set crop of false", () => {
+		expect(resolveDefaults({ crop: false })).toEqual({
+			version: "2.26.0",
+			resolution: 144,
+			crop: false,
+		});
+	});
+
+	it("passes through an explicitly-set crop of true", () => {
+		expect(resolveDefaults({ crop: true })).toEqual({
+			version: "2.26.0",
 			resolution: 144,
 			crop: true,
 		});

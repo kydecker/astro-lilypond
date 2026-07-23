@@ -4,30 +4,33 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("../render", () => ({
 	render: vi.fn(),
 	FORMATS: ["png", "svg"],
+	resolveCrop: (cropSetting: unknown, context: "markdown" | "component") =>
+		context === "markdown" ? cropSetting !== false : cropSetting === true,
 	defaultOptions: {
 		format: "svg",
+		crop: true,
 		binaryPath: "lilypond",
 		timeout: 60_000,
 		defaults: {
 			resolution: 144,
-			crop: true,
+			crop: "markdown-only",
 		},
 	},
 }));
 
 vi.mock("../writeAsset.js", () => ({
-	writeAsset: vi.fn(),
+	writeAssets: vi.fn(),
 }));
 
 import { render } from "../render";
-import { writeAsset } from "../writeAsset.js";
+import { writeAssets } from "../writeAsset.js";
 import {
 	remarkPlugin as _remarkLilypondPlugin,
 	type RemarkPluginOptions,
 } from "./remark.js";
 
 const mockRender = vi.mocked(render);
-const mockWriteAsset = vi.mocked(writeAsset);
+const mockWriteAssets = vi.mocked(writeAssets);
 
 const FAKE_SVG = "<svg xmlns='http://www.w3.org/2000/svg'><g>fake</g></svg>";
 
@@ -44,12 +47,20 @@ const remarkLilypondPlugin = _remarkLilypondPlugin as unknown as SimplePlugin;
 
 beforeEach(() => {
 	vi.clearAllMocks();
-	mockRender.mockResolvedValue(Buffer.from(FAKE_SVG));
+	mockRender.mockResolvedValue([Buffer.from(FAKE_SVG)]);
 
-	// Simulate a cache miss; invoke the render function
-	mockWriteAsset.mockImplementation(async (opts) => {
-		await opts.getBuffer();
-		return `/_lilypond/mock-hash.${opts.title}.${opts.format}`;
+	// Simulate a cache miss; invoke the render function. Uses the real
+	// `opts.hash` (computed by the plugin from the block's content) so
+	// filename assertions can still check the real hash format.
+	mockWriteAssets.mockImplementation(async (opts) => {
+		const buffers = await opts.getBuffers();
+		return buffers.map((_, i) => {
+			const fileName =
+				i === 0
+					? `${opts.hash}.${opts.title}.${opts.format}`
+					: `${opts.hash}.${opts.title}-p${i + 1}.${opts.format}`;
+			return { fileName, url: `/_lilypond/${fileName}` };
+		});
 	});
 });
 
@@ -81,11 +92,12 @@ describe("remarkLilypondPlugin", () => {
 
 		expect(mockRender).toHaveBeenCalledWith("\\score { }", {
 			format: "svg",
+			crop: true,
 			defaults: undefined,
 			includePaths: ["."],
 			sourceName: "test.md",
 		});
-		expect(mockWriteAsset).toHaveBeenCalledWith(
+		expect(mockWriteAssets).toHaveBeenCalledWith(
 			expect.objectContaining({
 				title: "test",
 				format: "svg",
@@ -94,11 +106,11 @@ describe("remarkLilypondPlugin", () => {
 				trackAsset: BASE_OPTIONS.trackAsset,
 			}),
 		);
-		expect(tree.children[0]).toEqual({
-			type: "html",
-			value:
-				'<img class="lilypond" src="/_lilypond/mock-hash.test.svg" alt="">',
-		});
+		const html = tree.children[0] as Html;
+		expect(html.type).toBe("html");
+		expect(html.value).toMatch(
+			/^<img data-lilypond-image src="\/_lilypond\/[0-9a-f]+\.test\.svg" alt="">$/,
+		);
 	});
 
 	it("leaves non-lilypond code blocks untouched", async () => {
@@ -108,7 +120,7 @@ describe("remarkLilypondPlugin", () => {
 		await runPlugin(tree);
 
 		expect(mockRender).not.toHaveBeenCalled();
-		expect(mockWriteAsset).not.toHaveBeenCalled();
+		expect(mockWriteAssets).not.toHaveBeenCalled();
 		expect(tree.children[0]).toBe(jsNode);
 	});
 
@@ -121,6 +133,7 @@ describe("remarkLilypondPlugin", () => {
 
 		expect(mockRender).toHaveBeenCalledWith("\\score { }", {
 			format: "svg",
+			crop: true,
 			defaults: undefined,
 			includePaths: ["."],
 			sourceName: "test.md",
@@ -136,6 +149,7 @@ describe("remarkLilypondPlugin", () => {
 
 		expect(mockRender).toHaveBeenCalledWith("\\score { }", {
 			format: "svg",
+			crop: true,
 			defaults: undefined,
 			includePaths: ["."],
 			sourceName: "test.md",
@@ -182,6 +196,7 @@ describe("remarkLilypondPlugin", () => {
 
 		expect(mockRender).toHaveBeenCalledWith('\\version "2.24.0"\n\\score { }', {
 			format: "svg",
+			crop: true,
 			defaults: { version: "2.24.0" },
 			includePaths: ["."],
 			sourceName: "test.md",
@@ -200,6 +215,7 @@ describe("remarkLilypondPlugin", () => {
 
 		expect(mockRender).toHaveBeenCalledWith(value, {
 			format: "svg",
+			crop: true,
 			defaults: { version: "2.24.0" },
 			includePaths: ["."],
 			sourceName: "test.md",
@@ -213,14 +229,14 @@ describe("remarkLilypondPlugin", () => {
 
 		await runPlugin(tree);
 
-		expect((tree.children[0] as Html).value).toContain(
-			'src="/_lilypond/mock-hash.test.svg"',
+		expect((tree.children[0] as Html).value).toMatch(
+			/src="\/_lilypond\/[0-9a-f]+\.test\.svg"/,
 		);
 	});
 
 	it("passes format: png through to render and writeAsset", async () => {
 		const fakePng = Buffer.from([0x89, 0x50, 0x4e, 0x47]);
-		mockRender.mockResolvedValue(fakePng);
+		mockRender.mockResolvedValue([fakePng]);
 		const options = { ...BASE_OPTIONS, format: "png" as const };
 		const plugin = remarkLilypondPlugin(
 			options,
@@ -233,18 +249,19 @@ describe("remarkLilypondPlugin", () => {
 
 		expect(mockRender).toHaveBeenCalledWith("\\score { }", {
 			format: "png",
+			crop: true,
 			defaults: undefined,
 			includePaths: ["."],
 			sourceName: "test.md",
 		});
-		expect((tree.children[0] as Html).value).toBe(
-			'<img class="lilypond" src="/_lilypond/mock-hash.test.png" alt="">',
+		expect((tree.children[0] as Html).value).toMatch(
+			/^<img data-lilypond-image src="\/_lilypond\/[0-9a-f]+\.test\.png" alt="">$/,
 		);
 	});
 
 	it("passes resolution DPI when resolution is set", async () => {
 		const fakePng = Buffer.from([0x89, 0x50, 0x4e, 0x47]);
-		mockRender.mockResolvedValue(fakePng);
+		mockRender.mockResolvedValue([fakePng]);
 		const options = {
 			...BASE_OPTIONS,
 			format: "png" as const,
@@ -261,13 +278,27 @@ describe("remarkLilypondPlugin", () => {
 
 		expect(mockRender).toHaveBeenCalledWith("\\score { }", {
 			format: "png",
+			crop: true,
 			defaults: { resolution: 300 },
 			includePaths: ["."],
 			sourceName: "test.md",
 		});
 	});
 
-	it("passes crop: false to render when the crop option is set to false", async () => {
+	it("renders cropped by default (defaults.crop unset)", async () => {
+		const tree = makeTree([
+			{ type: "code", lang: "lilypond", value: "\\score { }" } as Code,
+		]);
+
+		await runPlugin(tree);
+
+		expect(mockRender).toHaveBeenCalledWith(
+			"\\score { }",
+			expect.objectContaining({ crop: true }),
+		);
+	});
+
+	it("follows defaults.crop when configured — markdown fences have no per-block override", async () => {
 		const options = { ...BASE_OPTIONS, defaults: { crop: false } };
 		const plugin = remarkLilypondPlugin(
 			options,
@@ -278,11 +309,44 @@ describe("remarkLilypondPlugin", () => {
 
 		await plugin(tree, { path: "test.md" });
 
-		expect(mockRender).toHaveBeenCalledWith("\\score { }", {
-			format: "svg",
-			defaults: { crop: false },
-			includePaths: ["."],
-			sourceName: "test.md",
+		expect(mockRender).toHaveBeenCalledWith(
+			"\\score { }",
+			expect.objectContaining({ crop: false }),
+		);
+	});
+
+	describe("multi-page output", () => {
+		it("wraps multiple pages in an <ol><li> and prunes every page's filename", async () => {
+			mockRender.mockResolvedValue([
+				Buffer.from("page1"),
+				Buffer.from("page2"),
+				Buffer.from("page3"),
+			]);
+			const pruneStaleAssets = vi.fn();
+			const options = { ...BASE_OPTIONS, pruneStaleAssets };
+			const plugin = remarkLilypondPlugin(
+				options,
+			) as unknown as SimpleTransformer;
+			const tree = makeTree([
+				{ type: "code", lang: "lilypond", value: "\\score { }" } as Code,
+			]);
+
+			await plugin(tree, { path: "test.md" });
+
+			const html = tree.children[0] as Html;
+			expect(html.type).toBe("html");
+			expect(html.value).toMatch(/^<ol data-lilypond-group>/);
+			expect(html.value.match(/<li>/g)).toHaveLength(3);
+			expect(html.value).toMatch(/\.test\.svg" alt=""/);
+			expect(html.value).toMatch(/\.test-p2\.svg" alt=""/);
+			expect(html.value).toMatch(/\.test-p3\.svg" alt=""/);
+
+			expect(pruneStaleAssets).toHaveBeenCalledTimes(1);
+			const [, fileNames] = pruneStaleAssets.mock.calls[0] as [
+				string,
+				string[],
+			];
+			expect(fileNames).toHaveLength(3);
 		});
 	});
 

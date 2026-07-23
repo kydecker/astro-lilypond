@@ -1,40 +1,83 @@
 ---
 title: Usage
 description: Render LilyPond notation in Markdown or directly in Astro components.
+tableOfContents:
+  maxHeadingLevel: 4
 ---
 
 import { Code } from "@astrojs/starlight/components";
 import BachInventionExample from "../../components/examples/BachInventionExample.astro";
 import BachInventionExampleRaw from "../../components/examples/BachInventionExample.astro?raw";
+import UsageExample from "../../components/examples/UsageExample.astro";
 import FencedLilypond from "../../components/FencedLilypond.astro";
-import usageExample from "../../examples/usage-example.ly?raw";
+
+There are two ways to display LilyPond scores when using `astro-lilypond`:
+
+1. Write LilyPond code inside of fenced code block inside of a [Markdown](#markdown) file.
+2. Import the [`<LilyPond>` component](#component) and pass it a `.ly` file.
 
 ## Markdown
 
 Use a fenced code block with the `lilypond`, `ly`, or `ily` language tag:
 
-<FencedLilypond code={usageExample} />
+<UsageExample />
 
-The block is replaced with an inline image at build time. See [LilyPond Syntax](/lilypond-syntax/) for common patterns.
+The markdown-based approach is great for small musical examples and excerpts which you want to write alongside prose. You can write your text, compose some music, and then switch back to text without leaving the file!
+
+:::tip[A note on cropping]
+
+Markdown blocks are cropped unless you set [`defaults.crop`](/configuration/#defaultscrop) to `false` in your config — the default, `"markdown-only"`, still crops Markdown. Cropping cuts away margins and condenses all music into a single, sometimes large, image, and eliminates most spacing between staves.
+
+:::
 
 ## Component
 
+When you have longer, complex scores, or if you just prefer to keep music files separate from Markdown, you can use the Astro `<LilyPond>` component.
+
 The `<LilyPond>` component renders notation in any `.astro` file. Import a `.ly` or `.ily` file and pass it to the `content` prop.
 
-<Code code={BachInventionExampleRaw} lang="astro" />
+<Code code={BachInventionExampleRaw} lang="astro" title="MyComponent.astro" />
 
 <BachInventionExample />
 
-The `format` and `defaults` configured in your integration options apply automatically.
+When a score renders to more than one page, as above, the pages are wrapped in an unstyled `<ol>` element which contains one `<li>` list item for each page `<img>`. You can style pages and containers however you want. See [styling](/styling) for more examples.
+
+### Cropping
+
+`<LilyPond>` imports follow [`defaults.crop`](/configuration/#defaultscrop) too, but the default value, `"markdown-only"`, only crops Markdown — component output is left as full, potentially multi-page, pages by default, preserving page margins and spacing.
+
+Individual imports can override `defaults.crop` by appending `?crop` or `?nocrop` to the import path.
+
+Append `?crop` to always crop the score:
+
+```astro "?crop" title="CroppedScore.astro"
+---
+import LilyPond from "astro-lilypond/component";
+import bachInvention from "./bach-invention.ly?crop";
+---
+
+<LilyPond content={bachInvention} />
+```
+
+Append `?nocrop` to force full, uncropped pages:
+
+```astro "?nocrop" title="UncroppedScore.astro"
+---
+import LilyPond from "astro-lilypond/component";
+import bachInvention from "./bach-invention.ly?nocrop";
+---
+
+<LilyPond content={bachInvention} />
+```
 
 ### Props
 
 #### `content`
 
-**Type:** `string`  
+**Type:** `LilypondContent` (`{ srcs: string[] }`)  
 **Required:** yes
 
-The result of an imported `.ly` file. The output is resolved at build time according to the `version`, `format`, and `crop` options configured in your integration.
+The result of an imported `.ly` or `.ily` file. The output is resolved at build time according to the `defaults` configured in your integration.
 
 #### `class`
 

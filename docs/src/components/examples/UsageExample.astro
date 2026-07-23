@@ -1,0 +1,14 @@
+---
+import LilyPond from "astro-lilypond/component";
+import FencedLilypond from "../FencedLilypond.astro";
+import content from "./scores/example.ly?crop";
+import code from "./scores/example.ly?raw";
+---
+
+<FencedLilypond code={code} />
+
+<p>
+  The above text in Markdown will be replaced with this image on your webpage:
+</p>
+
+<LilyPond content={content} />

@@ -12,24 +12,37 @@ import {
 	remarkPlugin,
 	satteriPlugin,
 } from "./plugins/index.js";
-import { defaultOptions, type LilypondDefaults, render } from "./render.js";
+import {
+	defaultOptions,
+	type LilypondDefaults,
+	render,
+	resolveCrop,
+} from "./render.js";
 import {
 	assetsUrlBaseFor,
 	contentHashFor,
-	imgTag,
 	includePathsFor,
+	parseLyImportQuery,
 	prependVersion,
 	resolveDefaults,
 	sourceNameFor,
 	titleFor,
 } from "./utils/index.js";
-import { writeAsset } from "./writeAsset.js";
+import { writeAssets } from "./writeAsset.js";
 
 const execFileAsync = promisify(execFile);
 
 const LY_EXTENSIONS = [".ly", ".lilypond", ".ily"] as const;
 
 export type { LilypondDefaults, PluginOptions as LilypondPluginOptions };
+
+/**
+ * The default export of a `.ly`/`.lilypond`/`.ily` import — one URL per
+ * rendered page, in order, for `<LilyPond>` to build markup from.
+ */
+export interface LilypondContent {
+	srcs: string[];
+}
 
 export interface LilypondOptions extends PluginOptions {
 	/**
@@ -39,8 +52,8 @@ export interface LilypondOptions extends PluginOptions {
 	format?: "svg" | "png";
 
 	/**
-	 * Defaults passed to each score — `version`, `resolution`, `crop`.
-	 * Each can still be overridden by an individual `.ly` file.
+	 * Defaults passed to each score.
+	 * Defaults can still be overridden by individual `.ly` files.
 	 */
 	defaults?: LilypondDefaults;
 
@@ -68,34 +81,53 @@ function lyFilePlugin(options: ResolvedPluginOptions): Plugin {
 		name: "vite-plugin-astro-lilypond-ly",
 		enforce: "pre",
 		async transform(source, id) {
-			if (!LY_EXTENSIONS.some((ext) => id.endsWith(ext))) return;
-			const { version, resolution, crop } = resolveDefaults(options.defaults);
+			// undefined means an unrecognized query param (e.g. Vite's `?raw`,
+			// `?url`) — not ours to render, so let it fall through.
+			const query = parseLyImportQuery(id);
+			if (!query) return;
+			const { pathname, cropOverride } = query;
+			if (!LY_EXTENSIONS.some((ext) => pathname.endsWith(ext))) return;
+
+			const {
+				version,
+				resolution,
+				crop: cropSetting,
+			} = resolveDefaults(options.defaults);
+			const crop = cropOverride ?? resolveCrop(cropSetting, "component");
 			const src = version ? prependVersion(source, version) : source;
 			const format = options.format ?? defaultOptions.format;
-			const includePaths = includePathsFor(id);
-			const sourceName = sourceNameFor(id);
+			const includePaths = includePathsFor(pathname);
+			const sourceName = sourceNameFor(pathname);
 			const title = titleFor(sourceName);
 			const hash = contentHashFor({ source: src, format, resolution, crop });
-			const fileName = `${hash}.${title}.${format}`;
-			const url = await writeAsset({
+			const assets = await writeAssets({
 				hash,
 				title,
 				format,
 				outputDir: options.assetsDir,
 				urlBase: options.assetsUrlBase,
 				trackAsset: options.trackAsset,
-				getBuffer: () =>
+				getBuffers: () =>
 					render(src, {
 						format,
+						crop,
 						defaults: options.defaults,
 						timeout: options.timeout,
 						includePaths,
 						sourceName,
 					}),
 			});
-			await options.pruneStaleAssets(id, [fileName]);
+			// Keyed by the full id (including query) so `./score.ly` and
+			// `./score.ly?crop` are tracked as independent sources.
+			await options.pruneStaleAssets(
+				id,
+				assets.map((asset) => asset.fileName),
+			);
+			const content: LilypondContent = {
+				srcs: assets.map((asset) => asset.url),
+			};
 			return {
-				code: `export default ${JSON.stringify(imgTag(url))}`,
+				code: `export default ${JSON.stringify(content)}`,
 			};
 		},
 	};
@@ -227,7 +259,7 @@ export default function lilypond(
 					filename: "ly-types.d.ts",
 					content: LY_EXTENSIONS.map(
 						(ext) =>
-							`declare module "*${ext}" {\n  const html: string;\n  export default html;\n}`,
+							`declare module "*${ext}" {\n  const content: import("astro-lilypond").LilypondContent;\n  export default content;\n}`,
 					).join("\n"),
 				});
 			},

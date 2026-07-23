@@ -1,7 +1,11 @@
 ---
 import LilyPondExample from "../LilyPondExample.astro";
-import content from "./scores/stockhausen-klavierstueckII.ly";
+import content from "./scores/stockhausen-klavierstueckII.ly?crop";
 import code from "./scores/stockhausen-klavierstueckII.ly?raw";
 ---
 
-<LilyPondExample content={content} code={code} title="stockhausen-klavierstueckII.ly" />
+<LilyPondExample
+  content={content}
+  code={code}
+  title="stockhausen-klavierstueckII.ly"
+/>
