@@ -1,4 +1,5 @@
 export { altTextFor } from "./altTextFor.js";
+export { altTextForBlock } from "./altTextForBlock.js";
 export { assetsUrlBaseFor } from "./assetsUrlBaseFor.js";
 export { contentHashFor } from "./contentHashFor.js";
 export { escapeHtmlAttribute } from "./escapeHtmlAttribute.js";
@@ -14,3 +15,4 @@ export { renderedHtml } from "./renderedHtml.js";
 export { resolveDefaults } from "./resolveDefaults.js";
 export { sourceNameFor } from "./sourceNameFor.js";
 export { titleFor } from "./titleFor.js";
+export { unescapeQuoted } from "./unescapeQuoted.js";

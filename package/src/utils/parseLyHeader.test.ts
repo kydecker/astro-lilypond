@@ -69,4 +69,12 @@ describe("parseLyHeader", () => {
 	it("treats a whitespace-only value as absent", () => {
 		expect(parseLyHeader('\\header { title = "   " }')).toEqual({});
 	});
+
+	it("ignores a literal brace inside a quoted value and still finds a sibling field", () => {
+		expect(
+			parseLyHeader(
+				'\\header { title = "Op. 27 (Moonlight}" composer = "Beethoven" }',
+			),
+		).toEqual({ title: "Op. 27 (Moonlight}", composer: "Beethoven" });
+	});
 });

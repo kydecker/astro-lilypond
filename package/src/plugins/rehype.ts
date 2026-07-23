@@ -1,12 +1,10 @@
 import { visit } from "unist-util-visit";
 import { defaultOptions, render, resolveCrop } from "../render.js";
 import {
-	altTextFor,
+	altTextForBlock,
 	contentHashFor,
 	includePathsFor,
 	isLilypondLang,
-	parseFenceMeta,
-	parseLyHeader,
 	prependVersion,
 	renderedHtml,
 	resolveDefaults,
@@ -72,8 +70,7 @@ export function rehypePlugin(
 			const format = options.format ?? defaultOptions.format;
 			const crop = resolveCrop(cropSetting, "markdown");
 			const hash = contentHashFor({ source, format, resolution, crop });
-			const meta = (codeNode as { data?: { meta?: string } }).data?.meta;
-			const alt = parseFenceMeta(meta) ?? altTextFor(parseLyHeader(raw));
+			const alt = altTextForBlock(codeNode.data?.meta, raw);
 
 			const promise = writeAssets({
 				hash,

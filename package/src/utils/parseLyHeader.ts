@@ -1,3 +1,5 @@
+import { unescapeQuoted } from "./unescapeQuoted.js";
+
 const HEADER_FIELDS = ["title", "composer"] as const;
 
 export interface LyHeaderFields {
@@ -5,21 +7,24 @@ export interface LyHeaderFields {
 	composer?: string;
 }
 
-/** Undoes the `\"` and `\\` escaping of a quoted LilyPond string value. */
-function unescapeQuoted(value: string): string {
-	return value.replace(/\\(["\\])/g, "$1");
-}
-
-/** Returns the body of the first `\header { ... }` block, matching braces by depth so a nested `\markup` block can't truncate it early. */
+/** Returns the body of the first `\header { ... }` block, matching braces by depth (ignoring braces inside quoted strings) so nested `\markup` braces or a literal `{`/`}` in a value can't truncate it early. */
 function headerBodyOf(source: string): string | undefined {
 	const match = /\\header\s*\{/.exec(source);
 	if (!match) return undefined;
 
 	const start = match.index + match[0].length;
 	let depth = 1;
+	let inString = false;
 	for (let i = start; i < source.length; i++) {
-		if (source[i] === "{") depth++;
-		else if (source[i] === "}") {
+		const ch = source[i];
+		if (inString) {
+			if (ch === "\\") i++;
+			else if (ch === '"') inString = false;
+			continue;
+		}
+		if (ch === '"') inString = true;
+		else if (ch === "{") depth++;
+		else if (ch === "}") {
 			depth--;
 			if (depth === 0) return source.slice(start, i);
 		}

@@ -64,6 +64,7 @@ interface HastElement {
 	tagName: string;
 	properties: Record<string, unknown>;
 	children: (HastElement | HastText)[];
+	data?: { meta?: string };
 }
 
 interface HastRaw {
@@ -90,7 +91,7 @@ function makeLilypondPre(code: string, meta?: string): HastElement {
 				properties: { className: ["language-lilypond"] },
 				children: [{ type: "text", value: code }],
 				...(meta !== undefined ? { data: { meta } } : {}),
-			} as unknown as HastElement,
+			},
 		],
 	};
 }

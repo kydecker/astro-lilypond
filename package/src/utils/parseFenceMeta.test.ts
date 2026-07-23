@@ -34,6 +34,10 @@ describe("parseFenceMeta", () => {
 		expect(parseFenceMeta('title="x" alt="y"')).toBe("y");
 	});
 
+	it('ignores a hyphenated key that merely ends in "alt"', () => {
+		expect(parseFenceMeta('data-alt="internal"')).toBeUndefined();
+	});
+
 	it("returns undefined for malformed/unterminated quoting", () => {
 		expect(parseFenceMeta('alt="Sonata')).toBeUndefined();
 	});
