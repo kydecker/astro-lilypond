@@ -152,7 +152,7 @@ describe("rehypePlugin", () => {
 		const raw = tree.children[0] as HastRaw;
 		expect(raw.type).toBe("raw");
 		expect(raw.value).toMatch(
-			/^<img class="lilypond" src="\/_lilypond\/[0-9a-f]+\.score\.svg" alt="">$/,
+			/^<img data-lilypond-image src="\/_lilypond\/[0-9a-f]+\.score\.svg" alt="">$/,
 		);
 	});
 
@@ -254,7 +254,7 @@ describe("rehypePlugin", () => {
 			includePaths: [],
 		});
 		expect((tree.children[0] as HastRaw).value).toMatch(
-			/^<img class="lilypond" src="\/_lilypond\/[0-9a-f]+\.score\.png" alt="">$/,
+			/^<img data-lilypond-image src="\/_lilypond\/[0-9a-f]+\.score\.png" alt="">$/,
 		);
 	});
 
@@ -316,7 +316,7 @@ describe("rehypePlugin", () => {
 
 			const raw = tree.children[0] as HastRaw;
 			expect(raw.type).toBe("raw");
-			expect(raw.value).toMatch(/^<ol class="lilypond-pages">/);
+			expect(raw.value).toMatch(/^<ol data-lilypond-group>/);
 			expect(raw.value.match(/<li>/g)).toHaveLength(2);
 
 			expect(pruneStaleAssets).toHaveBeenCalledTimes(1);

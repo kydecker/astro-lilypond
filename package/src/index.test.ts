@@ -304,12 +304,13 @@ describe("lilypond integration", () => {
 		expect(content).toContain('declare module "*.ily"');
 	});
 
-	it("injected type declarations export a default html string", () => {
+	it("injected type declarations export a default LilypondContent value", () => {
 		const injectTypes = vi.fn();
 		const integration = lilypond();
 		integration.hooks["astro:config:done"]?.({ injectTypes } as never);
 		const { content } = injectTypes.mock.calls[0][0] as { content: string };
-		expect(content.match(/export default html/g)?.length).toBe(3);
+		expect(content.match(/export default content/g)?.length).toBe(3);
+		expect(content.match(/LilypondContent/g)?.length).toBe(3);
 	});
 
 	it("includes the detected processor name in the error", async () => {

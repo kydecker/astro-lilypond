@@ -86,7 +86,7 @@ describe("satteriPlugin", () => {
 		const html = result as Html;
 		expect(html.type).toBe("html");
 		expect(html.value).toMatch(
-			/^<img class="lilypond" src="\/_lilypond\/[0-9a-f]+\.score\.svg" alt="">$/,
+			/^<img data-lilypond-image src="\/_lilypond\/[0-9a-f]+\.score\.svg" alt="">$/,
 		);
 	});
 
@@ -200,7 +200,7 @@ describe("satteriPlugin", () => {
 			includePaths: [],
 		});
 		expect((result as Html).value).toMatch(
-			/^<img class="lilypond" src="\/_lilypond\/[0-9a-f]+\.score\.png" alt="">$/,
+			/^<img data-lilypond-image src="\/_lilypond\/[0-9a-f]+\.score\.png" alt="">$/,
 		);
 	});
 
@@ -273,7 +273,7 @@ describe("satteriPlugin", () => {
 
 			const html = result as Html;
 			expect(html.type).toBe("html");
-			expect(html.value).toMatch(/^<ol class="lilypond-pages">/);
+			expect(html.value).toMatch(/^<ol data-lilypond-group>/);
 			expect(html.value.match(/<li>/g)).toHaveLength(2);
 
 			expect(pruneStaleAssets).toHaveBeenCalledTimes(1);

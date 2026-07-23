@@ -31,6 +31,10 @@ interface VitePluginLike {
 	transform: (src: string, id: string) => Promise<{ code: string } | undefined>;
 }
 
+function contentOf(code: string | undefined): { srcs: string[] } {
+	return JSON.parse(code?.replace(/^export default /, "") ?? "null");
+}
+
 async function getLyPlugin(
 	publicDirUrl: URL,
 	options: LilypondOptions = {},
@@ -77,8 +81,7 @@ describe.skipIf(!lilypondAvailable())(
 				join(projectDir, "score.ly"),
 			);
 
-			expect(result?.code).toContain("lilypond-pages");
-			expect(result?.code?.match(/<li>/g)).toHaveLength(2);
+			expect(contentOf(result?.code).srcs).toHaveLength(2);
 
 			const files = await readdir(join(publicDir, "_lilypond"));
 			expect(files.filter((f) => f.endsWith(".svg"))).toHaveLength(2);
@@ -91,8 +94,7 @@ describe.skipIf(!lilypondAvailable())(
 				`${join(projectDir, "score.ly")}?crop`,
 			);
 
-			expect(result?.code).toContain("<img");
-			expect(result?.code).not.toContain("<ol");
+			expect(contentOf(result?.code).srcs).toHaveLength(1);
 
 			const files = await readdir(join(publicDir, "_lilypond"));
 			expect(files.filter((f) => f.endsWith(".svg"))).toHaveLength(1);
@@ -107,8 +109,7 @@ describe.skipIf(!lilypondAvailable())(
 				join(projectDir, "score.ly"),
 			);
 
-			expect(result?.code).toContain("<img");
-			expect(result?.code).not.toContain("<ol");
+			expect(contentOf(result?.code).srcs).toHaveLength(1);
 
 			const files = await readdir(join(publicDir, "_lilypond"));
 			expect(files.filter((f) => f.endsWith(".svg"))).toHaveLength(1);
@@ -123,8 +124,7 @@ describe.skipIf(!lilypondAvailable())(
 				`${join(projectDir, "score.ly")}?nocrop`,
 			);
 
-			expect(result?.code).toContain("lilypond-pages");
-			expect(result?.code?.match(/<li>/g)).toHaveLength(2);
+			expect(contentOf(result?.code).srcs).toHaveLength(2);
 
 			const files = await readdir(join(publicDir, "_lilypond"));
 			expect(files.filter((f) => f.endsWith(".svg"))).toHaveLength(2);

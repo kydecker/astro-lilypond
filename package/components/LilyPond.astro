@@ -1,35 +1,24 @@
 ---
-const HTML_ENTITIES: Record<string, string> = {
-	"&": "&amp;",
-	"<": "&lt;",
-	">": "&gt;",
-	'"': "&quot;",
-	"'": "&#39;",
-};
-
-function escapeHtml(text: unknown): string {
-	return String(text).replace(/[&<>"']/g, (c) => HTML_ENTITIES[c] ?? c);
-}
-
 interface Props {
-	content: string;
+	content: { srcs: string[] };
 	class?: string | undefined;
 	style?: string | undefined;
 }
 
 const { content, class: className, style } = Astro.props;
-
-let html = content;
-// Multi-page output nests several `<img class="lilypond">` inside an
-// `<ol class="lilypond-pages">` — class/style apply only to that outermost
-// wrapper, not to every page's `<img>`.
-if (className)
-	html = html.replace(
-		/class="(lilypond(?:-pages)?)"/,
-		`class="$1 ${className}"`,
-	);
-if (style)
-	html = html.replace(/<(ol|svg|img)\b/, `<$1 style="${escapeHtml(style)}"`);
+const { srcs } = content;
 ---
 
-<Fragment set:html={html} />
+{
+	srcs.length === 1 ? (
+		<img data-lilypond-image class={className} src={srcs[0]} alt="" style={style} />
+	) : (
+		<ol data-lilypond-group class={className} style={style}>
+			{srcs.map((src) => (
+				<li>
+					<img data-lilypond-image src={src} alt="" />
+				</li>
+			))}
+		</ol>
+	)
+}

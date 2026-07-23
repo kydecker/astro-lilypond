@@ -4,7 +4,7 @@ import { renderedHtml } from "./renderedHtml.js";
 describe("renderedHtml", () => {
 	it("wraps a single src in a plain lilypond img tag", () => {
 		expect(renderedHtml(["/_lilypond/abc123.svg"])).toBe(
-			'<img class="lilypond" src="/_lilypond/abc123.svg" alt="">',
+			'<img data-lilypond-image src="/_lilypond/abc123.svg" alt="">',
 		);
 	});
 
@@ -16,10 +16,10 @@ describe("renderedHtml", () => {
 				"/_lilypond/abc123-p3.svg",
 			]),
 		).toBe(
-			'<ol class="lilypond-pages">' +
-				'<li><img class="lilypond" src="/_lilypond/abc123.svg" alt=""></li>' +
-				'<li><img class="lilypond" src="/_lilypond/abc123-p2.svg" alt=""></li>' +
-				'<li><img class="lilypond" src="/_lilypond/abc123-p3.svg" alt=""></li>' +
+			"<ol data-lilypond-group>" +
+				'<li><img data-lilypond-image src="/_lilypond/abc123.svg" alt=""></li>' +
+				'<li><img data-lilypond-image src="/_lilypond/abc123-p2.svg" alt=""></li>' +
+				'<li><img data-lilypond-image src="/_lilypond/abc123-p3.svg" alt=""></li>' +
 				"</ol>",
 		);
 	});

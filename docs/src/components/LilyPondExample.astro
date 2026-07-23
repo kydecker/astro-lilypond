@@ -1,9 +1,10 @@
 ---
 import { Code } from "@astrojs/starlight/components";
+import type { LilypondContent } from "astro-lilypond";
 import LilyPond from "astro-lilypond/component";
 
 interface Props {
-	content: string;
+	content: LilypondContent;
 	code: string;
 	/** `<Code>` frame title, e.g. the source filename. */
 	title: string;

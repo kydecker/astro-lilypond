@@ -24,7 +24,6 @@ import {
 	includePathsFor,
 	parseLyImportQuery,
 	prependVersion,
-	renderedHtml,
 	resolveDefaults,
 	sourceNameFor,
 	titleFor,
@@ -36,6 +35,14 @@ const execFileAsync = promisify(execFile);
 const LY_EXTENSIONS = [".ly", ".lilypond", ".ily"] as const;
 
 export type { LilypondDefaults, PluginOptions as LilypondPluginOptions };
+
+/**
+ * The default export of a `.ly`/`.lilypond`/`.ily` import — one URL per
+ * rendered page, in order, for `<LilyPond>` to build markup from.
+ */
+export interface LilypondContent {
+	srcs: string[];
+}
 
 export interface LilypondOptions extends PluginOptions {
 	/**
@@ -116,8 +123,11 @@ function lyFilePlugin(options: ResolvedPluginOptions): Plugin {
 				id,
 				assets.map((asset) => asset.fileName),
 			);
+			const content: LilypondContent = {
+				srcs: assets.map((asset) => asset.url),
+			};
 			return {
-				code: `export default ${JSON.stringify(renderedHtml(assets.map((asset) => asset.url)))}`,
+				code: `export default ${JSON.stringify(content)}`,
 			};
 		},
 	};
@@ -249,7 +259,7 @@ export default function lilypond(
 					filename: "ly-types.d.ts",
 					content: LY_EXTENSIONS.map(
 						(ext) =>
-							`declare module "*${ext}" {\n  const html: string;\n  export default html;\n}`,
+							`declare module "*${ext}" {\n  const content: import("astro-lilypond").LilypondContent;\n  export default content;\n}`,
 					).join("\n"),
 				});
 			},

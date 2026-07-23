@@ -5,11 +5,10 @@
  */
 export function renderedHtml(srcs: string[]): string {
 	if (srcs.length === 1) {
-		return `<img class="lilypond" src="${srcs[0]}" alt="">`;
+		return `<img data-lilypond-image src="${srcs[0]}" alt="">`;
 	}
 
-	const items = srcs
-		.map((src) => `<li><img class="lilypond" src="${src}" alt=""></li>`)
-		.join("");
-	return `<ol class="lilypond-pages">${items}</ol>`;
+	return `<ol data-lilypond-group>${srcs
+		.map((src) => `<li><img data-lilypond-image src="${src}" alt=""></li>`)
+		.join("")}</ol>`;
 }

@@ -1,9 +1,9 @@
-.lilypond {
+[data-lilypond-image] {
 	/* From starlight-theme-flexoki */
 	background: var(--color-paper, #fffcf0);
 }
 
-.lilypond-pages {
+[data-lilypond-group] {
 	list-style-type: none;
 	padding: 0;
 	display: flex;

@@ -109,7 +109,7 @@ describe("remarkLilypondPlugin", () => {
 		const html = tree.children[0] as Html;
 		expect(html.type).toBe("html");
 		expect(html.value).toMatch(
-			/^<img class="lilypond" src="\/_lilypond\/[0-9a-f]+\.test\.svg" alt="">$/,
+			/^<img data-lilypond-image src="\/_lilypond\/[0-9a-f]+\.test\.svg" alt="">$/,
 		);
 	});
 
@@ -255,7 +255,7 @@ describe("remarkLilypondPlugin", () => {
 			sourceName: "test.md",
 		});
 		expect((tree.children[0] as Html).value).toMatch(
-			/^<img class="lilypond" src="\/_lilypond\/[0-9a-f]+\.test\.png" alt="">$/,
+			/^<img data-lilypond-image src="\/_lilypond\/[0-9a-f]+\.test\.png" alt="">$/,
 		);
 	});
 
@@ -335,7 +335,7 @@ describe("remarkLilypondPlugin", () => {
 
 			const html = tree.children[0] as Html;
 			expect(html.type).toBe("html");
-			expect(html.value).toMatch(/^<ol class="lilypond-pages">/);
+			expect(html.value).toMatch(/^<ol data-lilypond-group>/);
 			expect(html.value.match(/<li>/g)).toHaveLength(3);
 			expect(html.value).toMatch(/\.test\.svg" alt=""/);
 			expect(html.value).toMatch(/\.test-p2\.svg" alt=""/);

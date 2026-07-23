@@ -1,6 +1,6 @@
 ---
 title: Styling
-description: Style LilyPond SVG output using the .lilypond CSS class.
+description: Style LilyPond SVG output using the data-lilypond-image attribute.
 ---
 
 import { Code } from "@astrojs/starlight/components";
@@ -11,15 +11,15 @@ import StyledMusicExampleRaw from "../../components/examples/StyledMusicExample.
 Every image is output to the page with this basic markup:
 
 ```html
-<img src="..." class="lilypond" />
+<img src="..." data-lilypond-image />
 ```
 
 ## Global styles
 
-Target `.lilypond` in any global stylesheet to modify global styles for the rendered images. For example, backgrounds are transparent by default, so you may want to apply a custom `background-color` if your site uses dark mode:
+Target `[data-lilypond-image]` in any global stylesheet to modify global styles for the rendered images. For example, backgrounds are transparent by default, so you may want to apply a custom `background-color` if your site uses dark mode:
 
 ```css
-.lilypond {
+[data-lilypond-image] {
   background-color: white;
 }
 ```
@@ -37,12 +37,12 @@ The `<LilyPond>` component allows you to pass a `class`. The `class` is scoped t
 When `crop` is false, long scores will output multiple pages. These pages render inside of an `<ol>` ordered list, and each `<img>` image is within a `<li>` list item.
 
 ```html
-<ol class="lilypond-pages">
+<ol data-lilypond-group>
   <li>
-    <img class="lilypond" src="page1.svg" />
+    <img data-lilypond-image src="page1.svg" />
   </li>
   <li>
-    <img class="lilypond" src="page2.svg" />
+    <img data-lilypond-image src="page2.svg" />
   </li>
 </ol>
 ```
@@ -52,7 +52,7 @@ When `crop` is false, long scores will output multiple pages. These pages render
 `lilypond-astro` doesn't ship any styles of its own, so you may see bullets, padding, and margin around your multi-page groups. To prevent this, you can apply a reset to any global stylesheet:
 
 ```css
-.lilypond-pages {
+[data-lilypond-group] {
   list-style-type: none;
   padding: 0;
   margin: 0;
@@ -78,7 +78,7 @@ If you'd like to display multi-page scores in a horizontally-scrolling group lik
 ...here's the CSS to use:
 
 ```css
-.lilypond-pages {
+[data-lilypond-group] {
   list-style-type: none;
   padding: 0;
   display: flex;
