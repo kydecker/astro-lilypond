@@ -350,6 +350,83 @@ describe("remarkLilypondPlugin", () => {
 		});
 	});
 
+	describe("alt text", () => {
+		it("derives alt text from \\header title/composer when there's no meta override", async () => {
+			const tree = makeTree([
+				{
+					type: "code",
+					lang: "lilypond",
+					value: '\\header { title = "Sonata" composer = "Beethoven" }',
+				} as Code,
+			]);
+
+			await runPlugin(tree);
+
+			expect((tree.children[0] as Html).value).toContain(
+				'alt="Sonata, by Beethoven"',
+			);
+		});
+
+		it("prefers a meta alt= override over \\header-derived alt text", async () => {
+			const tree = makeTree([
+				{
+					type: "code",
+					lang: "lilypond",
+					meta: 'alt="Custom"',
+					value: '\\header { title = "Sonata" }',
+				} as Code,
+			]);
+
+			await runPlugin(tree);
+
+			expect((tree.children[0] as Html).value).toContain('alt="Custom"');
+		});
+
+		it('an explicit meta alt="" forces decorative alt even when a header is present', async () => {
+			const tree = makeTree([
+				{
+					type: "code",
+					lang: "lilypond",
+					meta: 'alt=""',
+					value: '\\header { title = "Sonata" }',
+				} as Code,
+			]);
+
+			await runPlugin(tree);
+
+			expect((tree.children[0] as Html).value).toContain('alt=""');
+		});
+
+		it("leaves alt empty when there's neither a header nor a meta override", async () => {
+			const tree = makeTree([
+				{ type: "code", lang: "lilypond", value: "\\score { }" } as Code,
+			]);
+
+			await runPlugin(tree);
+
+			expect((tree.children[0] as Html).value).toContain('alt=""');
+		});
+
+		it("applies the same header-derived alt text to every image in a group", async () => {
+			mockRender.mockResolvedValue([
+				Buffer.from("page1"),
+				Buffer.from("page2"),
+			]);
+			const tree = makeTree([
+				{
+					type: "code",
+					lang: "lilypond",
+					value: '\\header { title = "Sonata" }',
+				} as Code,
+			]);
+
+			await runPlugin(tree);
+
+			const html = (tree.children[0] as Html).value;
+			expect(html.match(/alt="Sonata"/g)).toHaveLength(2);
+		});
+	});
+
 	describe("pruning stale assets", () => {
 		it("prunes with file.path and every filename produced this pass", async () => {
 			const pruneStaleAssets = vi.fn();

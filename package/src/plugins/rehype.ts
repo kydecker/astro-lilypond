@@ -1,9 +1,12 @@
 import { visit } from "unist-util-visit";
 import { defaultOptions, render, resolveCrop } from "../render.js";
 import {
+	altTextFor,
 	contentHashFor,
 	includePathsFor,
 	isLilypondLang,
+	parseFenceMeta,
+	parseLyHeader,
 	prependVersion,
 	renderedHtml,
 	resolveDefaults,
@@ -69,6 +72,8 @@ export function rehypePlugin(
 			const format = options.format ?? defaultOptions.format;
 			const crop = resolveCrop(cropSetting, "markdown");
 			const hash = contentHashFor({ source, format, resolution, crop });
+			const meta = (codeNode as { data?: { meta?: string } }).data?.meta;
+			const alt = parseFenceMeta(meta) ?? altTextFor(parseLyHeader(raw));
 
 			const promise = writeAssets({
 				hash,
@@ -90,7 +95,10 @@ export function rehypePlugin(
 				fileNames.push(...assets.map((asset) => asset.fileName));
 				const rawNode: RawNode = {
 					type: "raw",
-					value: renderedHtml(assets.map((asset) => asset.url)),
+					value: renderedHtml(
+						assets.map((asset) => asset.url),
+						alt,
+					),
 				};
 				parent.children[index] = rawNode;
 			});

@@ -28,6 +28,64 @@ describe("LilyPond.astro", () => {
 		expect(result).toContain('style="width: 50%"');
 	});
 
+	it("defaults to an empty alt when neither the alt prop nor content.alt is set", async () => {
+		const container = await AstroContainer.create();
+		const result = await container.renderToString(LilyPond, {
+			props: { content: { srcs: ["/a.svg"] } },
+		});
+		// An empty dynamic `alt` attribute is serialized as the bare attribute
+		// name by Astro, which parses identically to `alt=""`.
+		expect(result).toMatch(/\balt(?=[ >])/);
+	});
+
+	it("uses content.alt when no alt prop is passed", async () => {
+		const container = await AstroContainer.create();
+		const result = await container.renderToString(LilyPond, {
+			props: { content: { srcs: ["/a.svg"], alt: "Sonata" } },
+		});
+		expect(result).toContain('alt="Sonata"');
+	});
+
+	it("prefers the alt prop over content.alt", async () => {
+		const container = await AstroContainer.create();
+		const result = await container.renderToString(LilyPond, {
+			props: {
+				content: { srcs: ["/a.svg"], alt: "Automatic" },
+				alt: "Custom",
+			},
+		});
+		expect(result).toContain('alt="Custom"');
+		expect(result).not.toContain("Automatic");
+	});
+
+	it("an explicit empty alt prop forces decorative alt even when content.alt is set", async () => {
+		const container = await AstroContainer.create();
+		const result = await container.renderToString(LilyPond, {
+			props: {
+				content: {
+					srcs: ["/a.svg", "/a-p2.svg"],
+					alt: "Automatic",
+				},
+				alt: "",
+			},
+		});
+		expect(result.match(/\balt(?=[ >])/g)).toHaveLength(2);
+		expect(result).not.toContain("Automatic");
+	});
+
+	it("applies the same alt text to every image in a group", async () => {
+		const container = await AstroContainer.create();
+		const result = await container.renderToString(LilyPond, {
+			props: {
+				content: {
+					srcs: ["/_lilypond/a.svg", "/_lilypond/a-p2.svg"],
+					alt: "Sonata",
+				},
+			},
+		});
+		expect(result.match(/alt="Sonata"/g)).toHaveLength(2);
+	});
+
 	it("wraps multi-page content in an <ol><li> of img tags, in order", async () => {
 		const container = await AstroContainer.create();
 		const result = await container.renderToString(LilyPond, {

@@ -1,3 +1,7 @@
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("./render.js", () => ({
@@ -190,6 +194,61 @@ describe("lilypond integration", () => {
 				];
 				expect(options.sourceName).toBe("score.ly");
 				expect(options.includePaths).toEqual(["/docs/src"]);
+			});
+		});
+
+		describe("alt text", () => {
+			async function transformWithRealAssetsDir(source: string) {
+				const dir = await mkdtemp(join(tmpdir(), "astro-lilypond-test-"));
+				try {
+					mockRender.mockResolvedValueOnce([Buffer.from("fake-svg")]);
+					const updateConfig = vi.fn();
+					vi.doMock("@astrojs/markdown-satteri", () => ({
+						satteri: vi.fn((o: unknown) => ({ name: "satteri", options: o })),
+						isSatteriProcessor: vi.fn(() => true),
+					}));
+					const integration = lilypond();
+					await integration.hooks["astro:config:setup"]?.({
+						command: "build",
+						config: baseConfig({
+							markdown: { processor: { name: "satteri", options: {} } },
+							publicDir: pathToFileURL(`${dir}/`),
+						}),
+						updateConfig,
+						logger: { info: vi.fn(), warn: vi.fn() },
+					} as never);
+					vi.doUnmock("@astrojs/markdown-satteri");
+					const { plugins } = (
+						updateConfig.mock.calls[0][0] as { vite: { plugins: unknown[] } }
+					).vite;
+					const plugin = plugins[0] as {
+						transform: (
+							src: string,
+							id: string,
+						) => Promise<{ code: string } | undefined>;
+					};
+
+					const result = await plugin.transform(source, "score.ly");
+					const match = /export default (.*)$/.exec(result?.code ?? "");
+					return JSON.parse(match?.[1] ?? "{}") as {
+						srcs: string[];
+						alt?: string;
+					};
+				} finally {
+					await rm(dir, { recursive: true, force: true });
+				}
+			}
+
+			it("derives alt text from the .ly file's \\header title/composer", async () => {
+				const content = await transformWithRealAssetsDir(
+					'\\header { title = "Sonata" composer = "Beethoven" }',
+				);
+				expect(content.alt).toBe("Sonata, by Beethoven");
+			});
+
+			it("is an empty string when the .ly file has no \\header", async () => {
+				const content = await transformWithRealAssetsDir("\\score { }");
+				expect(content.alt).toBe("");
 			});
 		});
 	});

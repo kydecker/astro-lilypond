@@ -5,7 +5,8 @@
   composer = "Johann Sebastian Bach"
   mutopiatitle = "Jesu, meine Freude"
   mutopiacomposer = "BachJS"
-  tagline = ""
+  % Do not display the default LilyPond footer
+  tagline = ##f
   poet = "BWV 610"
   mutopiainstrument = "Organ"
   source = "Bach-Album, Ernst H. Wolfram (editor), 6787, C. F. Peters, Leipzig"

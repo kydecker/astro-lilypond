@@ -285,6 +285,62 @@ describe("satteriPlugin", () => {
 		});
 	});
 
+	describe("alt text", () => {
+		it("derives alt text from \\header title/composer when there's no meta override", async () => {
+			const plugin = satteriPlugin(BASE_OPTIONS);
+			const node: Code = {
+				type: "code",
+				lang: "lilypond",
+				value: '\\header { title = "Sonata" composer = "Beethoven" }',
+			};
+
+			const result = await plugin.code?.(node, {} as never);
+
+			expect((result as Html).value).toContain('alt="Sonata, by Beethoven"');
+		});
+
+		it("prefers a meta alt= override over \\header-derived alt text", async () => {
+			const plugin = satteriPlugin(BASE_OPTIONS);
+			const node: Code = {
+				type: "code",
+				lang: "lilypond",
+				meta: 'alt="Custom"',
+				value: '\\header { title = "Sonata" }',
+			};
+
+			const result = await plugin.code?.(node, {} as never);
+
+			expect((result as Html).value).toContain('alt="Custom"');
+		});
+
+		it('an explicit meta alt="" forces decorative alt even when a header is present', async () => {
+			const plugin = satteriPlugin(BASE_OPTIONS);
+			const node: Code = {
+				type: "code",
+				lang: "lilypond",
+				meta: 'alt=""',
+				value: '\\header { title = "Sonata" }',
+			};
+
+			const result = await plugin.code?.(node, {} as never);
+
+			expect((result as Html).value).toContain('alt=""');
+		});
+
+		it("leaves alt empty when there's neither a header nor a meta override", async () => {
+			const plugin = satteriPlugin(BASE_OPTIONS);
+			const node: Code = {
+				type: "code",
+				lang: "lilypond",
+				value: "\\score { }",
+			};
+
+			const result = await plugin.code?.(node, {} as never);
+
+			expect((result as Html).value).toContain('alt=""');
+		});
+	});
+
 	describe("pruning stale assets", () => {
 		it("prunes keyed by fileURL and the block's position among siblings", async () => {
 			const pruneStaleAssets = vi.fn();

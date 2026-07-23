@@ -2,9 +2,12 @@ import type { Code, Html } from "mdast";
 import type { MdastPluginDefinition, MdastVisitorContext } from "satteri";
 import { defaultOptions, render, resolveCrop } from "../render.js";
 import {
+	altTextFor,
 	contentHashFor,
 	includePathsFor,
 	isLilypondLang,
+	parseFenceMeta,
+	parseLyHeader,
 	prependVersion,
 	renderedHtml,
 	resolveDefaults,
@@ -41,6 +44,8 @@ export function satteriPlugin(
 			const title = titleFor(sourceName);
 			const crop = resolveCrop(cropSetting, "markdown");
 			const hash = contentHashFor({ source, format, resolution, crop });
+			const alt =
+				parseFenceMeta(node.meta) ?? altTextFor(parseLyHeader(node.value));
 			const assets = await writeAssets({
 				hash,
 				title,
@@ -70,7 +75,10 @@ export function satteriPlugin(
 
 			return {
 				type: "html",
-				value: renderedHtml(assets.map((asset) => asset.url)),
+				value: renderedHtml(
+					assets.map((asset) => asset.url),
+					alt,
+				),
 			};
 		},
 	};

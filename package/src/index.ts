@@ -19,9 +19,11 @@ import {
 	resolveCrop,
 } from "./render.js";
 import {
+	altTextFor,
 	assetsUrlBaseFor,
 	contentHashFor,
 	includePathsFor,
+	parseLyHeader,
 	parseLyImportQuery,
 	prependVersion,
 	resolveDefaults,
@@ -42,6 +44,7 @@ export type { LilypondDefaults, PluginOptions as LilypondPluginOptions };
  */
 export interface LilypondContent {
 	srcs: string[];
+	alt?: string;
 }
 
 export interface LilypondOptions extends PluginOptions {
@@ -100,6 +103,7 @@ function lyFilePlugin(options: ResolvedPluginOptions): Plugin {
 			const sourceName = sourceNameFor(pathname);
 			const title = titleFor(sourceName);
 			const hash = contentHashFor({ source: src, format, resolution, crop });
+			const alt = altTextFor(parseLyHeader(source));
 			const assets = await writeAssets({
 				hash,
 				title,
@@ -125,6 +129,7 @@ function lyFilePlugin(options: ResolvedPluginOptions): Plugin {
 			);
 			const content: LilypondContent = {
 				srcs: assets.map((asset) => asset.url),
+				alt,
 			};
 			return {
 				code: `export default ${JSON.stringify(content)}`,
