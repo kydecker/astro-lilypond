@@ -21,7 +21,7 @@ vi.mock("../writeAsset.js", () => ({
 	writeAssets: vi.fn(),
 }));
 
-import { render } from "../render";
+import { render } from "../render.js";
 import { writeAssets } from "../writeAsset.js";
 import { type RehypePluginOptions, rehypePlugin } from "./rehype.js";
 

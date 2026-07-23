@@ -38,19 +38,12 @@ const LY_EXTENSIONS = [".ly", ".lilypond", ".ily"] as const;
 
 export type { LilypondDefaults, PluginOptions as LilypondPluginOptions };
 
-/** One rendered page of a `.ly`/`.lilypond`/`.ily` import. */
 export interface LilypondPage {
 	src: string;
-	/** Omitted if it couldn't be determined from the rendered file. */
 	width?: number;
-	/** Omitted if it couldn't be determined from the rendered file. */
 	height?: number;
 }
 
-/**
- * The default export of a `.ly`/`.lilypond`/`.ily` import — one page per
- * rendered page, in order, for `<LilyPond>` to build markup from.
- */
 export interface LilypondContent {
 	pages: LilypondPage[];
 	alt?: string;
@@ -93,8 +86,6 @@ function lyFilePlugin(options: ResolvedPluginOptions): Plugin {
 		name: "vite-plugin-astro-lilypond-ly",
 		enforce: "pre",
 		async transform(source, id) {
-			// undefined means an unrecognized query param (e.g. Vite's `?raw`,
-			// `?url`) — not ours to render, so let it fall through.
 			const query = parseLyImportQuery(id);
 			if (!query) return;
 			const { pathname, cropOverride } = query;

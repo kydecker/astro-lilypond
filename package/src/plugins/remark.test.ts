@@ -22,7 +22,7 @@ vi.mock("../writeAsset.js", () => ({
 	writeAssets: vi.fn(),
 }));
 
-import { render } from "../render";
+import { render } from "../render.js";
 import { writeAssets } from "../writeAsset.js";
 import {
 	remarkPlugin as _remarkLilypondPlugin,
@@ -184,7 +184,10 @@ describe("remarkLilypondPlugin", () => {
 	});
 
 	it("prepends \\version when the version option is set", async () => {
-		const options = { ...BASE_OPTIONS, defaults: { version: "2.24.0" } };
+		const options = {
+			...BASE_OPTIONS,
+			defaults: { version: "2.24.0" as const },
+		};
 		const plugin = remarkLilypondPlugin(
 			options,
 		) as unknown as SimpleTransformer;
@@ -204,7 +207,10 @@ describe("remarkLilypondPlugin", () => {
 	});
 
 	it("does not prepend \\version when the block already declares it", async () => {
-		const options = { ...BASE_OPTIONS, defaults: { version: "2.24.0" } };
+		const options = {
+			...BASE_OPTIONS,
+			defaults: { version: "2.24.0" as const },
+		};
 		const plugin = remarkLilypondPlugin(
 			options,
 		) as unknown as SimpleTransformer;

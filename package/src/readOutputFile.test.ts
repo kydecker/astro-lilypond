@@ -1,4 +1,11 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import {
+	beforeEach,
+	describe,
+	expect,
+	it,
+	type MockedFunction,
+	vi,
+} from "vitest";
 
 vi.mock("fs/promises", async (importOriginal) => {
 	const actual = await importOriginal<typeof import("fs/promises")>();
@@ -12,7 +19,9 @@ vi.mock("fs/promises", async (importOriginal) => {
 import { readdir, readFile } from "node:fs/promises";
 import { readOutputFile, safeInputFileName } from "./readOutputFile.js";
 
-const mockReaddir = vi.mocked(readdir);
+const mockReaddir = vi.mocked(readdir) as unknown as MockedFunction<
+	(dir: string) => Promise<string[]>
+>;
 const mockReadFile = vi.mocked(readFile);
 
 beforeEach(() => {

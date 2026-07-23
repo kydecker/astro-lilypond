@@ -1,15 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { imageDimensionsFor } from "./imageDimensions.js";
 
-function fakePng(width: number, height: number): Buffer {
-	const buf = Buffer.alloc(24);
-	buf.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a], 0); // signature
-	buf.writeUInt32BE(13, 8); // IHDR chunk length
-	buf.write("IHDR", 12, "ascii");
-	buf.writeUInt32BE(width, 16);
-	buf.writeUInt32BE(height, 20);
-	return buf;
-}
+// 4x3 pixel PNG (single solid color) inlined as base64.
+const PNG_4X3_B64 =
+	"iVBORw0KGgoAAAANSUhEUgAAAAQAAAADAQMAAACOOjyFAAAAA1BMVEX/VZlX/YvGAAAAC0lEQVQI12NgAAEAAAYAAWb0yWwAAAAASUVORK5CYII=";
 
 describe("imageDimensionsFor", () => {
 	it("reads width/height from an svg's root element", () => {
@@ -17,7 +11,10 @@ describe("imageDimensionsFor", () => {
 			'<svg xmlns="http://www.w3.org/2000/svg" width="157.5" height="82.5" viewBox="0 0 105 55">content</svg>',
 		);
 
-		expect(imageDimensionsFor("svg", svg)).toEqual({ width: 158, height: 83 });
+		expect(imageDimensionsFor("svg", svg)).toEqual({
+			width: 157.5,
+			height: 82.5,
+		});
 	});
 
 	it("returns undefined when the svg has no width/height attributes", () => {
@@ -33,10 +30,8 @@ describe("imageDimensionsFor", () => {
 	});
 
 	it("reads width/height from a png's IHDR chunk", () => {
-		expect(imageDimensionsFor("png", fakePng(640, 480))).toEqual({
-			width: 640,
-			height: 480,
-		});
+		const png = Buffer.from(PNG_4X3_B64, "base64");
+		expect(imageDimensionsFor("png", png)).toEqual({ width: 4, height: 3 });
 	});
 
 	it("returns undefined for a buffer too short to contain an IHDR chunk", () => {

@@ -24,7 +24,7 @@
 		"components/*.astro"
 	],
 	"scripts": {
-		"build": "tsc --project tsconfig.json",
+		"build": "tsc --project tsconfig.build.json",
 		"test": "vitest --project unit",
 		"test:integration": "vitest run --project integration"
 	},

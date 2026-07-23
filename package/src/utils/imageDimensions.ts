@@ -10,10 +10,6 @@ const PNG_SIGNATURE = Buffer.from([
 ]);
 
 function svgDimensions(buf: Buffer): ImageDimensions | undefined {
-	// Not anchored to the start of the string: LilyPond prefixes SVG output
-	// with an `<?xml ... ?>` declaration, so the root element isn't at offset
-	// 0. `.match` without the `g` flag only returns this first match, i.e.
-	// the root `<svg>`, not any nested element.
 	const openTag = buf.toString("utf8").match(/<svg\b[^>]*>/)?.[0];
 	if (!openTag) return undefined;
 
@@ -22,8 +18,8 @@ function svgDimensions(buf: Buffer): ImageDimensions | undefined {
 	if (width === undefined || height === undefined) return undefined;
 
 	return {
-		width: Math.round(Number(width)),
-		height: Math.round(Number(height)),
+		width: Number(width),
+		height: Number(height),
 	};
 }
 
