@@ -5,7 +5,7 @@
   title = "Two-Part Inventions"
   composer = "Johann Sebastian Bach"
   opus = "BWV 772"
-  tagline = ""
+  tagline = ##f
 }
 
 global = {

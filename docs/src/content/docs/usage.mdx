@@ -10,6 +10,7 @@ import BachInventionExample from "../../components/examples/BachInventionExample
 import BachInventionExampleRaw from "../../components/examples/BachInventionExample.astro?raw";
 import UsageExample from "../../components/examples/UsageExample.astro";
 import FencedLilypond from "../../components/FencedLilypond.astro";
+import headerExample from "../../examples/header-example.ly?raw";
 
 There are two ways to display LilyPond scores when using `astro-lilypond`:
 
@@ -24,11 +25,32 @@ Use a fenced code block with the `lilypond`, `ly`, or `ily` language tag:
 
 The markdown-based approach is great for small musical examples and excerpts which you want to write alongside prose. You can write your text, compose some music, and then switch back to text without leaving the file!
 
-:::tip[A note on cropping]
+### Cropping
 
-Markdown blocks are cropped unless you set [`defaults.crop`](/configuration/#defaultscrop) to `false` in your config — the default, `"markdown-only"`, still crops Markdown. Cropping cuts away margins and condenses all music into a single, sometimes large, image, and eliminates most spacing between staves.
+All markdown blocks are cropped unless you set [`defaults.crop`](/configuration/#defaultscrop) to `false` in your config. Cropping cuts away margins and condenses all music into a single, sometimes large, image, and eliminates most spacing between staves.
 
-:::
+### Alt text
+
+Rendered scores get an `alt` attribute so they're accessible to screen readers.
+
+By default, alt text is derived automatically from the `title` and `composer` fields in the score's `\header` block:
+
+<FencedLilypond code={headerExample} />
+
+This produces `alt="Sonata No. 14, by Ludwig van Beethoven"`. If only one of `title`/`composer` is present, alt text falls back to just the title, or `"Sheet music by {composer}"`. With neither, alt text is left empty (which marks the image as decorative, excluding it from screen readers).
+
+A multi-page score's pages are wrapped in an `<ol>`, so every page gets the same alt text — screen readers already announce list position (e.g. "1 of 2") on their own.
+
+You can override the automatically-derived alt text by setting `alt="..."` in the fenced code block's meta string, right after the language tag:
+
+````md
+```lilypond alt="Sonata in C# minor"
+\header {
+  title = "Sonata No. 14"
+}
+...
+```
+````
 
 ## Component
 
@@ -70,6 +92,19 @@ import bachInvention from "./bach-invention.ly?nocrop";
 <LilyPond content={bachInvention} />
 ```
 
+### Alt text
+
+`<LilyPond>` imports derive alt text automatically the same way [Markdown](#alt-text) does, from the imported `.ly` file's `\header` block. Pass an `alt` prop to override it with your own description:
+
+```astro title="MyComponent.astro"
+---
+import LilyPond from "astro-lilypond/component";
+import bachInvention from "./bach-invention.ly";
+---
+
+<LilyPond content={bachInvention} alt="Bach's Invention No. 1 in C Major" />
+```
+
 ### Props
 
 #### `content`
@@ -90,3 +125,9 @@ Additional class name(s) merged onto the rendered `<img>` element alongside the 
 **Type:** `string`
 
 Inline styles applied directly to the rendered element.
+
+#### `alt`
+
+**Type:** `string`
+
+Overrides the automatically-derived alt text (see [Alt text](#alt-text)). Takes precedence over any `title`/`composer` found in the `.ly` file's `\header` block.

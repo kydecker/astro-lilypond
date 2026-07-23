@@ -3,6 +3,7 @@ import type { Plugin } from "unified";
 import { visit } from "unist-util-visit";
 import { defaultOptions, render, resolveCrop } from "../render.js";
 import {
+	altTextForBlock,
 	contentHashFor,
 	includePathsFor,
 	isLilypondLang,
@@ -37,6 +38,7 @@ export const remarkPlugin: Plugin<[RemarkPluginOptions], Root> = (options) => {
 			const format = options.format ?? defaultOptions.format;
 			const crop = resolveCrop(cropSetting, "markdown");
 			const hash = contentHashFor({ source, format, resolution, crop });
+			const alt = altTextForBlock(node.meta, node.value);
 
 			const promise = writeAssets({
 				hash,
@@ -58,7 +60,10 @@ export const remarkPlugin: Plugin<[RemarkPluginOptions], Root> = (options) => {
 				fileNames.push(...assets.map((asset) => asset.fileName));
 				const htmlNode: Html = {
 					type: "html",
-					value: renderedHtml(assets.map((asset) => asset.url)),
+					value: renderedHtml(
+						assets.map((asset) => asset.url),
+						alt,
+					),
 				};
 				parent.children[index] = htmlNode;
 			});

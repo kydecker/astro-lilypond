@@ -64,6 +64,7 @@ interface HastElement {
 	tagName: string;
 	properties: Record<string, unknown>;
 	children: (HastElement | HastText)[];
+	data?: { meta?: string };
 }
 
 interface HastRaw {
@@ -78,7 +79,7 @@ interface HastRoot {
 	children: HastChild[];
 }
 
-function makeLilypondPre(code: string): HastElement {
+function makeLilypondPre(code: string, meta?: string): HastElement {
 	return {
 		type: "element",
 		tagName: "pre",
@@ -89,6 +90,7 @@ function makeLilypondPre(code: string): HastElement {
 				tagName: "code",
 				properties: { className: ["language-lilypond"] },
 				children: [{ type: "text", value: code }],
+				...(meta !== undefined ? { data: { meta } } : {}),
 			},
 		],
 	};
@@ -325,6 +327,48 @@ describe("rehypePlugin", () => {
 				string[],
 			];
 			expect(fileNames).toHaveLength(2);
+		});
+	});
+
+	describe("alt text", () => {
+		it("derives alt text from \\header title/composer when there's no meta override", async () => {
+			const tree = makeTree([
+				makeLilypondPre('\\header { title = "Sonata" composer = "Beethoven" }'),
+			]);
+
+			await runPlugin(tree);
+
+			expect((tree.children[0] as HastRaw).value).toContain(
+				'alt="Sonata, by Beethoven"',
+			);
+		});
+
+		it("prefers a meta alt= override (read from codeNode.data.meta) over \\header-derived alt text", async () => {
+			const tree = makeTree([
+				makeLilypondPre('\\header { title = "Sonata" }', 'alt="Custom"'),
+			]);
+
+			await runPlugin(tree);
+
+			expect((tree.children[0] as HastRaw).value).toContain('alt="Custom"');
+		});
+
+		it('an explicit meta alt="" forces decorative alt even when a header is present', async () => {
+			const tree = makeTree([
+				makeLilypondPre('\\header { title = "Sonata" }', 'alt=""'),
+			]);
+
+			await runPlugin(tree);
+
+			expect((tree.children[0] as HastRaw).value).toContain('alt=""');
+		});
+
+		it("leaves alt empty when there's neither a header nor a meta override", async () => {
+			const tree = makeTree([makeLilypondPre("\\score { }")]);
+
+			await runPlugin(tree);
+
+			expect((tree.children[0] as HastRaw).value).toContain('alt=""');
 		});
 	});
 

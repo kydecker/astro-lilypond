@@ -2,6 +2,7 @@ import type { Code, Html } from "mdast";
 import type { MdastPluginDefinition, MdastVisitorContext } from "satteri";
 import { defaultOptions, render, resolveCrop } from "../render.js";
 import {
+	altTextForBlock,
 	contentHashFor,
 	includePathsFor,
 	isLilypondLang,
@@ -41,6 +42,7 @@ export function satteriPlugin(
 			const title = titleFor(sourceName);
 			const crop = resolveCrop(cropSetting, "markdown");
 			const hash = contentHashFor({ source, format, resolution, crop });
+			const alt = altTextForBlock(node.meta, node.value);
 			const assets = await writeAssets({
 				hash,
 				title,
@@ -70,7 +72,10 @@ export function satteriPlugin(
 
 			return {
 				type: "html",
-				value: renderedHtml(assets.map((asset) => asset.url)),
+				value: renderedHtml(
+					assets.map((asset) => asset.url),
+					alt,
+				),
 			};
 		},
 	};

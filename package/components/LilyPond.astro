@@ -1,24 +1,32 @@
 ---
 interface Props {
-	content: { srcs: string[] };
+	content: { srcs: string[]; alt?: string };
 	class?: string | undefined;
 	style?: string | undefined;
+	alt?: string | undefined;
 }
 
-const { content, class: className, style } = Astro.props;
-const { srcs } = content;
+const { content, class: className, style, alt: altProp } = Astro.props;
+const { srcs, alt: contentAlt } = content;
+const alt = altProp ?? contentAlt ?? "";
 ---
 
 {
-	srcs.length === 1 ? (
-		<img data-lilypond-image class={className} src={srcs[0]} alt="" style={style} />
-	) : (
-		<ol data-lilypond-group class={className} style={style}>
-			{srcs.map((src) => (
-				<li>
-					<img data-lilypond-image src={src} alt="" />
-				</li>
-			))}
-		</ol>
-	)
+  srcs.length === 1 ? (
+    <img
+      data-lilypond-image
+      class={className}
+      src={srcs[0]}
+      alt={alt}
+      style={style}
+    />
+  ) : (
+    <ol data-lilypond-group class={className} style={style}>
+      {srcs.map((src) => (
+        <li>
+          <img data-lilypond-image src={src} alt={alt} />
+        </li>
+      ))}
+    </ol>
+  )
 }

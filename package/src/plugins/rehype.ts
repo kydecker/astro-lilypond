@@ -1,6 +1,7 @@
 import { visit } from "unist-util-visit";
 import { defaultOptions, render, resolveCrop } from "../render.js";
 import {
+	altTextForBlock,
 	contentHashFor,
 	includePathsFor,
 	isLilypondLang,
@@ -69,6 +70,7 @@ export function rehypePlugin(
 			const format = options.format ?? defaultOptions.format;
 			const crop = resolveCrop(cropSetting, "markdown");
 			const hash = contentHashFor({ source, format, resolution, crop });
+			const alt = altTextForBlock(codeNode.data?.meta, raw);
 
 			const promise = writeAssets({
 				hash,
@@ -90,7 +92,10 @@ export function rehypePlugin(
 				fileNames.push(...assets.map((asset) => asset.fileName));
 				const rawNode: RawNode = {
 					type: "raw",
-					value: renderedHtml(assets.map((asset) => asset.url)),
+					value: renderedHtml(
+						assets.map((asset) => asset.url),
+						alt,
+					),
 				};
 				parent.children[index] = rawNode;
 			});
