@@ -75,25 +75,27 @@ If you'd like to display multi-page scores in a horizontally-scrolling group lik
 
 <BachInventionExample />
 
-...here's the CSS to use:
+...here's a good baseline to start from:
 
 ```css
 [data-lilypond-group] {
-  list-style-type: none;
-  padding: 0;
-  display: flex;
-  overflow-x: auto;
-  gap: 1rem;
+	display: flex;
+	gap: 1rem;
+	padding: 0;
+	overflow-x: auto;
+	scroll-snap-type: x mandatory;
+	list-style-type: none;
 
-  li {
-    flex-shrink: 0;
-    margin: 0;
-  }
+	li {
+		flex-shrink: 0;
+		max-width: 80vw;
+		margin: 0;
+	}
 
-  img {
-    width: 100%;
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    margin: 0;
-  }
+	img {
+		width: 100%;
+		margin: 0;
+		border: 1px solid rgba(0, 0, 0, 0.1);
+	}
 }
 ```

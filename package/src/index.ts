@@ -23,9 +23,11 @@ import {
 	assetsUrlBaseFor,
 	contentHashFor,
 	includePathsFor,
+	lyTypeDeclarationsFor,
 	parseLyHeader,
 	parseLyImportQuery,
 	prependVersion,
+	RECOGNIZED_QUERY_PARAMS,
 	resolveDefaults,
 	sourceNameFor,
 	titleFor,
@@ -268,10 +270,10 @@ export default function lilypond(
 			"astro:config:done": ({ injectTypes }) => {
 				injectTypes({
 					filename: "ly-types.d.ts",
-					content: LY_EXTENSIONS.map(
-						(ext) =>
-							`declare module "*${ext}" {\n  const content: import("astro-lilypond").LilypondContent;\n  export default content;\n}`,
-					).join("\n"),
+					content: lyTypeDeclarationsFor(
+						LY_EXTENSIONS,
+						RECOGNIZED_QUERY_PARAMS,
+					),
 				});
 			},
 

@@ -7,8 +7,19 @@ import score from "./scores/example.ly?crop";
 <LilyPond content={score} class="styled" />
 
 <style>
+  @keyframes rainbow {
+    from {
+      filter: hue-rotate(0deg);
+    }
+    to {
+      filter: hue-rotate(360deg);
+    }
+  }
+
   .styled {
-    background: antiquewhite;
-    padding: 20px;
+    animation: rainbow 3s infinite;
+    background-color: moccasin;
+    border-radius: 5px;
+    padding: 5px;
   }
 </style>
