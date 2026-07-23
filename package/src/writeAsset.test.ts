@@ -275,4 +275,73 @@ describe("writeAssets", () => {
 			"abc123.granados-goyescas.svg",
 		]);
 	});
+
+	describe("sizeScale", () => {
+		const REAL_SVG =
+			'<svg xmlns="http://www.w3.org/2000/svg" width="105" height="55" viewBox="0 0 105 55">content</svg>';
+
+		it("multiplies the reported width/height without touching the written file", async () => {
+			const outputDir = join(dir, "_lilypond");
+
+			const assets = await writeAssets({
+				hash: "abc123",
+				title: "score",
+				format: "svg",
+				outputDir,
+				urlBase: "/_lilypond",
+				sizeScale: 1.5,
+				getBuffers: vi.fn().mockResolvedValue([Buffer.from(REAL_SVG)]),
+			});
+
+			expect(assets[0].width).toBe(157.5);
+			expect(assets[0].height).toBe(82.5);
+			expect(await readFile(join(outputDir, "abc123.score.svg"), "utf8")).toBe(
+				REAL_SVG,
+			);
+		});
+
+		it("defaults to a scale of 1 when omitted", async () => {
+			const outputDir = join(dir, "_lilypond");
+
+			const assets = await writeAssets({
+				hash: "abc123",
+				title: "score",
+				format: "svg",
+				outputDir,
+				urlBase: "/_lilypond",
+				getBuffers: vi.fn().mockResolvedValue([Buffer.from(REAL_SVG)]),
+			});
+
+			expect(assets[0].width).toBe(105);
+			expect(assets[0].height).toBe(55);
+		});
+
+		it("still applies on a cache hit, reading dimensions back from disk", async () => {
+			const outputDir = join(dir, "_lilypond");
+			const getBuffers = vi.fn().mockResolvedValue([Buffer.from(REAL_SVG)]);
+
+			await writeAssets({
+				hash: "abc123",
+				title: "score",
+				format: "svg",
+				outputDir,
+				urlBase: "/_lilypond",
+				getBuffers,
+			});
+
+			const assets = await writeAssets({
+				hash: "abc123",
+				title: "score",
+				format: "svg",
+				outputDir,
+				urlBase: "/_lilypond",
+				sizeScale: 2,
+				getBuffers,
+			});
+
+			expect(assets[0].width).toBe(210);
+			expect(assets[0].height).toBe(110);
+			expect(getBuffers).toHaveBeenCalledTimes(1);
+		});
+	});
 });

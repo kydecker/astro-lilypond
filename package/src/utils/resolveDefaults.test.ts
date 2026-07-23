@@ -7,6 +7,7 @@ describe("resolveDefaults", () => {
 			version: "2.26.0",
 			resolution: 144,
 			crop: "markdown-only",
+			cropScale: 1.5,
 		});
 	});
 
@@ -15,6 +16,7 @@ describe("resolveDefaults", () => {
 			version: "2.26.0",
 			resolution: 300,
 			crop: "markdown-only",
+			cropScale: 1.5,
 		});
 	});
 
@@ -23,6 +25,7 @@ describe("resolveDefaults", () => {
 			version: "2.24.0",
 			resolution: 144,
 			crop: "markdown-only",
+			cropScale: 1.5,
 		});
 	});
 
@@ -31,6 +34,7 @@ describe("resolveDefaults", () => {
 			version: "2.26.0",
 			resolution: 144,
 			crop: false,
+			cropScale: 1.5,
 		});
 	});
 
@@ -39,6 +43,16 @@ describe("resolveDefaults", () => {
 			version: "2.26.0",
 			resolution: 144,
 			crop: true,
+			cropScale: 1.5,
+		});
+	});
+
+	it("passes through an explicitly-set cropScale", () => {
+		expect(resolveDefaults({ cropScale: 2 })).toEqual({
+			version: "2.26.0",
+			resolution: 144,
+			crop: "markdown-only",
+			cropScale: 2,
 		});
 	});
 });

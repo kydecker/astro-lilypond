@@ -38,12 +38,21 @@ const LY_EXTENSIONS = [".ly", ".lilypond", ".ily"] as const;
 
 export type { LilypondDefaults, PluginOptions as LilypondPluginOptions };
 
+/** One rendered page of a `.ly`/`.lilypond`/`.ily` import. */
+export interface LilypondPage {
+	src: string;
+	/** Omitted if it couldn't be determined from the rendered file. */
+	width?: number;
+	/** Omitted if it couldn't be determined from the rendered file. */
+	height?: number;
+}
+
 /**
- * The default export of a `.ly`/`.lilypond`/`.ily` import — one URL per
+ * The default export of a `.ly`/`.lilypond`/`.ily` import — one page per
  * rendered page, in order, for `<LilyPond>` to build markup from.
  */
 export interface LilypondContent {
-	srcs: string[];
+	pages: LilypondPage[];
 	alt?: string;
 }
 
@@ -95,6 +104,7 @@ function lyFilePlugin(options: ResolvedPluginOptions): Plugin {
 				version,
 				resolution,
 				crop: cropSetting,
+				cropScale,
 			} = resolveDefaults(options.defaults);
 			const crop = cropOverride ?? resolveCrop(cropSetting, "component");
 			const src = version ? prependVersion(source, version) : source;
@@ -110,6 +120,7 @@ function lyFilePlugin(options: ResolvedPluginOptions): Plugin {
 				format,
 				outputDir: options.assetsDir,
 				urlBase: options.assetsUrlBase,
+				sizeScale: crop ? cropScale : 1,
 				trackAsset: options.trackAsset,
 				getBuffers: () =>
 					render(src, {
@@ -128,7 +139,11 @@ function lyFilePlugin(options: ResolvedPluginOptions): Plugin {
 				assets.map((asset) => asset.fileName),
 			);
 			const content: LilypondContent = {
-				srcs: assets.map((asset) => asset.url),
+				pages: assets.map((asset) => ({
+					src: asset.url,
+					width: asset.width,
+					height: asset.height,
+				})),
 				alt,
 			};
 			return {

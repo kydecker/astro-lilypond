@@ -6,7 +6,9 @@ describe("LilyPond.astro", () => {
 	it("renders a single page as a plain img", async () => {
 		const container = await AstroContainer.create();
 		const result = await container.renderToString(LilyPond, {
-			props: { content: { srcs: ["/_lilypond/abc123.bach-bwv610.svg"] } },
+			props: {
+				content: { pages: [{ src: "/_lilypond/abc123.bach-bwv610.svg" }] },
+			},
 		});
 		expect(result).toContain('src="/_lilypond/abc123.bach-bwv610.svg"');
 		expect(result).toContain("data-lilypond-image");
@@ -15,7 +17,7 @@ describe("LilyPond.astro", () => {
 	it("applies a custom class to the img", async () => {
 		const container = await AstroContainer.create();
 		const result = await container.renderToString(LilyPond, {
-			props: { content: { srcs: ["/a.svg"] }, class: "extra" },
+			props: { content: { pages: [{ src: "/a.svg" }] }, class: "extra" },
 		});
 		expect(result).toContain('class="extra"');
 	});
@@ -23,15 +25,35 @@ describe("LilyPond.astro", () => {
 	it("applies a style attribute to the img element", async () => {
 		const container = await AstroContainer.create();
 		const result = await container.renderToString(LilyPond, {
-			props: { content: { srcs: ["/a.svg"] }, style: "width: 50%" },
+			props: { content: { pages: [{ src: "/a.svg" }] }, style: "width: 50%" },
 		});
 		expect(result).toContain('style="width: 50%"');
+	});
+
+	it("includes width/height attributes when known", async () => {
+		const container = await AstroContainer.create();
+		const result = await container.renderToString(LilyPond, {
+			props: {
+				content: { pages: [{ src: "/a.svg", width: 158, height: 83 }] },
+			},
+		});
+		expect(result).toContain('width="158"');
+		expect(result).toContain('height="83"');
+	});
+
+	it("omits width/height attributes when not known", async () => {
+		const container = await AstroContainer.create();
+		const result = await container.renderToString(LilyPond, {
+			props: { content: { pages: [{ src: "/a.svg" }] } },
+		});
+		expect(result).not.toContain("width=");
+		expect(result).not.toContain("height=");
 	});
 
 	it("defaults to an empty alt when neither the alt prop nor content.alt is set", async () => {
 		const container = await AstroContainer.create();
 		const result = await container.renderToString(LilyPond, {
-			props: { content: { srcs: ["/a.svg"] } },
+			props: { content: { pages: [{ src: "/a.svg" }] } },
 		});
 		// An empty dynamic `alt` attribute is serialized as the bare attribute
 		// name by Astro, which parses identically to `alt=""`.
@@ -41,7 +63,7 @@ describe("LilyPond.astro", () => {
 	it("uses content.alt when no alt prop is passed", async () => {
 		const container = await AstroContainer.create();
 		const result = await container.renderToString(LilyPond, {
-			props: { content: { srcs: ["/a.svg"], alt: "Sonata" } },
+			props: { content: { pages: [{ src: "/a.svg" }], alt: "Sonata" } },
 		});
 		expect(result).toContain('alt="Sonata"');
 	});
@@ -50,7 +72,7 @@ describe("LilyPond.astro", () => {
 		const container = await AstroContainer.create();
 		const result = await container.renderToString(LilyPond, {
 			props: {
-				content: { srcs: ["/a.svg"], alt: "Automatic" },
+				content: { pages: [{ src: "/a.svg" }], alt: "Automatic" },
 				alt: "Custom",
 			},
 		});
@@ -63,7 +85,7 @@ describe("LilyPond.astro", () => {
 		const result = await container.renderToString(LilyPond, {
 			props: {
 				content: {
-					srcs: ["/a.svg", "/a-p2.svg"],
+					pages: [{ src: "/a.svg" }, { src: "/a-p2.svg" }],
 					alt: "Automatic",
 				},
 				alt: "",
@@ -78,7 +100,7 @@ describe("LilyPond.astro", () => {
 		const result = await container.renderToString(LilyPond, {
 			props: {
 				content: {
-					srcs: ["/_lilypond/a.svg", "/_lilypond/a-p2.svg"],
+					pages: [{ src: "/_lilypond/a.svg" }, { src: "/_lilypond/a-p2.svg" }],
 					alt: "Sonata",
 				},
 			},
@@ -90,7 +112,9 @@ describe("LilyPond.astro", () => {
 		const container = await AstroContainer.create();
 		const result = await container.renderToString(LilyPond, {
 			props: {
-				content: { srcs: ["/_lilypond/a.svg", "/_lilypond/a-p2.svg"] },
+				content: {
+					pages: [{ src: "/_lilypond/a.svg" }, { src: "/_lilypond/a-p2.svg" }],
+				},
 			},
 		});
 		expect(result).toContain("<ol data-lilypond-group");
@@ -103,7 +127,9 @@ describe("LilyPond.astro", () => {
 		const container = await AstroContainer.create();
 		const result = await container.renderToString(LilyPond, {
 			props: {
-				content: { srcs: ["/_lilypond/a.svg", "/_lilypond/a-p2.svg"] },
+				content: {
+					pages: [{ src: "/_lilypond/a.svg" }, { src: "/_lilypond/a-p2.svg" }],
+				},
 				class: "extra",
 				style: "width: 50%",
 			},

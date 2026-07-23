@@ -33,6 +33,7 @@ export const remarkPlugin: Plugin<[RemarkPluginOptions], Root> = (options) => {
 				version,
 				resolution,
 				crop: cropSetting,
+				cropScale,
 			} = resolveDefaults(options.defaults);
 			const source = version ? prependVersion(node.value, version) : node.value;
 			const format = options.format ?? defaultOptions.format;
@@ -47,6 +48,7 @@ export const remarkPlugin: Plugin<[RemarkPluginOptions], Root> = (options) => {
 				outputDir: options.assetsDir,
 				urlBase: options.assetsUrlBase,
 				trackAsset: options.trackAsset,
+				sizeScale: crop ? cropScale : 1,
 				getBuffers: () =>
 					render(source, {
 						format,
@@ -60,10 +62,7 @@ export const remarkPlugin: Plugin<[RemarkPluginOptions], Root> = (options) => {
 				fileNames.push(...assets.map((asset) => asset.fileName));
 				const htmlNode: Html = {
 					type: "html",
-					value: renderedHtml(
-						assets.map((asset) => asset.url),
-						alt,
-					),
+					value: renderedHtml(assets, alt),
 				};
 				parent.children[index] = htmlNode;
 			});

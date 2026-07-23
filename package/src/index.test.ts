@@ -231,7 +231,7 @@ describe("lilypond integration", () => {
 					const result = await plugin.transform(source, "score.ly");
 					const match = /export default (.*)$/.exec(result?.code ?? "");
 					return JSON.parse(match?.[1] ?? "{}") as {
-						srcs: string[];
+						pages: { src: string; width?: number; height?: number }[];
 						alt?: string;
 					};
 				} finally {

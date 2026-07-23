@@ -61,6 +61,16 @@ export interface LilypondDefaults {
 	 * @default "markdown-only"
 	 */
 	crop?: CropSetting;
+
+	/**
+	 * Multiplies the `width`/`height` set on a cropped score's `<img>` tag.
+	 * Cropped output is sized exactly to its content, which often reads as
+	 * too small once embedded in a page. Only affects the `<img>` tag's
+	 * dimensions — the rendered file itself is untouched. Has no effect on
+	 * uncropped (paginated) output.
+	 * @default 1.5
+	 */
+	cropScale?: number;
 }
 
 /**
@@ -129,6 +139,7 @@ export const defaultOptions: Required<
 		version: "2.26.0",
 		resolution: 144,
 		crop: "markdown-only",
+		cropScale: 1.5,
 	},
 };
 
