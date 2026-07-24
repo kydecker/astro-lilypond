@@ -5,6 +5,8 @@ description: Options accepted by lilypondLoader() and the shape of each entry it
 
 `lilypondLoader()`, imported from `astro-lilypond/loader`, accepts the following options.
 
+## Options
+
 ### `base`
 
 **Type:** `string | URL`  
@@ -88,14 +90,14 @@ interface LilypondCollectionEntry {
 
 Data can be passed directly to the `<LilyPond>` [component](/guides/component/) to render images:
 
-```astro
+```astro {9} title="MyScore.astro"
 ---
 import { getEntry } from "astro:content";
 import LilyPond from "astro-lilypond/component";
 
-const sonata = await getEntry("scores", "sonata");
+const entry = await getEntry("scores", "my-score");
 ---
 
-<h3>{sonata.data.title}</h3>
-<LilyPond content={sonata.data} />
+<h3>{entry.data.title}</h3>
+<LilyPond content={entry.data} />
 ```

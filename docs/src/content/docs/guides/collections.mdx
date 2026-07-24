@@ -25,7 +25,7 @@ export const collections = {
 
 Read the collection with `getCollection()`, then render each entry by passing its `data` to the `<LilyPond>` component:
 
-```astro {5,9-14}
+```astro {5,9-14} title="MyScores.astro"
 ---
 import { getCollection } from "astro:content";
 import LilyPond from "astro-lilypond/component";
@@ -47,7 +47,7 @@ const scores = await getCollection("scores");
 
 Use `getEntry()` with the collection name and an entry's id:
 
-```astro {5}
+```astro {5} title="MyScore.astro"
 ---
 import { getEntry } from "astro:content";
 import LilyPond from "astro-lilypond/component";
@@ -75,7 +75,7 @@ Each entry's `data` includes fields from your `.ly` file's `\header` such as `ti
 
 You can access these properties directly from `data`:
 
-```astro {8-9}
+```astro {8-9} title="MyScore.astro"
 ---
 import { getEntry } from "astro:content";
 import LilyPond from "astro-lilypond/component";
