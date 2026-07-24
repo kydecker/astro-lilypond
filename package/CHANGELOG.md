@@ -1,5 +1,11 @@
 # astro-lilypond
 
+## 0.11.1
+
+### Patch Changes
+
+- 8532a52: Remove source maps from the published package, fixing Vite's "missing source file" warning.
+
 ## 0.11.0
 
 ### Minor Changes
