@@ -7,7 +7,7 @@ head:
 ---
 
 import { CardGrid, Card, LinkButton } from "@astrojs/starlight/components";
-import HowToUse from "../../components/examples/HowToUse.astro";
+import HowToUse from "#components/examples/HowToUse.astro";
 
 `astro-lilypond` is an [Astro](https://astro.build) integration for displaying musical notation on the web.
 
@@ -28,7 +28,7 @@ import HowToUse from "../../components/examples/HowToUse.astro";
 
 <CardGrid>
   <Card title="Text to images">
-    Render musical scores via [Markdown](/usage/#markdown) or with an Astro [component](/usage/#component).
+    Render musical scores via [Markdown](/guides/markdown/) or with an Astro [component](/guides/component/).
   </Card>
   <Card title="Easy setup">
     Works with `remark`, `rehype` and `satteri` Markdown processors out-of-the-box.
@@ -41,4 +41,4 @@ import HowToUse from "../../components/examples/HowToUse.astro";
   </Card>
 </CardGrid>
 
-You can notate lots of different music with LilyPond! Check out the [examples](/examples).
+You can notate lots of different music with LilyPond! Check out the [examples](/examples/).

@@ -329,3 +329,11 @@ Use `<<` and `>>` to stack voices on the same staff. `\voiceOne` and `\voiceTwo`
   }
 >>
 ```
+
+## Additional resources
+
+LilyPond can have a bit of a steep learning curve, but these resources can help.
+
+- [An introduction to LilyPond markup](https://lilypond.org/doc/v2.24/Documentation/web/text-input) is a handy single-page look at some of the basic syntax in LilyPond.
+- [LilyPond Notation Reference](https://lilypond.org/doc/v2.24/Documentation/notation/) is the comprehensive manual on all notation possible in LilyPond.
+  - [Notation Cheat Sheet](https://lilypond.org/doc/v2.24/Documentation/notation/cheat-sheet) is a quick reference for the most common notation.
