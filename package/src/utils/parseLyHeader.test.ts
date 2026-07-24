@@ -106,6 +106,36 @@ describe("parseLyHeader", () => {
 			),
 		).toEqual({ title: "Op. 27 (Moonlight}", composer: "Beethoven" });
 	});
+
+	it("ignores a field commented out with %, keeping a same-named field later in the block", () => {
+		expect(
+			parseLyHeader(
+				'\\header {\n  title = "Real"  % composer = "not real"\n  composer = "Bach"\n}',
+			),
+		).toEqual({ title: "Real", composer: "Bach" });
+	});
+
+	it("ignores a \\header block commented out with %", () => {
+		expect(
+			parseLyHeader(
+				'\\header { title = "Real" }\n% \\header { title = "FakeLater" }\n',
+			),
+		).toEqual({ title: "Real" });
+	});
+
+	it("ignores a %{ %} block comment spanning a fake header block", () => {
+		expect(
+			parseLyHeader(
+				'\\header { title = "Real" }\n%{\n\\header { title = "FakeLater" }\n%}\n',
+			),
+		).toEqual({ title: "Real" });
+	});
+
+	it("keeps a literal % inside a quoted value", () => {
+		expect(parseLyHeader('\\header { title = "50% Cadence" }')).toEqual({
+			title: "50% Cadence",
+		});
+	});
 });
 
 describe("parseLyHeaderFields", () => {

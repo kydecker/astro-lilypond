@@ -38,6 +38,53 @@ function matchBalancedBraces(source: string, openBraceIndex: number): number {
 	return -1;
 }
 
+/**
+ * Strips LilyPond `%` line comments and `%{ ... %}` block comments from
+ * `source`, replacing their text with spaces (so offsets are unaffected) —
+ * quote-aware, so a literal `%` inside a `"..."` string (e.g. `"50% done"`)
+ * is left alone. Run once, up front, so neither the `\header {` block scan
+ * nor the field scan inside a block can mistake commented-out text for real
+ * source.
+ */
+function stripComments(source: string): string {
+	let result = "";
+	let inString = false;
+	for (let i = 0; i < source.length; i++) {
+		const ch = source[i];
+		if (inString) {
+			result += ch;
+			if (ch === "\\") {
+				i++;
+				result += source[i] ?? "";
+			} else if (ch === '"') {
+				inString = false;
+			}
+			continue;
+		}
+		if (ch === '"') {
+			inString = true;
+			result += ch;
+			continue;
+		}
+		if (ch === "%" && source[i + 1] === "{") {
+			const end = source.indexOf("%}", i + 2);
+			const stop = end === -1 ? source.length : end + 2;
+			result += " ".repeat(stop - i);
+			i = stop - 1;
+			continue;
+		}
+		if (ch === "%") {
+			const end = source.indexOf("\n", i);
+			const stop = end === -1 ? source.length : end;
+			result += " ".repeat(stop - i);
+			i = stop - 1;
+			continue;
+		}
+		result += ch;
+	}
+	return result;
+}
+
 /** Returns the body of every top-level `\header { ... }` block in `source` — there may be more than one (e.g. book-level metadata plus a per-`\score` override). */
 function allHeaderBodies(source: string): string[] {
 	const bodies: string[] = [];
@@ -192,9 +239,10 @@ function fieldsFromHeaderBody(body: string): Record<string, string> {
  * for the common case of a book/top-level header followed by per-score ones.
  */
 export function parseLyHeaderFields(source: string): Record<string, string> {
+	const withoutComments = stripComments(source);
 	return Object.assign(
 		{},
-		...allHeaderBodies(source).map(fieldsFromHeaderBody),
+		...allHeaderBodies(withoutComments).map(fieldsFromHeaderBody),
 	);
 }
 

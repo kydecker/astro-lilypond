@@ -136,7 +136,7 @@ describe("lilypondLoader", () => {
 
 		const entry = store.get("sonata");
 		expect(entry?.data).toMatchObject({
-			pages: [{ src: expect.stringContaining("/_lilypond-scores/") }],
+			pages: [{ src: expect.stringContaining("/_lilypond/scores/") }],
 			alt: "Sonata, by Beethoven",
 			title: "Sonata",
 			composer: "Beethoven",
@@ -208,7 +208,7 @@ describe("lilypondLoader", () => {
 		await loader.load(context);
 		expect(mockRender).toHaveBeenCalledTimes(1);
 
-		await rm(join(publicDir, "_lilypond-scores"), {
+		await rm(join(publicDir, "_lilypond", "scores"), {
 			recursive: true,
 			force: true,
 		});
@@ -231,6 +231,39 @@ describe("lilypondLoader", () => {
 		expect(store.keys()).toEqual([]);
 	});
 
+	it("keeps a previously-synced entry when its file transiently fails to read on a later sync", async () => {
+		const filePath = join(scoresDir, "sonata.ly");
+		await writeFile(
+			filePath,
+			'\\header { title = "Sonata" } \\score { { c4 } }',
+		);
+
+		const loader = lilypondLoader({ base: "./src/scores" });
+		const { context, store } = createFakeContext({ root, publicDir });
+
+		await loader.load(context);
+		const originalEntry = store.get("sonata");
+		expect(originalEntry).toBeDefined();
+
+		// Simulate a transient read failure (e.g. an editor's atomic save
+		// racing the sync) by swapping the file for a directory of the same
+		// name — `readFile` on it throws EISDIR — while it still matches the
+		// glob pattern.
+		await rm(filePath);
+		await mkdir(filePath);
+
+		await loader.load(context);
+		expect(store.get("sonata")).toEqual(originalEntry);
+
+		await rm(filePath, { recursive: true });
+		await writeFile(
+			filePath,
+			'\\header { title = "Sonata" } \\score { { c4 } }',
+		);
+		await loader.load(context);
+		expect(store.get("sonata")).toBeDefined();
+	});
+
 	it("deletes a deleted file's rendered asset from its exclusive output directory", async () => {
 		const filePath = join(scoresDir, "sonata.ly");
 		await writeFile(filePath, "\\score { { c4 } }");
@@ -239,7 +272,7 @@ describe("lilypondLoader", () => {
 		const { context } = createFakeContext({ root, publicDir });
 
 		await loader.load(context);
-		const assetsDir = join(publicDir, "_lilypond-scores");
+		const assetsDir = join(publicDir, "_lilypond", "scores");
 		expect((await readdir(assetsDir)).length).toBeGreaterThan(0);
 
 		await rm(filePath);

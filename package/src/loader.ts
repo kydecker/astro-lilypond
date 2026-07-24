@@ -1,5 +1,5 @@
 import { glob, readFile } from "node:fs/promises";
-import { join, relative, sep } from "node:path";
+import { basename, join, posix, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { Loader, LoaderContext } from "astro/loaders";
 import { z } from "astro/zod";
@@ -58,7 +58,7 @@ export interface LilypondLoaderOptions extends PluginOptions {
 	 * anything under it that isn't currently referenced by one of its own
 	 * entries, so don't point two different collections (or the `lilypond()`
 	 * integration's own `outputDir`) at the same directory.
-	 * @default `"_lilypond-<collection name>"`
+	 * @default `"_lilypond/<collection name>"`
 	 */
 	outputDir?: string;
 }
@@ -104,8 +104,13 @@ function stripLyExtension(entryPath: string): string {
 	return entryPath;
 }
 
+/** Converts a platform-native path to POSIX-separated form (a no-op on POSIX systems). */
+function toPosixPath(path: string): string {
+	return path.split(sep).join("/");
+}
+
 function defaultGenerateId({ entry }: GenerateIdOptions): string {
-	return stripLyExtension(entry.split(sep).join("/"));
+	return stripLyExtension(toPosixPath(entry));
 }
 
 function resolveBaseUrl(base: string | URL, root: URL): URL {
@@ -115,11 +120,7 @@ function resolveBaseUrl(base: string | URL, root: URL): URL {
 }
 
 function posixRelative(from: string, to: string): string {
-	return relative(from, to).split(sep).join("/");
-}
-
-function fileNameFromUrl(url: string): string {
-	return url.slice(url.lastIndexOf("/") + 1);
+	return toPosixPath(relative(from, to));
 }
 
 /**
@@ -137,6 +138,10 @@ export function lilypondLoader(options: LilypondLoaderOptions): Loader {
 		outputDir,
 	} = options;
 
+	const resolved = resolveDefaults(defaults);
+	const crop = resolveCrop(resolved.crop, "component");
+	const resolvedFormat = format ?? defaultOptions.format;
+
 	return {
 		name: "astro-lilypond-loader",
 		schema: lilypondEntrySchema,
@@ -151,7 +156,7 @@ export function lilypondLoader(options: LilypondLoaderOptions): Loader {
 				parseData,
 			} = context;
 
-			const outputDirName = outputDir ?? `_lilypond-${collection}`;
+			const outputDirName = outputDir ?? posix.join("_lilypond", collection);
 			const assetsDir = join(fileURLToPath(config.publicDir), outputDirName);
 			const assetsUrlBase = assetsUrlBaseFor(config.base, outputDirName);
 			const rootDir = fileURLToPath(config.root);
@@ -183,10 +188,7 @@ export function lilypondLoader(options: LilypondLoaderOptions): Loader {
 				// pays the cheap cost of getting there.
 				const digest = generateDigest(source);
 
-				const resolved = resolveDefaults(defaults);
-				const crop = resolveCrop(resolved.crop, "component");
 				const src = prependVersion(source, resolved.version);
-				const resolvedFormat = format ?? defaultOptions.format;
 				const includePaths = includePathsFor(filePath);
 				const sourceName = sourceNameFor(filePath);
 				const title = titleFor(sourceName);
@@ -243,6 +245,10 @@ export function lilypondLoader(options: LilypondLoaderOptions): Loader {
 
 			async function runSync(): Promise<void> {
 				const untouched = new Set(store.keys());
+				const idByPath = new Map<string, string>();
+				for (const stored of store.values()) {
+					if (stored.filePath) idByPath.set(stored.filePath, stored.id);
+				}
 				const entries: string[] = [];
 				for await (const entry of glob(pattern, { cwd: baseDir })) {
 					entries.push(entry);
@@ -252,8 +258,23 @@ export function lilypondLoader(options: LilypondLoaderOptions): Loader {
 						`astro-lilypond: no files matched "${pattern}" in "${baseDir}"`,
 					);
 				}
-				const ids = await Promise.all(entries.map((entry) => syncEntry(entry)));
-				for (const id of ids) if (id) untouched.delete(id);
+				const results = await Promise.all(
+					entries.map(async (entry) => ({ entry, id: await syncEntry(entry) })),
+				);
+				for (const { entry, id } of results) {
+					if (id) {
+						untouched.delete(id);
+						continue;
+					}
+					// syncEntry() failed (e.g. a transient read error racing an
+					// editor's atomic save) — if this path previously synced
+					// successfully, keep its existing entry rather than evicting
+					// it; the next fs event will retry the read.
+					const previousId = idByPath.get(
+						posixRelative(rootDir, join(baseDir, entry)),
+					);
+					if (previousId) untouched.delete(previousId);
+				}
 				for (const id of untouched) store.delete(id);
 
 				// Sweep the directory against every currently-stored entry's pages
@@ -263,8 +284,7 @@ export function lilypondLoader(options: LilypondLoaderOptions): Loader {
 				const referenced = new Set<string>();
 				for (const stored of store.values()) {
 					const pages = (stored.data as { pages?: { src: string }[] }).pages;
-					for (const page of pages ?? [])
-						referenced.add(fileNameFromUrl(page.src));
+					for (const page of pages ?? []) referenced.add(basename(page.src));
 				}
 				await pruneOrphanedAssets({ dir: assetsDir, referenced, logger });
 			}

@@ -85,7 +85,7 @@ describe.skipIf(!lilypondAvailable())(
 			const context = createFakeContext(root, publicDir);
 			await loader.load(context);
 
-			const files = await readdir(join(publicDir, "_lilypond-scores"));
+			const files = await readdir(join(publicDir, "_lilypond", "scores"));
 			const svgFiles = files.filter((f) => f.endsWith(".svg"));
 			expect(svgFiles.length).toBeGreaterThanOrEqual(2);
 
@@ -93,7 +93,7 @@ describe.skipIf(!lilypondAvailable())(
 			expect(sonata).toBeDefined();
 			const sonataData = sonata?.data as { pages: { width?: number }[] };
 			expect(sonataData).toMatchObject({
-				pages: [{ src: expect.stringMatching(/^\/_lilypond-scores\//) }],
+				pages: [{ src: expect.stringMatching(/^\/_lilypond\/scores\//) }],
 				alt: "Sonata, by Beethoven",
 				title: "Sonata",
 				composer: "Beethoven",
