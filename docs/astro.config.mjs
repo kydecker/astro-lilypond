@@ -63,16 +63,33 @@ export default defineConfig({
 				},
 			],
 			sidebar: [
-				"getting-started",
-				"configuration",
-				"usage",
-				"styling",
-				"lilypond-syntax",
-				"examples",
-				"resources",
 				{
-					label: "Changelog",
-					link: "https://github.com/kydecker/astro-lilypond/releases",
+					label: "Start Here",
+					items: ["getting-started", "examples"],
+				},
+				{
+					label: "Guides",
+					items: ["guides/markdown", "guides/component", "guides/styling"],
+				},
+				{
+					label: "Reference",
+					items: [
+						"reference/configuration",
+						"reference/component",
+						"reference/styling",
+					],
+				},
+				{
+					label: "Resources",
+					items: [
+						{
+							label: "Changelog",
+							link: "/changelog/",
+						},
+						"resources/syntax",
+						"resources/extensions",
+						"resources/published-music",
+					],
 				},
 			],
 			editLink: {
@@ -80,6 +97,15 @@ export default defineConfig({
 			},
 		}),
 	],
+	redirects: {
+		usage: "guides/component",
+		component: "guides/component",
+		markdown: "guides/markdown",
+		styling: "guides/styling",
+		"lilypond-syntax": "resources/syntax",
+		resources: "resources/syntax",
+		configuration: "reference/configuration",
+	},
 	devToolbar: {
 		enabled: false,
 	},

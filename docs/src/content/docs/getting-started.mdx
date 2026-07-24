@@ -3,12 +3,12 @@ title: Getting Started
 description: Install astro-lilypond and render music notation on your site.
 ---
 
-import { LinkButton, Steps, Tabs, TabItem } from "@astrojs/starlight/components";
-import InstallAstro from "../../components/InstallAstro.astro";
-import InstallAstroLilyPond from "../../components/InstallAstroLilyPond.astro";
-import InstallLilyPond from "../../components/InstallLilyPond.astro";
+import { Steps } from "@astrojs/starlight/components";
+import InstallAstro from "#components/InstallAstro.astro";
+import InstallAstroLilyPond from "#components/InstallAstroLilyPond.astro";
+import InstallLilyPond from "#components/InstallLilyPond.astro";
 
-To display music on your site, you will need to install Astro, LilyPond, and this integration.
+Here's how to get the `astro-lilypond` integration set up so you can begin writing and displaying notation on your site.
 
 ## Installation
 
@@ -40,7 +40,7 @@ To display music on your site, you will need to install Astro, LilyPond, and thi
      });
    ```
 
-   See [Configuration](/configuration/) for available options.
+   See the [configuration reference](/reference/configuration/) for available options.
 
    :::caution
 
@@ -48,6 +48,6 @@ To display music on your site, you will need to install Astro, LilyPond, and thi
 
    :::
 
-5. Start writing music! See [Usage](/usage/) for Markdown and component-based approaches.
+5. Start writing music! You can do a lot with LilyPond; view the [examples](/examples/). Write your LilyPond code directly in [Markdown](/guides/markdown/), or render `.ly` files with a [component](/guides/component/).
 
 </Steps>

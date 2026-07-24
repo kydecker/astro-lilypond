@@ -1,0 +1,37 @@
+---
+title: Markdown Usage
+description: How to render LilyPond notation in Markdown.
+---
+
+import UsageExample from "#components/examples/UsageExample.astro";
+import FencedLilypond from "#components/FencedLilypond.astro";
+import headerExample from "#examples/header-example.ly?raw";
+import altOverrideExample from "#examples/alt-override-example.ly?raw";
+
+Once you've installed `astro-lilypond`, you can write LilyPond code inside of any Markdown file. Use a fenced code block (triple backticks) with the `lilypond`, `ly`, or `ily` language tag:
+
+<UsageExample />
+
+The markdown-based approach is great for small musical examples and excerpts which you want to write alongside prose. You can write your text, compose some music, and then switch back to text without leaving the file!
+
+For longer musical examples, you may want to use the [component](/guides/component/) instead.
+
+## Cropping
+
+All markdown blocks have image dimensions cropped by default. If you prefer to display full pages with margins, set [`defaults.crop`](/reference/configuration/#defaultscrop) to `false` in your config.
+
+## Alt text
+
+Rendered scores get an `alt` attribute so they're accessible to screen readers.
+
+By default, alt text is derived automatically from the `title` and `composer` fields in the score's `\header` block:
+
+<FencedLilypond code={headerExample} />
+
+This produces `alt="Sonata No. 14, by Ludwig van Beethoven"`. If only one of `title`/`composer` is present, alt text falls back to just the title, or `"Sheet music by {composer}"`. With neither, alt text is left empty (which marks the image as decorative, excluding it from screen readers).
+
+### Customizing
+
+Override the automatic alt text by setting `alt="..."` after the language tag in your fenced code block:
+
+<FencedLilypond code={altOverrideExample} meta='alt="Moonlight Sonata"' />

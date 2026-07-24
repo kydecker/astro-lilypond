@@ -1,0 +1,71 @@
+---
+title: Component Usage
+description: How to render LilyPond notation using the Astro component.
+---
+
+import { Code } from "@astrojs/starlight/components";
+import BachInventionExample from "#components/examples/BachInventionExample.astro";
+import BachInventionExampleRaw from "#components/examples/BachInventionExample.astro?raw";
+
+Import the `<LilyPond>` component and pass it an imported `.ly` or `.ily` file.
+
+<Code code={BachInventionExampleRaw} lang="astro" title="MyComponent.astro" />
+
+<BachInventionExample />
+
+When a score renders to more than one page, as above, the pages are wrapped in an unstyled `<ol>` element which contains one `<li>` list item for each page `<img>`. You can style pages and containers however you want. See [styling](/guides/styling/) for more examples.
+
+## Disabling full-page output
+
+By default, the `<LilyPond>` component renders output as a full page (or multiple pages), preserving page sizes and margins set via the imported LilyPond file.
+
+If you would prefer _not_ to use full pages, and instead crop all content to a single, potentially large image, you can do either of the following:
+
+1. Update your configuration to set [`defaults.crop`](/reference/configuration/#defaultscrop) to `true`. This will crop all `<LilyPond>` component output by default.
+2. Append `?crop` to selected import paths:
+
+```astro "?crop" title="CroppedScore.astro" {3-4}
+---
+import LilyPond from "astro-lilypond/component";
+// Force the score to be cropped and merged into a single image
+import bachInvention from "./bach-invention.ly?crop";
+---
+
+<LilyPond content={bachInvention} />
+```
+
+## Re-enabling full-page output
+
+If your configuration sets [`defaults.crop`](/reference/configuration/#defaultscrop) to `true`, but you want to display uncropped pages somewhere, append `?nocrop` to your import path:
+
+```astro "?nocrop" title="UncroppedScore.astro" {3-4}
+---
+import LilyPond from "astro-lilypond/component";
+// Allow the score to render as multiple full pages with margins
+import bachInvention from "./bach-invention.ly?nocrop";
+---
+
+<LilyPond content={bachInvention} />
+```
+
+## Alt text
+
+`<LilyPond>` imports derive alt text automatically from the imported `.ly` file's `\header` block, displaying `alt="{title} by {composer}"`.
+
+### Customizing
+
+Pass an `alt` prop to override the generated alt text with your own description:
+
+```astro title="MyComponent.astro" {8}
+---
+import LilyPond from "astro-lilypond/component";
+import bachInvention from "./bach-invention.ly";
+---
+
+<LilyPond
+  content={bachInvention}
+  alt="A piano score showing a two-part invention by Bach"
+/>
+```
+
+See the [Component reference](/reference/component/) for the full list of props.

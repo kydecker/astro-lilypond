@@ -292,11 +292,11 @@
 
 - 49a0f61: Initial release! Render LilyPond music notation to inline SVG (or PNG) at build time in Astro sites.
 
-  ## Prerequisites
+  #### Prerequisites
 
   The [LilyPond](https://lilypond.org/download.html) binary must be installed and available on `PATH` at build time. The integration renders notation during the Astro build — the binary is not needed at runtime.
 
-  ## Installation
+  #### Installation
 
   ```sh
   pnpm add astro-lilypond

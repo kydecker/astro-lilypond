@@ -1,0 +1,31 @@
+---
+title: Component Reference
+description: Props accepted by the <LilyPond> component.
+---
+
+The `<LilyPond>` component accepts the following props.
+
+### `content`
+
+**Type:** `LilypondContent`  
+**Required:** yes
+
+The result of an imported `.ly` or `.ily` file. The output is resolved at build time according to the `defaults` configured in your integration.
+
+### `class`
+
+**Type:** `string`
+
+Class name(s) applied to the rendered `<img>` (or `<ol>`, for multi-page scores). Not set unless you provide it — see [Styling](/guides/styling/) for how to use this for per-instance styles.
+
+### `style`
+
+**Type:** `string`
+
+Inline styles applied directly to the rendered element.
+
+### `alt`
+
+**Type:** `string`
+
+Overrides the automatically-derived alt text (see [Alt text](/guides/component/#alt-text)). Takes precedence over any `title`/`composer` found in the `.ly` file's `\header` block.

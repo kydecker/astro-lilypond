@@ -1,0 +1,141 @@
+---
+title: Configuration Reference
+description: Options available when calling lilypond() in your Astro config.
+---
+
+import FencedLilypond from "#components/FencedLilypond.astro";
+import versionExample from "#examples/version-example.ly?raw";
+
+The following reference covers all supported configuration options in the `astro-lilypond` integration.
+
+```js
+// astro.config.mjs
+import { defineConfig } from 'astro/config';
+import lilypond from 'astro-lilypond';
+
+export default defineConfig({
+  integrations: [
+    lilypond({
+      // your configuration options here...
+    }),
+  ],
+});
+```
+
+## Top-level options
+
+### `format`
+
+**Type:** `"svg" | "png"`  
+**Default:** `"svg"`
+
+The output format passed to the LilyPond binary. Controls how the rendered output is embedded in the page.
+
+```js {5}
+// astro.config.mjs
+lilypond({
+  format: "png"
+})
+```
+
+### `outputDir`
+
+**Type:** `string`  
+**Default:** `"_lilypond"`
+
+Directory name that rendered scores are written to, relative to Astro's [`publicDir`](https://docs.astro.build/en/reference/configuration-reference/#publicdir) (`./public` by default). Files in this directory are served at `/` during dev and copied to your build directory during build.
+
+```js
+// astro.config.mjs
+lilypond({
+  outputDir: "scores"
+})
+```
+
+:::note
+
+Output files will be built, pruned, and rebuilt as needed. You can commit the generated files to cut down on build times; if the score hasn't changed, `astro-lilypond` will skip regenerating the image.
+
+If you choose to commit the generated files, it's recommended to mark the output directory as [generated](https://docs.github.com/en/repositories/working-with-files/managing-files/customizing-how-changed-files-appear-on-github) in a `.gitattributes` file:
+
+```ini title=".gitattributes"
+# exclude generated files from diff counts and language stats
+public/_lilypond/* linguist-generated
+```
+
+If you prefer to exclude generated images from your repository, they will be built from scratch each time. Add the output directory to your `.gitignore`:
+
+```ini title=".gitignore"
+# exclude generated LilyPond images
+public/_lilypond
+```
+
+:::
+
+## `defaults`
+
+**Type:** `object`
+
+Default settings applied when rendering each score. Any individual `.ly` file can still override them with its own settings.
+
+### `defaults.crop`
+
+**Type:** `boolean | "markdown-only"`  
+**Default:** `"markdown-only"`
+
+When cropped, margins are removed and the page is cropped to fit the rendered staves, producing a single image. When not cropped, the full page (or pages, for a multi-page score) is preserved.
+
+- `"markdown-only"` (default) crops [Markdown](/guides/markdown/) fences, but leaves [`<LilyPond>`](/guides/component/) components full-page.
+- `true` crops everywhere.
+- `false` never crops by default.
+
+A `<LilyPond>` `.ly` import can always override this per-instance with `?crop` or `?nocrop` — see the [component guide](/guides/component/#disabling-full-page-output).
+
+### `defaults.cropScale`
+
+**Type:** `number`  
+**Default:** `1.5`
+
+Multiplies the `width`/`height` set on a cropped score's `<img>` tag, to compensate for LilyPond's internal size units (points/mm) appearing too small once converted to pixels. Only affects the `<img>` dimensions on the page — the rendered file itself is unchanged, and this has no effect on uncropped (paginated) output.
+
+```js
+// astro.config.mjs
+lilypond({
+  defaults: {
+    cropScale: 2
+  }
+})
+```
+
+### `defaults.resolution`
+
+**Type:** `number`  
+**Default:** `144`
+
+Resolution to render `.png` files, in DPI. Only applies when `format` is set to `png`.
+
+### `defaults.version`
+
+**Type:** `string` of the shape `"2.<number>.<number>"`  
+**Default:** `"2.26.0"`
+
+To know how to output text, LilyPond needs to know a `version` to use for compilation. This is usually defined at the start of each `.ly` file:
+
+<FencedLilypond code={versionExample} />
+
+By default, `astro-lilypond` will prepend this version for you, so you don't need to write it yourself, which is helpful if you are writing a lot of small, inline music examples.
+
+To pin your examples to a different default release, specify `version`:
+
+```js
+// astro.config.mjs
+lilypond({
+  defaults: {
+    version: "2.27.1" // Use the development release
+  }
+})
+```
+
+Blocks with an explicit `\version` declaration always use that version, regardless of the global config.
+
+Information about the latest releases can be found on the [LilyPond news](https://lilypond.org/news.html) page.

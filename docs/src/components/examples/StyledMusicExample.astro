@@ -1,24 +1,20 @@
 ---
 import LilyPond from "astro-lilypond/component";
-import score from "./scores/example.ly?crop";
+import rainbowRoad from "./scores/rainbow-road.ly?crop";
 ---
 
-<LilyPond content={score} class="styled" />
+<LilyPond content={rainbowRoad} class="styled" />
 
 <style>
   @keyframes rainbow {
-    from {
-      filter: hue-rotate(0deg);
-    }
-    to {
-      filter: hue-rotate(360deg);
-    }
+    from { filter: hue-rotate(0deg); }
+    to { filter: hue-rotate(360deg); }
   }
 
   .styled {
     animation: rainbow 3s infinite;
-    background-color: moccasin;
-    border-radius: 5px;
+    background-color: peachPuff;
     padding: 5px;
+    border-radius: 5px;
   }
 </style>

@@ -4,15 +4,17 @@ description: Style LilyPond SVG output using the data-lilypond-image attribute.
 ---
 
 import { Code } from "@astrojs/starlight/components";
-import BachInventionExample from "../../components/examples/BachInventionExample.astro";
-import StyledMusicExample from "../../components/examples/StyledMusicExample.astro";
-import StyledMusicExampleRaw from "../../components/examples/StyledMusicExample.astro?raw";
+import BachInventionExample from "#components/examples/BachInventionExample.astro";
+import StyledMusicExample from "#components/examples/StyledMusicExample.astro";
+import StyledMusicExampleRaw from "#components/examples/StyledMusicExample.astro?raw";
 
 Every image is output to the page with this basic markup:
 
 ```html
 <img src="..." data-lilypond-image />
 ```
+
+See the [styling reference](/reference/styling/) for a full list of available selectors.
 
 ## Global styles
 
@@ -49,7 +51,7 @@ When `crop` is false, long scores will output multiple pages. These pages render
 
 ### Basic styles
 
-`lilypond-astro` doesn't ship any styles of its own, so you may see bullets, padding, and margin around your multi-page groups. To prevent this, you can apply a reset to any global stylesheet:
+`astro-lilypond` doesn't ship any styles of its own, so you may see bullets, padding, and margin around your multi-page groups. To prevent this, you can apply a reset to any global stylesheet:
 
 ```css
 [data-lilypond-group] {
