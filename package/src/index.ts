@@ -36,7 +36,7 @@ import { writeAssets } from "./writeAsset.js";
 
 const execFileAsync = promisify(execFile);
 
-const LY_EXTENSIONS = [".ly", ".lilypond", ".ily"] as const;
+export const LY_EXTENSIONS = [".ly", ".lilypond", ".ily"] as const;
 
 export type { LilypondDefaults, PluginOptions as LilypondPluginOptions };
 

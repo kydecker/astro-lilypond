@@ -20,7 +20,7 @@ See the [styling reference](/reference/styling/) for a full list of available se
 
 Target `[data-lilypond-image]` in any global stylesheet to modify global styles for the rendered images. For example, backgrounds are transparent by default, so you may want to apply a custom `background-color` if your site uses dark mode:
 
-```css
+```css title="my-site.css"
 [data-lilypond-image] {
   background-color: white;
 }
@@ -38,7 +38,7 @@ The `<LilyPond>` component allows you to pass a `class`. The `class` is scoped t
 
 When `crop` is false, long scores will output multiple pages. These pages render inside of an `<ol>` ordered list, and each `<img>` image is within a `<li>` list item.
 
-```html
+```html 
 <ol data-lilypond-group>
   <li>
     <img data-lilypond-image src="page1.svg" />
@@ -53,7 +53,7 @@ When `crop` is false, long scores will output multiple pages. These pages render
 
 `astro-lilypond` doesn't ship any styles of its own, so you may see bullets, padding, and margin around your multi-page groups. To prevent this, you can apply a reset to any global stylesheet:
 
-```css
+```css title="reset.css"
 [data-lilypond-group] {
   list-style-type: none;
   padding: 0;
@@ -79,7 +79,7 @@ If you'd like to display multi-page scores in a horizontally-scrolling group lik
 
 ...here's a good baseline to start from:
 
-```css
+```css title="custom.css"
 [data-lilypond-group] {
 	display: flex;
 	gap: 1rem;
