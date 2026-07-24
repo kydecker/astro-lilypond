@@ -4,8 +4,7 @@
 }
 
 [data-theme="dark"] [data-lilypond-image] {
-	padding: 5px;
-	border-radius: 5px;
+	padding: 6px;
 }
 
 [data-lilypond-group] {
