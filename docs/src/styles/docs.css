@@ -1,6 +1,7 @@
 [data-lilypond-image] {
 	/* From starlight-theme-flexoki */
 	background: var(--color-paper, #fffcf0);
+	border-radius: 2px;
 }
 
 [data-theme="dark"] [data-lilypond-image] {

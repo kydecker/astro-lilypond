@@ -69,13 +69,19 @@ export default defineConfig({
 				},
 				{
 					label: "Guides",
-					items: ["guides/markdown", "guides/component", "guides/styling"],
+					items: [
+						"guides/markdown",
+						"guides/component",
+						"guides/collections",
+						"guides/styling",
+					],
 				},
 				{
 					label: "Reference",
 					items: [
 						"reference/configuration",
 						"reference/component",
+						"reference/collections",
 						"reference/styling",
 					],
 				},

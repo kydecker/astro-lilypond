@@ -1,0 +1,48 @@
+---
+title: Content Collections
+description: How to expose a folder of LilyPond scores as an Astro content collection.
+---
+
+If you have a folder of `.ly` files, `lilypondLoader()` turns that folder into an [Astro content collection](https://docs.astro.build/en/guides/content-collections/). Each file becomes one entry, with header info like `title` and `composer` extracted for you.
+
+Import `lilypondLoader` from `astro-lilypond/loader` and pass it to `defineCollection()` in your `content.config.ts`:
+
+```ts {3,6-8}
+// src/content.config.ts
+import { defineCollection } from "astro:content";
+import { lilypondLoader } from "astro-lilypond/loader";
+
+export const collections = {
+  scores: defineCollection({
+    loader: lilypondLoader({ base: "./src/content/scores" }),
+  }),
+};
+```
+
+Read the collection with `getCollection()`, then render each entry by passing its `data` to the `<LilyPond>` component:
+
+```astro {5,9-14}
+---
+import { getCollection } from "astro:content";
+import LilyPond from "astro-lilypond/component";
+
+const scores = await getCollection("scores");
+---
+
+<ul>
+  {scores.map((score) => (
+    <li>
+      <h3>{score.data.title}</h3>
+      <LilyPond content={score.data} />
+    </li>
+  ))}
+</ul>
+```
+
+## Header metadata
+
+Each entry's `data` includes fields from your `.ly` file's `\header` (`title`, `composer`, `opus`, etc.) alongside `pages` and `alt`, plus an `extra` object for any custom fields. See the [reference](/reference/collections/#entry-shape) for the full list.
+
+## Options
+
+`lilypondLoader()` accepts a `pattern` (defaulting to every `.ly`/`.ily`/`.lilypond` file under `base`), a `generateId` override, and the same `format`/`defaults`/`timeout` options as the `lilypond()` integration. See the [reference](/reference/collections/) for the full list.

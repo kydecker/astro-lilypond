@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { docsLoader } from "@astrojs/starlight/loaders";
 import { docsSchema } from "@astrojs/starlight/schema";
 import type { Loader } from "astro/loaders";
+import { lilypondLoader } from "astro-lilypond/loader";
 
 function changelogLoader(): Loader {
 	return {
@@ -46,5 +47,8 @@ export const collections = {
 	}),
 	changelog: defineCollection({
 		loader: changelogLoader(),
+	}),
+	scores: defineCollection({
+		loader: lilypondLoader({ base: "./src/content/scores" }),
 	}),
 };
