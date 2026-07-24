@@ -104,7 +104,6 @@ function stripLyExtension(entryPath: string): string {
 	return entryPath;
 }
 
-/** Converts a platform-native path to POSIX-separated form (a no-op on POSIX systems). */
 function toPosixPath(path: string): string {
 	return path.split(sep).join("/");
 }
@@ -124,8 +123,7 @@ function posixRelative(from: string, to: string): string {
 }
 
 /**
- * Astro Content Layer loader that turns a directory of `.ly`/`.ily` files
- * into a content collection.
+ * Content Loader to turn a directory of `.ly` files into a content collection.
  */
 export function lilypondLoader(options: LilypondLoaderOptions): Loader {
 	const {
@@ -177,15 +175,9 @@ export function lilypondLoader(options: LilypondLoaderOptions): Loader {
 
 				const headerFields = parseLyHeaderFields(source);
 				const id = generateId({ entry, base: baseUrl, header: headerFields });
-				// Deliberately not short-circuited on a matching stored digest:
-				// unlike a rendered-markdown digest, that would only tell us the
-				// *source* hasn't changed, not that the previously-written asset
-				// file is still on disk (it could be gone — output dir cleaned,
-				// or a fresh checkout reusing a persisted content store cache).
-				// `writeAssets()` below already does the real, disk-backed cache
-				// check (does the content-hashed file exist?) and skips the
-				// `lilypond` invocation itself when it does — this just always
-				// pays the cheap cost of getting there.
+				// Not short-circuited on a matching digest: that only proves the
+				// source is unchanged, not that the asset file still exists on
+				// disk. `writeAssets()` does the real disk-backed cache check.
 				const digest = generateDigest(source);
 
 				const src = prependVersion(source, resolved.version);
