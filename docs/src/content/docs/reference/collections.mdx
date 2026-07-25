@@ -12,7 +12,7 @@ description: Options accepted by lilypondLoader() and the shape of each entry it
 **Type:** `string | URL`  
 **Required:** yes
 
-The directory `pattern` resolves from — relative to the project root, or an absolute file URL.
+The directory `pattern` resolves from. Relative to the project root.
 
 ### `pattern`
 
@@ -33,21 +33,21 @@ Generates each entry's collection id. `header` is the file's parsed `\header` fi
 **Type:** `"svg" | "png"`  
 **Default:** `"svg"`
 
-Same as the [integration's `format`](/reference/configuration/#format) option — the output format each score is rendered to.
+The image format each score is rendered to.
 
 ### `defaults`
 
 **Type:** `object`  
 **Default:** same as the [integration's `defaults`](/reference/configuration/#defaults)
 
-Default `crop`/`cropScale`/`resolution`/`version` settings applied to every file this loader renders. There's no per-file override (unlike a `.ly?crop` component import).
+Default settings applied to every score this loader renders.
 
 ### `timeout`
 
 **Type:** `number`  
 **Default:** `60000`
 
-Milliseconds to wait for a single `lilypond` invocation before aborting it.
+Milliseconds to wait for a single `lilypond` invocation before aborting.
 
 ### `outputDir`
 

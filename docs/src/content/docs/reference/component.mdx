@@ -3,7 +3,7 @@ title: Component Reference
 description: Props accepted by the <LilyPond> component.
 ---
 
-The `<LilyPond>` component accepts the following props.
+The `<LilyPond>` component, imported from `astro-lilypond/component`, accepts the following props.
 
 ## Props
 
@@ -24,7 +24,7 @@ Render only the first `n` pages of content. If omitted, all pages render. See [l
 
 **Type:** `string`
 
-Class name(s) applied to the rendered `<img>` (or `<ol>`, for multi-page scores). Not set unless you provide it — see [Styling](/guides/styling/) for how to use this for per-instance styles.
+Class name(s) applied to the rendered `<img>` (or `<ol>`, for multi-page scores). See the [styling guide](/guides/styling/).
 
 ### `style`
 
@@ -36,4 +36,4 @@ Inline styles applied directly to the rendered element.
 
 **Type:** `string`
 
-Overrides the automatically-derived alt text (see [Alt text](/guides/component/#alt-text)). Takes precedence over any `title`/`composer` found in the `.ly` file's `\header` block.
+Overrides the automatically-derived alt text. Takes precedence over any `title`/`composer` found in the `.ly` file's `\header` block. See also: [alt text](/guides/component/#alt-text).

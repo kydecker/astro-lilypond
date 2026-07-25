@@ -43,7 +43,7 @@ lilypond({
 **Type:** `string`  
 **Default:** `"_lilypond"`
 
-Directory name that rendered scores are written to, relative to Astro's [`publicDir`](https://docs.astro.build/en/reference/configuration-reference/#publicdir) (`./public` by default). Files in this directory are served at `/` during dev and copied to your build directory during build.
+Directory name that rendered scores are written to, relative to Astro's [`publicDir`](https://docs.astro.build/en/reference/configuration-reference/#publicdir) (`./public` by default).
 
 ```js
 // astro.config.mjs
@@ -59,7 +59,7 @@ Output files will be built, pruned, and rebuilt as needed. You can commit the ge
 If you choose to commit the generated files, it's recommended to mark the output directory as [generated](https://docs.github.com/en/repositories/working-with-files/managing-files/customizing-how-changed-files-appear-on-github) in a `.gitattributes` file:
 
 ```ini title=".gitattributes"
-# exclude generated files from diff counts and language stats
+# exclude generated files from language stats
 public/_lilypond/* linguist-generated
 ```
 
@@ -76,7 +76,7 @@ public/_lilypond
 
 **Type:** `object`
 
-Default settings applied when rendering each score. Any individual `.ly` file can still override them with its own settings.
+Default settings applied when rendering each score. An individual `.ly` file can override `defaults` with its own settings.
 
 ### `defaults.crop`
 
