@@ -4,13 +4,22 @@ interface Props {
 		pages: { src: string; width?: number; height?: number }[];
 		alt?: string;
 	};
+	pageLimit?: number;
 	class?: string | undefined;
 	style?: string | undefined;
 	alt?: string | undefined;
 }
 
-const { content, class: className, style, alt: altProp } = Astro.props;
-const { pages, alt: contentAlt } = content;
+const {
+	content,
+	pageLimit,
+	class: className,
+	style,
+	alt: altProp,
+} = Astro.props;
+const { alt: contentAlt } = content;
+const pages =
+	pageLimit === undefined ? content.pages : content.pages.slice(0, pageLimit);
 const alt = altProp ?? contentAlt ?? "";
 ---
 
