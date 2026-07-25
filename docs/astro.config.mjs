@@ -94,7 +94,6 @@ export default defineConfig({
 						},
 						"resources/syntax",
 						"resources/extensions",
-						"resources/published-music",
 					],
 				},
 			],
