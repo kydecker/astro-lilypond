@@ -48,6 +48,21 @@ import bachInvention from "./bach-invention.ly?nocrop";
 <LilyPond content={bachInvention} />
 ```
 
+## Limiting rendered pages
+
+By default, `<LilyPond>` renders every page of a score. To show only an excerpt — the first page as a preview, for example — pass a `pageLimit`:
+
+```astro title="PreviewScore.astro" {8}
+---
+import LilyPond from "astro-lilypond/component";
+import bachInvention from "./bach-invention.ly";
+---
+
+<LilyPond content={bachInvention} pageLimit={1} />
+```
+
+`pageLimit={1}` renders only the first page. `pageLimit={2}` renders the first two pages, etc. Passing a `pageLimit` larger than the number of available pages has no effect.
+
 ## Alt text
 
 `<LilyPond>` imports derive alt text automatically from the imported `.ly` file's `\header` block, displaying `alt="{title} by {composer}"`.

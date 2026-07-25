@@ -141,4 +141,79 @@ describe("LilyPond.astro", () => {
 		expect(result.match(/<img[^>]*style="width: 50%"/g)).toBeNull();
 		expect(result.match(/data-lilypond-image/g)).toHaveLength(2);
 	});
+
+	it("renders all pages when pageLimit is omitted", async () => {
+		const container = await AstroContainer.create();
+		const result = await container.renderToString(LilyPond, {
+			props: {
+				content: {
+					pages: [
+						{ src: "/_lilypond/a-p1.svg" },
+						{ src: "/_lilypond/a-p2.svg" },
+						{ src: "/_lilypond/a-p3.svg" },
+					],
+				},
+			},
+		});
+		expect(result.match(/data-lilypond-image/g)).toHaveLength(3);
+	});
+
+	it("renders a single plain img when pageLimit is 1, even for multi-page content", async () => {
+		const container = await AstroContainer.create();
+		const result = await container.renderToString(LilyPond, {
+			props: {
+				content: {
+					pages: [
+						{ src: "/_lilypond/a-p1.svg" },
+						{ src: "/_lilypond/a-p2.svg" },
+						{ src: "/_lilypond/a-p3.svg" },
+					],
+				},
+				pageLimit: 1,
+			},
+		});
+		expect(result).not.toContain("<ol");
+		expect(result.match(/data-lilypond-image/g)).toHaveLength(1);
+		expect(result).toContain('src="/_lilypond/a-p1.svg"');
+		expect(result).not.toContain('src="/_lilypond/a-p2.svg"');
+	});
+
+	it("renders only the first n pages when pageLimit is less than the total", async () => {
+		const container = await AstroContainer.create();
+		const result = await container.renderToString(LilyPond, {
+			props: {
+				content: {
+					pages: [
+						{ src: "/_lilypond/a-p1.svg" },
+						{ src: "/_lilypond/a-p2.svg" },
+						{ src: "/_lilypond/a-p3.svg" },
+					],
+				},
+				pageLimit: 2,
+			},
+		});
+		expect(result).toContain("<ol data-lilypond-group");
+		expect(result.match(/data-lilypond-image/g)).toHaveLength(2);
+		expect(result).toContain('src="/_lilypond/a-p1.svg"');
+		expect(result).toContain('src="/_lilypond/a-p2.svg"');
+		expect(result).not.toContain('src="/_lilypond/a-p3.svg"');
+	});
+
+	it("clamps pageLimit larger than the available page count to all pages", async () => {
+		const container = await AstroContainer.create();
+		const result = await container.renderToString(LilyPond, {
+			props: {
+				content: {
+					pages: [
+						{ src: "/_lilypond/a-p1.svg" },
+						{ src: "/_lilypond/a-p2.svg" },
+					],
+				},
+				pageLimit: 10,
+			},
+		});
+		expect(result.match(/data-lilypond-image/g)).toHaveLength(2);
+		expect(result).toContain('src="/_lilypond/a-p1.svg"');
+		expect(result).toContain('src="/_lilypond/a-p2.svg"');
+	});
 });
