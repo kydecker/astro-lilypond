@@ -1,5 +1,11 @@
 # astro-lilypond
 
+## 0.12.0
+
+### Minor Changes
+
+- 716fd79: Add a `pageLimit` prop to `<LilyPond>` to limit rendering to the first `n` pages of a multi-page score.
+
 ## 0.11.1
 
 ### Patch Changes
