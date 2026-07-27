@@ -8,3 +8,6 @@ allowBuilds:
   sharp: true
   simple-git-hooks: true
   workerd: true
+
+minimumReleaseAgeExclude:
+  - starlight-theme-flexoki
