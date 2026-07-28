@@ -15,7 +15,7 @@ async function resolveGenerated() {
 }
 
 describe("emitLilypondAsset", () => {
-	it("calls emitAsset with '<title>.<format>' as the path and render deps as the cache key", async () => {
+	it("calls emitAsset with '<title>.[hash].<format>' as the path (name before hash) and render deps as the cache key", async () => {
 		emitAsset.mockResolvedValue([
 			{ src: "/_astro/score.abc123.svg", meta: {} },
 		]);
@@ -31,7 +31,7 @@ describe("emitLilypondAsset", () => {
 		});
 
 		expect(emitAsset).toHaveBeenCalledWith(
-			"bach-bwv610.svg",
+			"bach-bwv610.[hash].svg",
 			["\\relative c' { c d e }", "svg", 144, true],
 			expect.any(Function),
 		);

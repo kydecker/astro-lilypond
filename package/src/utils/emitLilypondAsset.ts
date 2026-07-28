@@ -3,7 +3,10 @@ import type { Format } from "../render.js";
 import { imageDimensionsFor } from "./imageDimensions.js";
 
 export interface EmitLilypondAssetOptions {
-	/** Human-readable title — the file name `emitAsset()` derives a hash off of. */
+	/**
+	 * Human-readable title — becomes the emitted file's name, with the hash
+	 * `emitAsset()` derives inserted after it (`<title>.<hash>.<format>`).
+	 */
 	title: string;
 
 	/** Output format — also used as the file extension. */
@@ -60,7 +63,7 @@ export async function emitLilypondAsset(
 	// async callback), so the call comes back as `any` — cast it back to the
 	// shape its own types promise for an array-returning generator.
 	const assets = (await emitAsset<PageMeta>(
-		`${title}.${format}`,
+		`${title}.[hash].${format}`,
 		[source, format, resolution, crop],
 		async () => {
 			const buffers = await render();
