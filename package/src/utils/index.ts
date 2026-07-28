@@ -1,7 +1,10 @@
 export { altTextFor } from "./altTextFor.js";
 export { altTextForBlock } from "./altTextForBlock.js";
-export { assetsUrlBaseFor } from "./assetsUrlBaseFor.js";
-export { contentHashFor } from "./contentHashFor.js";
+export {
+	type EmitLilypondAssetOptions,
+	type EmittedLilypondPage,
+	emitLilypondAsset,
+} from "./emitLilypondAsset.js";
 export { escapeHtmlAttribute } from "./escapeHtmlAttribute.js";
 export type { ImageDimensions } from "./imageDimensions.js";
 export { imageDimensionsFor } from "./imageDimensions.js";
@@ -12,7 +15,6 @@ export {
 	RECOGNIZED_QUERY_PARAMS,
 } from "./lyImportQuery.js";
 export { lyTypeDeclarationsFor } from "./lyTypeDeclarationsFor.js";
-export { contentTypeFor, isOwnAssetFileName } from "./ownAssetFileName.js";
 export { parseFenceMeta } from "./parseFenceMeta.js";
 export type { LyHeaderFields } from "./parseLyHeader.js";
 export {

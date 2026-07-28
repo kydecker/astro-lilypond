@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, readdir, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -24,10 +24,16 @@ vi.mock("./render.js", () => ({
 	},
 }));
 
+vi.mock("./utils/emitLilypondAsset.js", () => ({
+	emitLilypondAsset: vi.fn(),
+}));
+
 import { lilypondEntrySchema, lilypondLoader } from "./loader.js";
 import { render } from "./render.js";
+import { emitLilypondAsset } from "./utils/emitLilypondAsset.js";
 
 const mockRender = vi.mocked(render);
+const mockEmitLilypondAsset = vi.mocked(emitLilypondAsset);
 
 /** Minimal in-memory stand-in for Astro's content-layer DataStore. */
 function createFakeStore() {
@@ -117,6 +123,16 @@ beforeEach(async () => {
 	await mkdir(publicDir, { recursive: true });
 	mockRender.mockClear();
 	mockRender.mockResolvedValue([Buffer.from("<svg></svg>")]);
+	// Mimics one page per rendered buffer, using a stable fake `src` (no real
+	// hash) so assertions on stored entries stay simple. Still invokes
+	// `opts.render()` so render-call-count assertions keep working.
+	mockEmitLilypondAsset.mockReset();
+	mockEmitLilypondAsset.mockImplementation(async (opts) => {
+		const buffers = await opts.render();
+		return buffers.map((_, i) => ({
+			src: `/_astro/${opts.title}${i === 0 ? "" : `-p${i + 1}`}.${opts.format}`,
+		}));
+	});
 });
 
 afterEach(async () => {
@@ -136,7 +152,7 @@ describe("lilypondLoader", () => {
 
 		const entry = store.get("sonata");
 		expect(entry?.data).toMatchObject({
-			pages: [{ src: expect.stringContaining("/_lilypond/scores/") }],
+			pages: [{ src: "/_astro/sonata.svg" }],
 			alt: "Sonata, by Beethoven",
 			title: "Sonata",
 			composer: "Beethoven",
@@ -171,20 +187,7 @@ describe("lilypondLoader", () => {
 		expect(store.keys()).toEqual(["custom-sonata.ly"]);
 	});
 
-	it("skips rendering an unchanged file on a second load()", async () => {
-		await writeFile(join(scoresDir, "sonata.ly"), "\\score { { c4 } }");
-
-		const loader = lilypondLoader({ base: "./src/scores" });
-		const { context } = createFakeContext({ root, publicDir });
-
-		await loader.load(context);
-		expect(mockRender).toHaveBeenCalledTimes(1);
-
-		await loader.load(context);
-		expect(mockRender).toHaveBeenCalledTimes(1);
-	});
-
-	it("re-renders a file whose content changed between load()s", async () => {
+	it("calls emitLilypondAsset with the updated source when a file changes between load()s", async () => {
 		const filePath = join(scoresDir, "sonata.ly");
 		await writeFile(filePath, "\\score { { c4 } }");
 
@@ -192,28 +195,15 @@ describe("lilypondLoader", () => {
 		const { context } = createFakeContext({ root, publicDir });
 
 		await loader.load(context);
-		expect(mockRender).toHaveBeenCalledTimes(1);
+		expect(mockEmitLilypondAsset).toHaveBeenLastCalledWith(
+			expect.objectContaining({ source: expect.stringContaining("c4") }),
+		);
 
 		await writeFile(filePath, "\\score { { d4 } }");
 		await loader.load(context);
-		expect(mockRender).toHaveBeenCalledTimes(2);
-	});
-
-	it("re-renders when the previously-written output was deleted, even though the source is unchanged", async () => {
-		await writeFile(join(scoresDir, "sonata.ly"), "\\score { { c4 } }");
-
-		const loader = lilypondLoader({ base: "./src/scores" });
-		const { context } = createFakeContext({ root, publicDir });
-
-		await loader.load(context);
-		expect(mockRender).toHaveBeenCalledTimes(1);
-
-		await rm(join(publicDir, "_lilypond", "scores"), {
-			recursive: true,
-			force: true,
-		});
-		await loader.load(context);
-		expect(mockRender).toHaveBeenCalledTimes(2);
+		expect(mockEmitLilypondAsset).toHaveBeenLastCalledWith(
+			expect.objectContaining({ source: expect.stringContaining("d4") }),
+		);
 	});
 
 	it("removes an entry for a file deleted between load()s", async () => {
@@ -264,22 +254,6 @@ describe("lilypondLoader", () => {
 		expect(store.get("sonata")).toBeDefined();
 	});
 
-	it("deletes a deleted file's rendered asset from its exclusive output directory", async () => {
-		const filePath = join(scoresDir, "sonata.ly");
-		await writeFile(filePath, "\\score { { c4 } }");
-
-		const loader = lilypondLoader({ base: "./src/scores" });
-		const { context } = createFakeContext({ root, publicDir });
-
-		await loader.load(context);
-		const assetsDir = join(publicDir, "_lilypond", "scores");
-		expect((await readdir(assetsDir)).length).toBeGreaterThan(0);
-
-		await rm(filePath);
-		await loader.load(context);
-		expect(await readdir(assetsDir)).toEqual([]);
-	});
-
 	it("re-syncs when the watcher reports a change under base", async () => {
 		const filePath = join(scoresDir, "sonata.ly");
 		await writeFile(filePath, "\\score { { c4 } }");
@@ -312,7 +286,7 @@ describe("lilypondLoader", () => {
 describe("lilypondEntrySchema", () => {
 	it("round-trips a full entry, including extra header fields", () => {
 		const parsed = lilypondEntrySchema.parse({
-			pages: [{ src: "/_lilypond/abc123.sonata.svg", width: 100, height: 50 }],
+			pages: [{ src: "/_astro/sonata.abc123.svg", width: 100, height: 50 }],
 			alt: "Sonata, by Beethoven",
 			title: "Sonata",
 			composer: "Beethoven",
@@ -325,7 +299,7 @@ describe("lilypondEntrySchema", () => {
 	it("accepts an entry with no header fields at all", () => {
 		expect(() =>
 			lilypondEntrySchema.parse({
-				pages: [{ src: "/_lilypond/abc123.score.svg" }],
+				pages: [{ src: "/_astro/abc123.score.svg" }],
 				extra: {},
 			}),
 		).not.toThrow();

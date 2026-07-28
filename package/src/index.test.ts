@@ -1,8 +1,4 @@
-import { mkdtemp, rm } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
-import { pathToFileURL } from "node:url";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("./render.js", () => ({
 	render: vi.fn().mockRejectedValue(new Error("mock render failure")),
@@ -21,17 +17,16 @@ vi.mock("./render.js", () => ({
 	},
 }));
 
-vi.mock("./deleteAssets.js", () => ({
-	pruneOrphanedAssets: vi.fn(),
-	pruneStaleAssets: vi.fn(),
+vi.mock("./utils/emitLilypondAsset.js", () => ({
+	emitLilypondAsset: vi.fn(),
 }));
 
-import { pruneOrphanedAssets } from "./deleteAssets.js";
 import lilypond from "./index.js";
 import { render } from "./render.js";
+import { emitLilypondAsset } from "./utils/emitLilypondAsset.js";
 
-const mockPruneOrphanedAssets = vi.mocked(pruneOrphanedAssets);
 const mockRender = vi.mocked(render);
+const mockEmitLilypondAsset = vi.mocked(emitLilypondAsset);
 
 const FAKE_PUBLIC_DIR = new URL("file:///project/public/");
 
@@ -58,6 +53,18 @@ function baseConfig(
 	};
 }
 
+beforeEach(() => {
+	// Mimics one page per rendered buffer, using a stable fake `src` (no real
+	// hash) so assertions on the emitted content stay simple. Still invokes
+	// `opts.render()` so `render()`-focused assertions/rejections keep working.
+	mockEmitLilypondAsset.mockImplementation(async (opts) => {
+		const buffers = await opts.render();
+		return buffers.map((_, i) => ({
+			src: `/_astro/${opts.title}${i === 0 ? "" : `-p${i + 1}`}.${opts.format}`,
+		}));
+	});
+});
+
 describe("lilypond integration", () => {
 	it("exports a function", () => {
 		expect(typeof lilypond).toBe("function");
@@ -71,6 +78,32 @@ describe("lilypond integration", () => {
 	it("has an astro:config:setup hook", () => {
 		const integration = lilypond();
 		expect(typeof integration.hooks?.["astro:config:setup"]).toBe("function");
+	});
+
+	it("registers the astro-emit-asset integration and the .ly vite plugin", async () => {
+		vi.doMock("@astrojs/markdown-satteri", () => ({
+			satteri: vi.fn((o: unknown) => ({ name: "satteri", options: o })),
+			isSatteriProcessor: vi.fn(() => true),
+		}));
+
+		const updateConfig = vi.fn();
+		const integration = lilypond();
+		await integration.hooks["astro:config:setup"]?.({
+			command: "build",
+			config: baseConfig({
+				markdown: { processor: { name: "satteri", options: {} } },
+			}),
+			updateConfig,
+			logger: { info: vi.fn(), warn: vi.fn() },
+		} as never);
+		vi.doUnmock("@astrojs/markdown-satteri");
+
+		const firstCall = updateConfig.mock.calls[0][0] as {
+			integrations: unknown[];
+			vite: { plugins: unknown[] };
+		};
+		expect(firstCall.integrations).toHaveLength(1);
+		expect(firstCall.vite.plugins).toHaveLength(1);
 	});
 
 	describe("vite plugin transform", () => {
@@ -198,56 +231,26 @@ describe("lilypond integration", () => {
 		});
 
 		describe("alt text", () => {
-			async function transformWithRealAssetsDir(source: string) {
-				const dir = await mkdtemp(join(tmpdir(), "astro-lilypond-test-"));
-				try {
-					mockRender.mockResolvedValueOnce([Buffer.from("fake-svg")]);
-					const updateConfig = vi.fn();
-					vi.doMock("@astrojs/markdown-satteri", () => ({
-						satteri: vi.fn((o: unknown) => ({ name: "satteri", options: o })),
-						isSatteriProcessor: vi.fn(() => true),
-					}));
-					const integration = lilypond();
-					await integration.hooks["astro:config:setup"]?.({
-						command: "build",
-						config: baseConfig({
-							markdown: { processor: { name: "satteri", options: {} } },
-							publicDir: pathToFileURL(`${dir}/`),
-						}),
-						updateConfig,
-						logger: { info: vi.fn(), warn: vi.fn() },
-					} as never);
-					vi.doUnmock("@astrojs/markdown-satteri");
-					const { plugins } = (
-						updateConfig.mock.calls[0][0] as { vite: { plugins: unknown[] } }
-					).vite;
-					const plugin = plugins[0] as {
-						transform: (
-							src: string,
-							id: string,
-						) => Promise<{ code: string } | undefined>;
-					};
-
-					const result = await plugin.transform(source, "score.ly");
-					const match = /export default (.*)$/.exec(result?.code ?? "");
-					return JSON.parse(match?.[1] ?? "{}") as {
-						pages: { src: string; width?: number; height?: number }[];
-						alt?: string;
-					};
-				} finally {
-					await rm(dir, { recursive: true, force: true });
-				}
+			async function transformContent(source: string) {
+				const plugin = await getVitePlugin();
+				mockRender.mockResolvedValueOnce([Buffer.from("fake-svg")]);
+				const result = await plugin.transform(source, "score.ly");
+				const match = /export default (.*)$/.exec(result?.code ?? "");
+				return JSON.parse(match?.[1] ?? "{}") as {
+					pages: { src: string; width?: number; height?: number }[];
+					alt?: string;
+				};
 			}
 
 			it("derives alt text from the .ly file's \\header title/composer", async () => {
-				const content = await transformWithRealAssetsDir(
+				const content = await transformContent(
 					'\\header { title = "Sonata" composer = "Beethoven" }',
 				);
 				expect(content.alt).toBe("Sonata, by Beethoven");
 			});
 
 			it("is an empty string when the .ly file has no \\header", async () => {
-				const content = await transformWithRealAssetsDir("\\score { }");
+				const content = await transformContent("\\score { }");
 				expect(content.alt).toBe("");
 			});
 		});
@@ -389,114 +392,5 @@ describe("lilypond integration", () => {
 				logger,
 			} as never),
 		).rejects.toThrow("custom-proc");
-	});
-
-	describe("astro:build:done", () => {
-		it("has an astro:build:done hook", () => {
-			const integration = lilypond();
-			expect(typeof integration.hooks?.["astro:build:done"]).toBe("function");
-		});
-
-		it("does nothing if astro:config:setup never ran", async () => {
-			const integration = lilypond();
-			await integration.hooks["astro:build:done"]?.({
-				logger: { info: vi.fn(), warn: vi.fn() },
-			} as never);
-			expect(mockPruneOrphanedAssets).not.toHaveBeenCalled();
-		});
-
-		it("prunes the resolved assets dir under publicDir/outputDir after setup ran", async () => {
-			vi.doMock("@astrojs/markdown-satteri", () => ({
-				satteri: vi.fn((o: unknown) => ({ name: "satteri", options: o })),
-				isSatteriProcessor: vi.fn(() => true),
-			}));
-
-			const integration = lilypond();
-			const logger = { info: vi.fn(), warn: vi.fn() };
-			await integration.hooks["astro:config:setup"]?.({
-				command: "build",
-				config: baseConfig({
-					markdown: { processor: { name: "satteri", options: {} } },
-				}),
-				updateConfig: vi.fn(),
-				logger,
-			} as never);
-			vi.doUnmock("@astrojs/markdown-satteri");
-
-			await integration.hooks["astro:build:done"]?.({ logger } as never);
-
-			expect(mockPruneOrphanedAssets).toHaveBeenCalledWith({
-				dir: "/project/public/_lilypond",
-				referenced: expect.any(Set),
-				logger,
-			});
-		});
-
-		it("uses a custom outputDir name when provided", async () => {
-			vi.doMock("@astrojs/markdown-satteri", () => ({
-				satteri: vi.fn((o: unknown) => ({ name: "satteri", options: o })),
-				isSatteriProcessor: vi.fn(() => true),
-			}));
-
-			const integration = lilypond({ outputDir: "scores" });
-			const logger = { info: vi.fn(), warn: vi.fn() };
-			await integration.hooks["astro:config:setup"]?.({
-				command: "build",
-				config: baseConfig({
-					markdown: { processor: { name: "satteri", options: {} } },
-				}),
-				updateConfig: vi.fn(),
-				logger,
-			} as never);
-			vi.doUnmock("@astrojs/markdown-satteri");
-
-			await integration.hooks["astro:build:done"]?.({ logger } as never);
-
-			expect(mockPruneOrphanedAssets).toHaveBeenCalledWith(
-				expect.objectContaining({ dir: "/project/public/scores" }),
-			);
-		});
-	});
-
-	describe("dev vs. build assets directory", () => {
-		async function setupWithCommand(command: "dev" | "build") {
-			vi.doMock("@astrojs/markdown-satteri", () => ({
-				satteri: vi.fn((o: unknown) => ({ name: "satteri", options: o })),
-				isSatteriProcessor: vi.fn(() => true),
-			}));
-
-			const updateConfig = vi.fn();
-			const integration = lilypond();
-			await integration.hooks["astro:config:setup"]?.({
-				command,
-				config: baseConfig({
-					markdown: { processor: { name: "satteri", options: {} } },
-				}),
-				updateConfig,
-				logger: { info: vi.fn(), warn: vi.fn() },
-			} as never);
-			vi.doUnmock("@astrojs/markdown-satteri");
-
-			return { integration, updateConfig };
-		}
-
-		it.each(["dev", "build"] as const)(
-			"resolves assets under publicDir/outputDir for `astro %s`",
-			async (command) => {
-				const { integration, updateConfig } = await setupWithCommand(command);
-				const logger = { info: vi.fn(), warn: vi.fn() };
-
-				expect(
-					(updateConfig.mock.calls[0][0] as { vite: { plugins: unknown[] } })
-						.vite.plugins,
-				).toHaveLength(1);
-
-				await integration.hooks["astro:build:done"]?.({ logger } as never);
-
-				expect(mockPruneOrphanedAssets).toHaveBeenCalledWith(
-					expect.objectContaining({ dir: "/project/public/_lilypond" }),
-				);
-			},
-		);
 	});
 });

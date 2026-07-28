@@ -1,7 +1,7 @@
 import { escapeHtmlAttribute } from "./escapeHtmlAttribute.js";
 
 export interface RenderedPage {
-	url: string;
+	src: string;
 	width?: number;
 	height?: number;
 }
@@ -11,7 +11,7 @@ function imgTag(page: RenderedPage, escapedAlt: string): string {
 		page.width !== undefined && page.height !== undefined
 			? ` width="${page.width}" height="${page.height}"`
 			: "";
-	return `<img data-lilypond-image src="${page.url}"${size} alt="${escapedAlt}">`;
+	return `<img data-lilypond-image src="${page.src}"${size} alt="${escapedAlt}">`;
 }
 
 export function renderedHtml(pages: RenderedPage[], alt: string): string {
