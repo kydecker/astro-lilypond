@@ -5,12 +5,6 @@ type EmitLilypondAssetMock = ReturnType<
 	typeof vi.mocked<typeof emitLilypondAsset>
 >;
 
-/**
- * Default fake for a mocked `emitLilypondAsset()`: one page per rendered
- * buffer, with a stable, hash-free `src` so assertions on emitted HTML/URLs
- * stay simple. Still invokes `opts.render()`, so render-focused assertions
- * (call args, rejections, call counts) keep working against the real thing.
- */
 export function fakeEmitLilypondAsset(
 	mock: EmitLilypondAssetMock,
 	urlBase = "/_astro",
