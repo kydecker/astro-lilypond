@@ -1,12 +1,12 @@
 /**
- * Exercises `render()` against the real `lilypond` binary. This
- * catches drift between our assumptions about LilyPond's CLI (output file
- * naming, page numbering, format flags) and its actual behavior, which
+ * Exercises `render()` against a real `lilypond` binary, resolved the same
+ * way `astro build` would (PATH first, `autoInstall` otherwise). Catches
+ * drift between our assumptions about LilyPond's CLI (output file naming,
+ * page numbering, format flags) and its actual behavior, which
  * `render.test.ts`'s mocked suite cannot.
  *
- * Skips entirely if `lilypond` isn't on PATH. Run explicitly with
- * `npm run test:integration` — excluded from the default `npm test` run
- * due to slower speeds.
+ * Run explicitly with `npm run test:integration` — excluded from the
+ * default `npm test` run due to slower speeds.
  */
 import { execFile, execFileSync } from "node:child_process";
 import { mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
@@ -15,20 +15,12 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import { beforeAll, describe, expect, it } from "vitest";
+import { resolveLilypondBinary } from "../src/binary/index.js";
 import { render } from "../src/render.js";
 
 const execFileAsync = promisify(execFile);
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const SCORES_DIR = join(__dirname, "scores");
-
-function lilypondAvailable(): boolean {
-	try {
-		execFileSync("lilypond", ["--version"], { stdio: "ignore" });
-		return true;
-	} catch {
-		return false;
-	}
-}
 
 function svgDimensions(svg: string): { width: number; height: number } {
 	const match = svg.match(/viewBox="[-\d.]+\s+[-\d.]+\s+([\d.]+)\s+([\d.]+)"/);
@@ -45,158 +37,169 @@ function pngDimensions(buf: Buffer): { width: number; height: number } {
 // child process, so the Node event loop is free the whole time — running
 // them concurrently lets CI overlap multiple lilypond processes instead of
 // paying their compile time one at a time.
-describe
-	.skipIf(!lilypondAvailable())
-	.concurrent("render() against the real lilypond binary", () => {
-		let multiPagePng: string;
-		let multiPageSvg: string;
+describe.concurrent("render() against the real lilypond binary", () => {
+	let multiPagePng: string;
+	let multiPageSvg: string;
+	let binaryPath: string;
 
-		beforeAll(async () => {
-			[multiPagePng, multiPageSvg] = await Promise.all([
-				readFile(join(SCORES_DIR, "multi-page-png.ly"), "utf8"),
-				readFile(join(SCORES_DIR, "multi-page-svg.ly"), "utf8"),
-			]);
-		});
+	beforeAll(async () => {
+		[multiPagePng, multiPageSvg, binaryPath] = await Promise.all([
+			readFile(join(SCORES_DIR, "multi-page-png.ly"), "utf8"),
+			readFile(join(SCORES_DIR, "multi-page-svg.ly"), "utf8"),
+			resolveLilypondBinary({ autoInstall: true }),
+		]);
+	});
 
-		// Pins down LilyPond's actual output-file naming per format, run
-		// directly against the binary (bypassing render()'s own assumptions
-		// about that naming). If these fail, LilyPond's conventions changed
-		// and render()'s readOutputFile() fallback logic needs updating.
-		describe("LilyPond output-file naming (pinned via direct invocation)", () => {
-			it("names uncropped multi-page SVG output <base>-N.svg", async () => {
-				const dir = await mkdtemp(join(tmpdir(), "lilypond-naming-"));
-				try {
-					const inputPath = join(dir, "input.ly");
-					const outputBase = join(dir, "output");
-					await writeFile(inputPath, multiPageSvg, "utf8");
-					await execFileAsync("lilypond", [
-						"--svg",
-						"--define-default=no-point-and-click",
-						"--silent",
-						"--output",
-						outputBase,
-						inputPath,
-					]);
-					const files = (await readdir(dir)).filter((f) => f.endsWith(".svg"));
-					expect(files.sort()).toEqual(
-						expect.arrayContaining(["output-1.svg", "output-2.svg"]),
-					);
-				} finally {
-					await rm(dir, { recursive: true, force: true });
-				}
-			});
-
-			it("names uncropped multi-page PNG output <base>-pageN.png", async () => {
-				const dir = await mkdtemp(join(tmpdir(), "lilypond-naming-"));
-				try {
-					const inputPath = join(dir, "input.ly");
-					const outputBase = join(dir, "output");
-					await writeFile(inputPath, multiPagePng, "utf8");
-					await execFileAsync("lilypond", [
-						"--png",
-						"--define-default=no-point-and-click",
-						"--output",
-						outputBase,
-						inputPath,
-					]);
-					const files = (await readdir(dir)).filter((f) => f.endsWith(".png"));
-					expect(files.sort()).toEqual(
-						expect.arrayContaining(["output-page1.png", "output-page2.png"]),
-					);
-				} finally {
-					await rm(dir, { recursive: true, force: true });
-				}
-			});
-		});
-
-		describe("multi-page scores", () => {
-			it("renders every page's SVG when crop is false", async () => {
-				const result = await render(multiPageSvg, {
-					format: "svg",
-					crop: false,
-				});
-				expect(result).toHaveLength(2);
-				for (const buf of result) {
-					const svg = buf.toString("utf-8");
-					expect(svg).toContain("<svg");
-					const { width, height } = svgDimensions(svg);
-					// Each is a single uncropped US-letter page, not the tall
-					// merged image crop:true would produce for a 2-page score.
-					expect(height / width).toBeLessThan(2);
-				}
-			});
-
-			it("merges all pages into one tall image when crop is true", async () => {
-				const result = await render(multiPageSvg, {
-					format: "svg",
-					crop: true,
-				});
-				expect(result).toHaveLength(1);
-				const svg = result[0].toString("utf-8");
-				const { width, height } = svgDimensions(svg);
-				// multi-page-svg.ly is a 2-page score; the cropped merge stacks
-				// systems from all pages into a single much-taller-than-wide image.
-				expect(height / width).toBeGreaterThan(2);
-			});
-		});
-
-		describe("png format", () => {
-			it("renders valid PNG bytes", async () => {
-				const result = await render(multiPagePng, {
-					format: "png",
-					crop: true,
-				});
-				expect(result).toHaveLength(1);
-				const { width, height } = pngDimensions(result[0]);
-				expect(width).toBeGreaterThan(0);
-				expect(height).toBeGreaterThan(0);
-			});
-
-			it("renders every page of a multi-page score to PNG when crop is false", async () => {
-				const result = await render(multiPagePng, {
-					format: "png",
-					crop: false,
-				});
-				expect(result).toHaveLength(2);
-				for (const buf of result) {
-					const { width, height } = pngDimensions(buf);
-					expect(width).toBeGreaterThan(0);
-					expect(height).toBeGreaterThan(0);
-				}
-			});
-		});
-
-		describe("resolution", () => {
-			it("increases PNG pixel dimensions roughly proportionally to resolution", async () => {
-				const [low, high] = await Promise.all([
-					render(multiPagePng, {
-						format: "png",
-						crop: true,
-						defaults: { resolution: 72 },
-					}),
-					render(multiPagePng, {
-						format: "png",
-						crop: true,
-						defaults: { resolution: 288 },
-					}),
+	// Pins down LilyPond's actual output-file naming per format, run
+	// directly against the binary (bypassing render()'s own assumptions
+	// about that naming). If these fail, LilyPond's conventions changed
+	// and render()'s readOutputFile() fallback logic needs updating.
+	describe("LilyPond output-file naming (pinned via direct invocation)", () => {
+		it("names uncropped multi-page SVG output <base>-N.svg", async () => {
+			const dir = await mkdtemp(join(tmpdir(), "lilypond-naming-"));
+			try {
+				const inputPath = join(dir, "input.ly");
+				const outputBase = join(dir, "output");
+				await writeFile(inputPath, multiPageSvg, "utf8");
+				await execFileAsync(binaryPath, [
+					"--svg",
+					"--define-default=no-point-and-click",
+					"--silent",
+					"--output",
+					outputBase,
+					inputPath,
 				]);
-				const lowDim = pngDimensions(low[0]);
-				const highDim = pngDimensions(high[0]);
-				const ratio = highDim.width / lowDim.width;
-				// resolution quadruples (72 -> 288); pixel width should scale
-				// with it, allowing slack for rounding at page-fitting time.
-				expect(ratio).toBeGreaterThan(3);
-				expect(ratio).toBeLessThan(5);
-			});
+				const files = (await readdir(dir)).filter((f) => f.endsWith(".svg"));
+				expect(files.sort()).toEqual(
+					expect.arrayContaining(["output-1.svg", "output-2.svg"]),
+				);
+			} finally {
+				await rm(dir, { recursive: true, force: true });
+			}
 		});
 
-		describe("binaryPath", () => {
-			it("renders successfully with an explicit absolute binary path", async () => {
-				const binaryPath = execFileSync("which", ["lilypond"])
-					.toString()
-					.trim();
-				const result = await render("{ c'4 d'4 e'4 f'4 }", { binaryPath });
-				expect(result[0].toString("utf-8")).toContain("<svg");
-			});
+		it("names uncropped multi-page PNG output <base>-pageN.png", async () => {
+			const dir = await mkdtemp(join(tmpdir(), "lilypond-naming-"));
+			try {
+				const inputPath = join(dir, "input.ly");
+				const outputBase = join(dir, "output");
+				await writeFile(inputPath, multiPagePng, "utf8");
+				await execFileAsync(binaryPath, [
+					"--png",
+					"--define-default=no-point-and-click",
+					"--output",
+					outputBase,
+					inputPath,
+				]);
+				const files = (await readdir(dir)).filter((f) => f.endsWith(".png"));
+				expect(files.sort()).toEqual(
+					expect.arrayContaining(["output-page1.png", "output-page2.png"]),
+				);
+			} finally {
+				await rm(dir, { recursive: true, force: true });
+			}
 		});
 	});
+
+	describe("multi-page scores", () => {
+		it("renders every page's SVG when crop is false", async () => {
+			const result = await render(multiPageSvg, {
+				format: "svg",
+				crop: false,
+				binaryPath,
+			});
+			expect(result).toHaveLength(2);
+			for (const buf of result) {
+				const svg = buf.toString("utf-8");
+				expect(svg).toContain("<svg");
+				const { width, height } = svgDimensions(svg);
+				// Each is a single uncropped US-letter page, not the tall
+				// merged image crop:true would produce for a 2-page score.
+				expect(height / width).toBeLessThan(2);
+			}
+		});
+
+		it("merges all pages into one tall image when crop is true", async () => {
+			const result = await render(multiPageSvg, {
+				format: "svg",
+				crop: true,
+				binaryPath,
+			});
+			expect(result).toHaveLength(1);
+			const svg = result[0].toString("utf-8");
+			const { width, height } = svgDimensions(svg);
+			// multi-page-svg.ly is a 2-page score; the cropped merge stacks
+			// systems from all pages into a single much-taller-than-wide image.
+			expect(height / width).toBeGreaterThan(2);
+		});
+	});
+
+	describe("png format", () => {
+		it("renders valid PNG bytes", async () => {
+			const result = await render(multiPagePng, {
+				format: "png",
+				crop: true,
+				binaryPath,
+			});
+			expect(result).toHaveLength(1);
+			const { width, height } = pngDimensions(result[0]);
+			expect(width).toBeGreaterThan(0);
+			expect(height).toBeGreaterThan(0);
+		});
+
+		it("renders every page of a multi-page score to PNG when crop is false", async () => {
+			const result = await render(multiPagePng, {
+				format: "png",
+				crop: false,
+				binaryPath,
+			});
+			expect(result).toHaveLength(2);
+			for (const buf of result) {
+				const { width, height } = pngDimensions(buf);
+				expect(width).toBeGreaterThan(0);
+				expect(height).toBeGreaterThan(0);
+			}
+		});
+	});
+
+	describe("resolution", () => {
+		it("increases PNG pixel dimensions roughly proportionally to resolution", async () => {
+			const [low, high] = await Promise.all([
+				render(multiPagePng, {
+					format: "png",
+					crop: true,
+					defaults: { resolution: 72 },
+					binaryPath,
+				}),
+				render(multiPagePng, {
+					format: "png",
+					crop: true,
+					defaults: { resolution: 288 },
+					binaryPath,
+				}),
+			]);
+			const lowDim = pngDimensions(low[0]);
+			const highDim = pngDimensions(high[0]);
+			const ratio = highDim.width / lowDim.width;
+			// resolution quadruples (72 -> 288); pixel width should scale
+			// with it, allowing slack for rounding at page-fitting time.
+			expect(ratio).toBeGreaterThan(3);
+			expect(ratio).toBeLessThan(5);
+		});
+	});
+
+	describe("binaryPath", () => {
+		it("renders successfully with an explicit absolute binary path", async () => {
+			// binaryPath may just be "lilypond" (found on PATH) — force an
+			// absolute path so this test covers that case specifically.
+			const absolutePath =
+				binaryPath === "lilypond"
+					? execFileSync("which", ["lilypond"]).toString().trim()
+					: binaryPath;
+			const result = await render("{ c'4 d'4 e'4 f'4 }", {
+				binaryPath: absolutePath,
+			});
+			expect(result[0].toString("utf-8")).toContain("<svg");
+		});
+	});
+});

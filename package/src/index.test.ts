@@ -21,9 +21,13 @@ vi.mock("./utils/emitLilypondAsset.js", () => ({
 	emitLilypondAsset: vi.fn(),
 }));
 
-vi.mock("./binary/index.js", () => ({
-	resolveLilypondBinary: vi.fn().mockResolvedValue("lilypond"),
-}));
+vi.mock("./binary/index.js", async (importOriginal) => {
+	const actual = await importOriginal<typeof import("./binary/index.js")>();
+	return {
+		...actual,
+		resolveLilypondBinary: vi.fn().mockResolvedValue("lilypond"),
+	};
+});
 
 import { resolveLilypondBinary } from "./binary/index.js";
 import lilypond from "./index.js";

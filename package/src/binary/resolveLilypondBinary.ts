@@ -6,23 +6,31 @@ import { resolvePlatformTarget } from "./platformTarget.js";
 
 const execFileAsync = promisify(execFile);
 
-/** Version downloaded when `autoInstall.version` isn't set. */
 export const DEFAULT_LILYPOND_VERSION: LilypondVersion = "2.26.0";
 
+const IS_ON_PATH_TIMEOUT_MS = 10_000;
+
+/**
+ * Only a definite "no such command" (`ENOENT`) counts as "not on PATH" and
+ * triggers `autoInstall`. Anything else — a binary that exists but errors,
+ * or hangs past the timeout — is treated as present, so it's never silently
+ * shadowed by a downloaded copy; it fails at actual render time instead.
+ */
 async function isOnPath(): Promise<boolean> {
 	try {
-		await execFileAsync("lilypond", ["--version"]);
+		await execFileAsync("lilypond", ["--version"], {
+			signal: AbortSignal.timeout(IS_ON_PATH_TIMEOUT_MS),
+		});
 		return true;
-	} catch {
-		return false;
+	} catch (err) {
+		const code = (err as NodeJS.ErrnoException | undefined)?.code;
+		return code !== "ENOENT";
 	}
 }
 
 export interface ResolveLilypondBinaryOptions {
 	/**
-	 * LilyPond version to install if none is found on `PATH`. Unrelated to
-	 * `defaults.version` (which scores are compiled against) — this is only
-	 * which release gets downloaded.
+	 * LilyPond version to install if none is found on `PATH`.
 	 * @default DEFAULT_LILYPOND_VERSION
 	 */
 	version?: LilypondVersion;
@@ -34,13 +42,14 @@ export interface ResolveLilypondBinaryOptions {
 
 /**
  * Resolves the `lilypond` binary to invoke. A binary already on `PATH`
- * always wins — a manual install (matching the project's own version, or
- * simply the one the user wants) is never shadowed by a downloaded one.
- * Otherwise, when `autoInstall` is enabled, downloads a platform-matched
- * build into a local cache and returns its path. Falls back to the bare
- * `"lilypond"` command (which will fail loudly at render time) whenever a
- * binary can't be found or installed, after logging a warning explaining
- * why.
+ * always wins. Otherwise, when `autoInstall` is enabled, downloads a
+ * platform-matched build into a local cache and returns its path.
+ *
+ * Declining to install (`autoInstall: false`, or no prebuilt for this
+ * platform) falls back to the bare `"lilypond"` command after a warning.
+ * An actual install failure (network error, checksum mismatch, corrupt
+ * archive) throws instead, rather than deferring one clear error into a
+ * confusing failure on every single score.
  */
 export async function resolveLilypondBinary({
 	version = DEFAULT_LILYPOND_VERSION,
@@ -70,10 +79,10 @@ export async function resolveLilypondBinary({
 		const binaryPath = await downloadLilypond({ version, log });
 		return binaryPath ?? "lilypond";
 	} catch (err) {
-		warn(
-			`astro-lilypond: automatic LilyPond download failed — ${err instanceof Error ? err.message : String(err)}. ` +
-				"Install LilyPond manually and ensure it is on PATH.",
+		throw new Error(
+			`astro-lilypond: automatic LilyPond install failed — ${err instanceof Error ? err.message : String(err)}. ` +
+				"Install LilyPond manually and ensure it is on PATH, or set `autoInstall: false` to require a PATH install without attempting a download.",
+			{ cause: err },
 		);
-		return "lilypond";
 	}
 }

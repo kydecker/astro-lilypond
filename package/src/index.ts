@@ -1,7 +1,11 @@
 import type { AstroIntegration } from "astro";
 import emitAssetIntegration from "astro-emit-asset";
 import type { Plugin } from "vite";
-import { resolveLilypondBinary } from "./binary/index.js";
+import {
+	type AutoInstallOptions,
+	resolveAutoInstallOption,
+	resolveLilypondBinary,
+} from "./binary/index.js";
 import {
 	type PluginOptions,
 	rehypePlugin,
@@ -14,7 +18,6 @@ import {
 	render,
 	resolveCrop,
 } from "./render.js";
-import type { LilypondVersion } from "./types/lilypondVersion.js";
 import {
 	altTextFor,
 	emitLilypondAsset,
@@ -31,15 +34,11 @@ import {
 
 export const LY_EXTENSIONS = [".ly", ".lilypond", ".ily"] as const;
 
-export type { LilypondDefaults, PluginOptions as LilypondPluginOptions };
-
-export interface AutoInstallOptions {
-	/**
-	 * LilyPond version to download when none is found on `PATH`.
-	 * @default "2.26.0"
-	 */
-	version?: LilypondVersion;
-}
+export type {
+	AutoInstallOptions,
+	LilypondDefaults,
+	PluginOptions as LilypondPluginOptions,
+};
 
 export interface LilypondPage {
 	src: string;
@@ -141,11 +140,8 @@ export default function lilypond(
 		name: "astro-lilypond",
 		hooks: {
 			"astro:config:setup": async ({ config, updateConfig, logger }) => {
-				const autoInstall = options.autoInstall ?? true;
 				options.binaryPath = await resolveLilypondBinary({
-					version:
-						typeof autoInstall === "object" ? autoInstall.version : undefined,
-					autoInstall: autoInstall !== false,
+					...resolveAutoInstallOption(options.autoInstall),
 					log: (message) => logger?.info(message),
 					warn: (message) => logger?.warn(message),
 				});

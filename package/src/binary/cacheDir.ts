@@ -1,11 +1,6 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 
-/**
- * Root directory downloaded LilyPond builds are cached under. Override with
- * `ASTRO_LILYPOND_CACHE_DIR` — useful for pointing CI at a directory it
- * already knows how to cache between runs.
- */
 export function lilypondCacheDir(
 	env: NodeJS.ProcessEnv = process.env,
 	platform: NodeJS.Platform = process.platform,

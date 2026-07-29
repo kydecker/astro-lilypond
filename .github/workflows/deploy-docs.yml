@@ -25,10 +25,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # The docs build runs the real astro-lilypond integration, which
-      # downloads and caches LilyPond itself (autoInstall, on by default) —
-      # no manual install step needed. Just cache its download directory so
-      # repeat deploys don't re-download.
       - name: Cache LilyPond
         uses: actions/cache@v6
         with:

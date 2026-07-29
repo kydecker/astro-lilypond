@@ -1,14 +1,26 @@
 import { createHash } from "node:crypto";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+type ExecFileCb = (
+	err: unknown,
+	res?: { stdout: string; stderr: string },
+) => void;
+
+function normalizeExecFileCb<T>(
+	maybeOptions: T | ((...args: never[]) => void),
+	maybeCb?: (...args: never[]) => void,
+) {
+	return typeof maybeOptions === "function" ? maybeOptions : maybeCb;
+}
+
 vi.mock("child_process", () => ({
 	execFile: vi.fn(
-		(
-			_bin: string,
-			_args: string[],
-			cb: (err: unknown, res?: { stdout: string; stderr: string }) => void,
-		) => {
-			cb(null, { stdout: "", stderr: "" });
+		(_bin: string, _args: string[], optionsOrCb: unknown, cb?: ExecFileCb) => {
+			const callback = normalizeExecFileCb(
+				optionsOrCb as never,
+				cb as never,
+			) as ExecFileCb;
+			callback(null, { stdout: "", stderr: "" });
 		},
 	),
 }));
@@ -45,6 +57,13 @@ const mockRename = vi.mocked(rename);
 const mockWriteFile = vi.mocked(writeFile);
 const mockResolvePlatformTarget = vi.mocked(resolvePlatformTarget);
 
+const LINUX_TARGET = {
+	platform: "linux",
+	arch: "x86_64",
+	archiveExt: "tar.gz",
+	binaryName: "lilypond",
+} as const;
+
 const ARCHIVE_BYTES = Buffer.from("fake archive contents");
 const ARCHIVE_SHA256 = createHash("sha256").update(ARCHIVE_BYTES).digest("hex");
 
@@ -76,25 +95,29 @@ function fakeResponse(overrides: {
 	} as unknown as Response;
 }
 
+function mockExecFileResult(handler: (cb: ExecFileCb) => void) {
+	mockExecFile.mockImplementation(((
+		_bin: string,
+		_args: string[],
+		optionsOrCb: unknown,
+		cb?: ExecFileCb,
+	) => {
+		const callback = normalizeExecFileCb(
+			optionsOrCb as never,
+			cb as never,
+		) as ExecFileCb;
+		handler(callback);
+	}) as unknown as typeof execFile);
+}
+
 beforeEach(() => {
 	vi.clearAllMocks();
-	mockResolvePlatformTarget.mockReturnValue({
-		platform: "linux",
-		arch: "x86_64",
-		archiveExt: "tar.gz",
-		binaryName: "lilypond",
-	});
+	mockResolvePlatformTarget.mockReturnValue(LINUX_TARGET);
 	mockAccess.mockImplementation(async () => {
 		throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });
 	});
 	mockReaddir.mockResolvedValue(["lilypond-2.26.0-linux-x86_64"]);
-	mockExecFile.mockImplementation(((
-		_bin: string,
-		_args: string[],
-		cb: (err: unknown, res?: { stdout: string; stderr: string }) => void,
-	) => {
-		cb(null, { stdout: "", stderr: "" });
-	}) as unknown as typeof execFile);
+	mockExecFileResult((cb) => cb(null, { stdout: "", stderr: "" }));
 });
 
 afterEach(() => {
@@ -151,6 +174,22 @@ describe("downloadLilypond", () => {
 		expect(result).toMatch(/bin[/\\]lilypond$/);
 	});
 
+	it("extracts .zip archives with PowerShell instead of tar", async () => {
+		mockResolvePlatformTarget.mockReturnValue({
+			platform: "mingw",
+			arch: "x86_64",
+			archiveExt: "zip",
+			binaryName: "lilypond.exe",
+		});
+		const fetchImpl = vi.fn().mockResolvedValue(fakeResponse({}));
+		await downloadLilypond({
+			version: "2.26.0",
+			cacheDir: "/cache",
+			fetchImpl,
+		});
+		expect(mockExecFile.mock.calls[0]?.[0]).toBe("powershell.exe");
+	});
+
 	it("throws on a checksum mismatch and does not install", async () => {
 		const fetchImpl = vi
 			.fn()
@@ -191,5 +230,48 @@ describe("downloadLilypond", () => {
 		await expect(
 			downloadLilypond({ version: "2.26.0", cacheDir: "/cache", fetchImpl }),
 		).rejects.toThrow(/empty/);
+	});
+
+	it("reuses a concurrently-completed install instead of overwriting it", async () => {
+		let accessCalls = 0;
+		mockAccess.mockImplementation(async () => {
+			accessCalls += 1;
+			if (accessCalls === 1) {
+				throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });
+			}
+			return undefined;
+		});
+		const fetchImpl = vi.fn().mockResolvedValue(fakeResponse({}));
+		const log = vi.fn();
+		const result = await downloadLilypond({
+			version: "2.26.0",
+			cacheDir: "/cache",
+			fetchImpl,
+			log,
+		});
+		expect(mockRename).not.toHaveBeenCalled();
+		expect(log).toHaveBeenCalledWith(
+			expect.stringContaining("installed concurrently"),
+		);
+		expect(result).toMatch(/bin[/\\]lilypond$/);
+	});
+
+	it("recovers when rename fails because another process finished first", async () => {
+		let accessCalls = 0;
+		mockAccess.mockImplementation(async () => {
+			accessCalls += 1;
+			if (accessCalls <= 2) {
+				throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });
+			}
+			return undefined;
+		});
+		mockRename.mockRejectedValueOnce(new Error("ENOTEMPTY"));
+		const fetchImpl = vi.fn().mockResolvedValue(fakeResponse({}));
+		const result = await downloadLilypond({
+			version: "2.26.0",
+			cacheDir: "/cache",
+			fetchImpl,
+		});
+		expect(result).toMatch(/bin[/\\]lilypond$/);
 	});
 });

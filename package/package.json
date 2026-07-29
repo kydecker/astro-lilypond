@@ -21,6 +21,10 @@
 		"./loader": {
 			"types": "./dist/loader.d.ts",
 			"import": "./dist/loader.js"
+		},
+		"./binary": {
+			"types": "./dist/binary/index.d.ts",
+			"import": "./dist/binary/index.js"
 		}
 	},
 	"files": [

@@ -5,10 +5,16 @@ type ExecFileCb = (
 	res?: { stdout: string; stderr: string },
 ) => void;
 
+function enoentError() {
+	return Object.assign(new Error("spawn ENOENT"), { code: "ENOENT" });
+}
+
 vi.mock("child_process", () => ({
-	execFile: vi.fn((_bin: string, _args: string[], cb: ExecFileCb) => {
-		cb(Object.assign(new Error("spawn ENOENT"), { code: "ENOENT" }));
-	}),
+	execFile: vi.fn(
+		(_bin: string, _args: string[], _options: unknown, cb: ExecFileCb) => {
+			cb(enoentError());
+		},
+	),
 }));
 
 vi.mock("./downloadLilypond.js", () => ({
@@ -36,15 +42,24 @@ const mockExecFile = vi.mocked(execFile);
 const mockDownloadLilypond = vi.mocked(downloadLilypond);
 const mockResolvePlatformTarget = vi.mocked(resolvePlatformTarget);
 
-beforeEach(() => {
-	vi.clearAllMocks();
+function mockExecFileResult(
+	handler: (cb: ExecFileCb) => void,
+	captureOptions?: (options: unknown) => void,
+) {
 	mockExecFile.mockImplementation(((
 		_bin: string,
 		_args: string[],
+		options: unknown,
 		cb: ExecFileCb,
 	) => {
-		cb(Object.assign(new Error("spawn ENOENT"), { code: "ENOENT" }));
+		captureOptions?.(options);
+		handler(cb);
 	}) as unknown as typeof execFile);
+}
+
+beforeEach(() => {
+	vi.clearAllMocks();
+	mockExecFileResult((cb) => cb(enoentError()));
 	mockResolvePlatformTarget.mockReturnValue({
 		platform: "linux",
 		arch: "x86_64",
@@ -55,13 +70,33 @@ beforeEach(() => {
 
 describe("resolveLilypondBinary", () => {
 	it("returns the bare command when lilypond is already on PATH", async () => {
-		mockExecFile.mockImplementation(((
-			_bin: string,
-			_args: string[],
-			cb: ExecFileCb,
-		) => {
-			cb(null, { stdout: "GNU LilyPond 2.26.0", stderr: "" });
-		}) as unknown as typeof execFile);
+		mockExecFileResult((cb) =>
+			cb(null, { stdout: "GNU LilyPond 2.26.0", stderr: "" }),
+		);
+		const result = await resolveLilypondBinary({
+			version: "2.26.0",
+			autoInstall: true,
+		});
+		expect(result).toBe("lilypond");
+		expect(mockDownloadLilypond).not.toHaveBeenCalled();
+	});
+
+	it("passes an AbortSignal timeout to the PATH check", async () => {
+		let capturedOptions: { signal?: AbortSignal } = {};
+		mockExecFileResult(
+			(cb) => cb(null, { stdout: "", stderr: "" }),
+			(options) => {
+				capturedOptions = options as { signal?: AbortSignal };
+			},
+		);
+		await resolveLilypondBinary({ version: "2.26.0", autoInstall: true });
+		expect(capturedOptions.signal).toBeInstanceOf(AbortSignal);
+	});
+
+	it("treats a lilypond on PATH that errors for a reason other than ENOENT as present", async () => {
+		mockExecFileResult((cb) =>
+			cb(Object.assign(new Error("permission denied"), { code: "EACCES" })),
+		);
 		const result = await resolveLilypondBinary({
 			version: "2.26.0",
 			autoInstall: true,
@@ -119,17 +154,10 @@ describe("resolveLilypondBinary", () => {
 		);
 	});
 
-	it("warns and falls back to the bare command when the download fails", async () => {
+	it("throws when the download fails, instead of silently falling back", async () => {
 		mockDownloadLilypond.mockRejectedValue(new Error("network unreachable"));
-		const warn = vi.fn();
-		const result = await resolveLilypondBinary({
-			version: "2.26.0",
-			autoInstall: true,
-			warn,
-		});
-		expect(result).toBe("lilypond");
-		expect(warn).toHaveBeenCalledWith(
-			expect.stringContaining("network unreachable"),
-		);
+		await expect(
+			resolveLilypondBinary({ version: "2.26.0", autoInstall: true }),
+		).rejects.toThrow("network unreachable");
 	});
 });

@@ -28,6 +28,15 @@ vi.mock("./utils/emitLilypondAsset.js", () => ({
 	emitLilypondAsset: vi.fn(),
 }));
 
+vi.mock("./binary/index.js", async (importOriginal) => {
+	const actual = await importOriginal<typeof import("./binary/index.js")>();
+	return {
+		...actual,
+		resolveLilypondBinary: vi.fn().mockResolvedValue("lilypond"),
+	};
+});
+
+import { resolveLilypondBinary } from "./binary/index.js";
 import { lilypondEntrySchema, lilypondLoader } from "./loader.js";
 import { render } from "./render.js";
 import { fakeEmitLilypondAsset } from "./utils/emitLilypondAsset.fake.js";
@@ -35,6 +44,7 @@ import { emitLilypondAsset } from "./utils/emitLilypondAsset.js";
 
 const mockRender = vi.mocked(render);
 const mockEmitLilypondAsset = vi.mocked(emitLilypondAsset);
+const mockResolveLilypondBinary = vi.mocked(resolveLilypondBinary);
 
 /** Minimal in-memory stand-in for Astro's content-layer DataStore. */
 function createFakeStore() {
@@ -126,6 +136,7 @@ beforeEach(async () => {
 	mockRender.mockResolvedValue([Buffer.from("<svg></svg>")]);
 	mockEmitLilypondAsset.mockReset();
 	fakeEmitLilypondAsset(mockEmitLilypondAsset);
+	mockResolveLilypondBinary.mockReset().mockResolvedValue("lilypond");
 });
 
 afterEach(async () => {
@@ -273,6 +284,30 @@ describe("lilypondLoader", () => {
 		const loader = lilypondLoader({ base: "./src/scores" });
 		const { context } = createFakeContext({ root, publicDir });
 		await expect(loader.load(context)).resolves.toBeUndefined();
+	});
+
+	it("resolves its own binary and threads it through to render()", async () => {
+		mockResolveLilypondBinary.mockResolvedValue(
+			"/cache/lilypond-2.26.0/bin/lilypond",
+		);
+		await writeFile(join(scoresDir, "sonata.ly"), "\\score { { c4 } }");
+
+		const loader = lilypondLoader({
+			base: "./src/scores",
+			autoInstall: { version: "2.26.0" },
+		});
+		const { context } = createFakeContext({ root, publicDir });
+		await loader.load(context);
+
+		expect(mockResolveLilypondBinary).toHaveBeenCalledWith(
+			expect.objectContaining({ version: "2.26.0", autoInstall: true }),
+		);
+		expect(mockRender).toHaveBeenCalledWith(
+			expect.anything(),
+			expect.objectContaining({
+				binaryPath: "/cache/lilypond-2.26.0/bin/lilypond",
+			}),
+		);
 	});
 });
 

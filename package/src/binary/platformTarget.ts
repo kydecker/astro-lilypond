@@ -12,12 +12,6 @@ export interface PlatformTarget {
 	binaryName: "lilypond" | "lilypond.exe";
 }
 
-/**
- * Maps a Node `process.platform`/`process.arch` pair to the matching
- * LilyPond release archive, or `undefined` if LilyPond doesn't publish a
- * prebuilt for that combination (e.g. Linux arm64) — callers should fall
- * back to asking the user to install LilyPond manually in that case.
- */
 export function resolvePlatformTarget(
 	platform: NodeJS.Platform = process.platform,
 	arch: string = process.arch,

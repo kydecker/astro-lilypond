@@ -17,12 +17,6 @@ import { resolvePlatformTarget } from "./platformTarget.js";
 
 const execFileAsync = promisify(execFile);
 
-/**
- * GitLab's generic package registry, which LilyPond publishes release
- * archives to. Predictable and stable across versions — no release-API
- * lookup needed — and responses carry an `x-checksum-sha256` header we use
- * to verify the download.
- */
 function downloadUrlFor(
 	version: LilypondVersion,
 	platform: string,
@@ -40,6 +34,38 @@ async function pathExists(path: string): Promise<boolean> {
 	} catch {
 		return false;
 	}
+}
+
+/**
+ * `.zip` archives (Windows/mingw) use PowerShell's `Expand-Archive` rather
+ * than `tar`, since `tar -xf`'s zip support depends on a libarchive/bsdtar
+ * build resolving first on `PATH`, which isn't guaranteed on Windows.
+ */
+async function extractArchive(
+	archivePath: string,
+	extractDir: string,
+	archiveExt: string,
+): Promise<void> {
+	if (archiveExt === "zip") {
+		await execFileAsync(
+			"powershell.exe",
+			[
+				"-NoProfile",
+				"-NonInteractive",
+				"-Command",
+				"Expand-Archive -LiteralPath $env:ASTRO_LILYPOND_ARCHIVE -DestinationPath $env:ASTRO_LILYPOND_EXTRACT_DIR -Force",
+			],
+			{
+				env: {
+					...process.env,
+					ASTRO_LILYPOND_ARCHIVE: archivePath,
+					ASTRO_LILYPOND_EXTRACT_DIR: extractDir,
+				},
+			},
+		);
+		return;
+	}
+	await execFileAsync("tar", ["-xf", archivePath, "-C", extractDir]);
 }
 
 export interface DownloadLilypondOptions {
@@ -115,17 +141,38 @@ export async function downloadLilypond({
 
 		const extractDir = join(workDir, "extract");
 		await mkdir(extractDir, { recursive: true });
-		await execFileAsync("tar", ["-xf", archivePath, "-C", extractDir]);
+		await extractArchive(archivePath, extractDir, archiveExt);
 
 		// The archive contains a single top-level `lilypond-<version>/` dir.
 		const [extractedRoot] = await readdir(extractDir);
 		if (!extractedRoot) {
 			throw new Error(`downloaded archive for LilyPond ${version} was empty`);
 		}
+		const extractedPath = join(extractDir, extractedRoot);
 
-		await rm(installDir, { recursive: true, force: true });
-		await rename(join(extractDir, extractedRoot), installDir);
-		await writeFile(markerPath, "");
+		// Writing the marker inside the extracted tree makes the rename below
+		// move the binary and its "installed" marker into place atomically
+		// together, so a process killed mid-install can't leave a good install
+		// looking uninstalled.
+		await writeFile(join(extractedPath, ".complete"), "");
+
+		const reuseConcurrentInstall = async (): Promise<boolean> => {
+			if (!(await pathExists(markerPath))) return false;
+			log(
+				`astro-lilypond: LilyPond ${version} was installed concurrently by another process; reusing it`,
+			);
+			return true;
+		};
+
+		if (await reuseConcurrentInstall()) return binaryPath;
+
+		try {
+			await rm(installDir, { recursive: true, force: true });
+			await rename(extractedPath, installDir);
+		} catch (err) {
+			if (await reuseConcurrentInstall()) return binaryPath;
+			throw err;
+		}
 
 		log(`astro-lilypond: installed LilyPond ${version} to ${installDir}`);
 		return binaryPath;
