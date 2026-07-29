@@ -111,6 +111,7 @@ function lyFilePlugin(options: PluginOptions): Plugin {
 				resolution,
 				crop,
 				sizeScale: crop ? cropScale : 1,
+				binaryPath: options.binaryPath,
 				render: () =>
 					render(src, {
 						format,

@@ -1,9 +1,6 @@
 /**
- * Exercises `render()` against a real `lilypond` binary, resolved the same
- * way `astro build` would (PATH first, `autoInstall` otherwise). Catches
- * drift between our assumptions about LilyPond's CLI (output file naming,
- * page numbering, format flags) and its actual behavior, which
- * `render.test.ts`'s mocked suite cannot.
+ * Exercises `render()`, `lilypond()`, and `lilypondLoader()` against a real
+ * `lilypond` binary.
  *
  * Run explicitly with `npm run test:integration` — excluded from the
  * default `npm test` run due to slower speeds.
@@ -12,15 +9,43 @@ import { execFile, execFileSync } from "node:child_process";
 import { mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { promisify } from "node:util";
-import { beforeAll, describe, expect, it } from "vitest";
+import type { DataStore, LoaderContext } from "astro/loaders";
+import {
+	afterEach,
+	beforeAll,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi,
+} from "vitest";
+
+vi.mock("astro-emit-asset/emit", () => ({
+	emitAsset: async (
+		_path: string,
+		_cacheKey: unknown,
+		generateAsset: () => Promise<unknown>,
+	) => {
+		const generated = await generateAsset();
+		const pages = Array.isArray(generated) ? generated : [generated];
+		return pages.map((page, i) => ({
+			src: `/_astro/fake-${i}.svg`,
+			meta: (page as { meta: unknown }).meta,
+		}));
+	},
+}));
+
 import { resolveLilypondBinary } from "../src/binary/index.js";
+import lilypond, { type LilypondOptions } from "../src/index.js";
+import { lilypondLoader } from "../src/loader.js";
 import { render } from "../src/render.js";
 
 const execFileAsync = promisify(execFile);
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const SCORES_DIR = join(__dirname, "scores");
+const COLLECTION_SCORES_DIR = join(SCORES_DIR, "collection");
 
 function svgDimensions(svg: string): { width: number; height: number } {
 	const match = svg.match(/viewBox="[-\d.]+\s+[-\d.]+\s+([\d.]+)\s+([\d.]+)"/);
@@ -33,10 +58,6 @@ function pngDimensions(buf: Buffer): { width: number; height: number } {
 	return { width: buf.readUInt32BE(16), height: buf.readUInt32BE(20) };
 }
 
-// Each test shells out to the real `lilypond` binary and just awaits the
-// child process, so the Node event loop is free the whole time — running
-// them concurrently lets CI overlap multiple lilypond processes instead of
-// paying their compile time one at a time.
 describe.concurrent("render() against the real lilypond binary", () => {
 	let multiPagePng: string;
 	let multiPageSvg: string;
@@ -50,10 +71,6 @@ describe.concurrent("render() against the real lilypond binary", () => {
 		]);
 	});
 
-	// Pins down LilyPond's actual output-file naming per format, run
-	// directly against the binary (bypassing render()'s own assumptions
-	// about that naming). If these fail, LilyPond's conventions changed
-	// and render()'s readOutputFile() fallback logic needs updating.
 	describe("LilyPond output-file naming (pinned via direct invocation)", () => {
 		it("names uncropped multi-page SVG output <base>-N.svg", async () => {
 			const dir = await mkdtemp(join(tmpdir(), "lilypond-naming-"));
@@ -190,8 +207,6 @@ describe.concurrent("render() against the real lilypond binary", () => {
 
 	describe("binaryPath", () => {
 		it("renders successfully with an explicit absolute binary path", async () => {
-			// binaryPath may just be "lilypond" (found on PATH) — force an
-			// absolute path so this test covers that case specifically.
 			const absolutePath =
 				binaryPath === "lilypond"
 					? execFileSync("which", ["lilypond"]).toString().trim()
@@ -200,6 +215,172 @@ describe.concurrent("render() against the real lilypond binary", () => {
 				binaryPath: absolutePath,
 			});
 			expect(result[0].toString("utf-8")).toContain("<svg");
+		});
+	});
+});
+
+interface VitePluginLike {
+	transform: (src: string, id: string) => Promise<{ code: string } | undefined>;
+}
+
+function contentOf(code: string | undefined): {
+	pages: { src: string; width?: number; height?: number }[];
+} {
+	return JSON.parse(code?.replace(/^export default /, "") ?? "null");
+}
+
+async function getLyPlugin(
+	publicDirUrl: URL,
+	options: LilypondOptions = {},
+): Promise<VitePluginLike> {
+	const updateConfig = vi.fn();
+	const integration = lilypond(options);
+	await integration.hooks["astro:config:setup"]?.({
+		command: "build",
+		config: {
+			publicDir: publicDirUrl,
+			base: "/",
+			markdown: { processor: { name: "satteri", options: {} } },
+		},
+		updateConfig,
+		logger: { info: vi.fn(), warn: vi.fn() },
+	} as never);
+	const { plugins } = (
+		updateConfig.mock.calls[0][0] as { vite: { plugins: VitePluginLike[] } }
+	).vite;
+	return plugins[0];
+}
+
+describe(".ly import ?crop/?nocrop query params against the real lilypond binary", () => {
+	let projectDir: string;
+	let publicDir: string;
+	let source: string;
+
+	beforeEach(async () => {
+		projectDir = await mkdtemp(join(tmpdir(), "astro-lilypond-ly-import-"));
+		publicDir = join(projectDir, "public");
+		source = await readFile(join(SCORES_DIR, "multi-page-svg.ly"), "utf8");
+	});
+
+	afterEach(async () => {
+		await rm(projectDir, { recursive: true, force: true });
+	});
+
+	it("renders uncropped (every page) by default (defaults.crop defaults to markdown-only)", async () => {
+		const plugin = await getLyPlugin(new URL(`file://${publicDir}/`));
+		const result = await plugin.transform(source, join(projectDir, "score.ly"));
+
+		expect(contentOf(result?.code).pages).toHaveLength(2);
+	});
+
+	it("renders a single cropped image when the import has a ?crop query param", async () => {
+		const plugin = await getLyPlugin(new URL(`file://${publicDir}/`));
+		const result = await plugin.transform(
+			source,
+			`${join(projectDir, "score.ly")}?crop`,
+		);
+
+		expect(contentOf(result?.code).pages).toHaveLength(1);
+	});
+
+	it("follows a configured defaults.crop of true, rendering a single cropped image", async () => {
+		const plugin = await getLyPlugin(new URL(`file://${publicDir}/`), {
+			defaults: { crop: true },
+		});
+		const result = await plugin.transform(source, join(projectDir, "score.ly"));
+
+		expect(contentOf(result?.code).pages).toHaveLength(1);
+	});
+
+	it("overrides a configured defaults.crop of true with a ?nocrop query param", async () => {
+		const plugin = await getLyPlugin(new URL(`file://${publicDir}/`), {
+			defaults: { crop: true },
+		});
+		const result = await plugin.transform(
+			source,
+			`${join(projectDir, "score.ly")}?nocrop`,
+		);
+
+		expect(contentOf(result?.code).pages).toHaveLength(2);
+	});
+});
+
+function createFakeLoaderContext(
+	root: string,
+	publicDir: string,
+): LoaderContext {
+	const data = new Map<string, Parameters<DataStore["set"]>[0]>();
+	return {
+		collection: "scores",
+		store: {
+			get: (key: string) => data.get(key),
+			set: (entry: Parameters<DataStore["set"]>[0]) => {
+				data.set(entry.id, entry);
+				return true;
+			},
+			keys: () => [...data.keys()],
+			delete: (key: string) => data.delete(key),
+			has: (key: string) => data.has(key),
+			values: () => [...data.values()],
+			entries: () => [...data.entries()],
+			clear: () => data.clear(),
+			addModuleImport: () => {},
+		},
+		meta: {
+			get: () => undefined,
+			set: () => {},
+			has: () => false,
+			delete: () => {},
+		},
+		logger: { info() {}, warn() {}, error() {}, debug() {} } as never,
+		config: {
+			root: pathToFileURL(`${root}/`),
+			publicDir: pathToFileURL(`${publicDir}/`),
+			base: "/",
+		} as never,
+		parseData: async ({ data: entryData }: { data: Record<string, unknown> }) =>
+			entryData,
+		renderMarkdown: (async () => ({ html: "" })) as never,
+		generateDigest: (input: Record<string, unknown> | string) =>
+			typeof input === "string" ? input : JSON.stringify(input),
+	} as unknown as LoaderContext;
+}
+
+describe("lilypondLoader() against the real lilypond binary", () => {
+	let root: string;
+	let publicDir: string;
+
+	beforeEach(async () => {
+		root = await mkdtemp(join(tmpdir(), "astro-lilypond-loader-int-"));
+		publicDir = join(root, "public");
+	});
+
+	afterEach(async () => {
+		await rm(root, { recursive: true, force: true });
+	});
+
+	it("parses header metadata and real page dimensions for every fixture", async () => {
+		const loader = lilypondLoader({
+			base: pathToFileURL(`${COLLECTION_SCORES_DIR}/`),
+		});
+		const context = createFakeLoaderContext(root, publicDir);
+		await loader.load(context);
+
+		const sonata = context.store.get("sonata");
+		expect(sonata).toBeDefined();
+		const sonataData = sonata?.data as { pages: { width?: number }[] };
+		expect(sonataData).toMatchObject({
+			pages: [{ src: expect.stringMatching(/^\/_astro\//) }],
+			alt: "Sonata, by Beethoven",
+			title: "Sonata",
+			composer: "Beethoven",
+			extra: { mutopiacomposer: "BeethovenLV" },
+		});
+		expect(sonataData.pages[0].width).toBeGreaterThan(0);
+
+		const prelude = context.store.get("prelude");
+		expect(prelude?.data).toMatchObject({
+			piece: "Prelude",
 		});
 	});
 });

@@ -43,6 +43,7 @@ export const remarkPlugin: Plugin<[PluginOptions], Root> = (options) => {
 				resolution,
 				crop,
 				sizeScale: crop ? cropScale : 1,
+				binaryPath: options.binaryPath,
 				render: () =>
 					render(source, {
 						format,

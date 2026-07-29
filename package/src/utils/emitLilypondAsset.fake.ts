@@ -17,10 +17,6 @@ export function fakeEmitLilypondAsset(
 	});
 }
 
-/**
- * Fake that just awaits `opts.render()` and discards the result — for tests
- * asserting that a `render()` rejection propagates out of the caller.
- */
 export function fakeEmitLilypondAssetPropagatingRenderErrors(
 	mock: EmitLilypondAssetMock,
 ): void {

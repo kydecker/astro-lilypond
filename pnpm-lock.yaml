@@ -247,8 +247,8 @@ importers:
   package:
     dependencies:
       astro-emit-asset:
-        specifier: ^0.1.0
-        version: 0.1.0(astro@7.0.8(@astrojs/markdown-remark@7.2.1(supports-color@10.2.2))(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.2)(@types/node@26.1.1))
+        specifier: ^0.1.4
+        version: 0.1.4(astro@7.0.8(@astrojs/markdown-remark@7.2.1(supports-color@10.2.2))(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.2)(@types/node@26.1.1))
       unist-util-visit:
         specifier: ^5.1.0
         version: 5.1.0
@@ -1679,8 +1679,8 @@ packages:
     resolution: {integrity: sha512-LElXdjswlqjWrPpJFg1Fx4wpkOCxj1TDHlSV4PlaRxHGWko024xICaa97ZkMfs6DRKlCguiAI+rbXv5GWwXIkg==}
     hasBin: true
 
-  astro-emit-asset@0.1.0:
-    resolution: {integrity: sha512-8NgMgpzX+qaFzQz4YEFmrtIXvwalkLhfNHIP/N6oTi8gNG1Cl8FUebOobXfF7DnVNL1l3cIzJX/enFZSRJjXKA==}
+  astro-emit-asset@0.1.4:
+    resolution: {integrity: sha512-/j7/NgvcIUR49ldhbM+PkGB1x5ccRVJIwnpGO6o79XjGeJsOyFXBaGq2B2DZlMKE7BT5Y23jTxagrP2Qh+5q2w==}
     peerDependencies:
       astro: ^7.0.0
 
@@ -4516,7 +4516,7 @@ snapshots:
 
   astring@1.9.0: {}
 
-  astro-emit-asset@0.1.0(astro@7.0.8(@astrojs/markdown-remark@7.2.1(supports-color@10.2.2))(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.2)(@types/node@26.1.1)):
+  astro-emit-asset@0.1.4(astro@7.0.8(@astrojs/markdown-remark@7.2.1(supports-color@10.2.2))(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.2)(@types/node@26.1.1)):
     dependencies:
       astro: 7.0.8(@astrojs/markdown-remark@7.2.1(supports-color@10.2.2))(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.2)(@types/node@26.1.1)
       mrmime: 2.0.1

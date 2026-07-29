@@ -185,6 +185,7 @@ export function lilypondLoader(options: LilypondLoaderOptions): Loader {
 					resolution: resolved.resolution,
 					crop,
 					sizeScale: crop ? resolved.cropScale : 1,
+					binaryPath,
 					render: () =>
 						render(src, {
 							format: resolvedFormat,

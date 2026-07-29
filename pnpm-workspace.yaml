@@ -11,3 +11,4 @@ allowBuilds:
 
 minimumReleaseAgeExclude:
   - starlight-theme-flexoki
+  - astro-emit-asset@0.1.4
