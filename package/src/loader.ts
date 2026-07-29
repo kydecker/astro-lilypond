@@ -151,9 +151,6 @@ export function lilypondLoader(options: LilypondLoaderOptions): Loader {
 			const rootDir = fileURLToPath(config.root);
 			const baseUrl = resolveBaseUrl(base, config.root);
 			const baseDir = fileURLToPath(baseUrl);
-
-			// A standalone entrypoint — resolves its own binary rather than
-			// relying on the `lilypond()` integration having already done so.
 			const binaryPath = await resolveLilypondBinary({
 				...resolveAutoInstallOption(autoInstall),
 				log: (message) => logger.info(message),

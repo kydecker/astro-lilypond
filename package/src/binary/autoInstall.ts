@@ -9,12 +9,6 @@ export interface AutoInstallOptions {
 	version?: LilypondVersion;
 }
 
-/**
- * Normalizes the public `autoInstall` option (`boolean | AutoInstallOptions`)
- * into the plain `{ version, autoInstall }` shape `resolveLilypondBinary`
- * takes. Shared by `lilypond()` and `lilypondLoader()` so both resolve a
- * binary the same way.
- */
 export function resolveAutoInstallOption(
 	autoInstall: boolean | AutoInstallOptions | undefined,
 ): { version?: LilypondVersion; autoInstall: boolean } {
