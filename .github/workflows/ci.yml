@@ -31,8 +31,6 @@ jobs:
       - name: Test
         run: pnpm --filter astro-lilypond test --run
 
-      # test:integration resolves LilyPond itself via autoInstall — this just
-      # caches the download so repeat runs don't re-fetch it.
       - name: Cache LilyPond
         uses: actions/cache@v6
         with:
