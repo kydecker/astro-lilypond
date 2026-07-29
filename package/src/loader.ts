@@ -3,6 +3,11 @@ import { join, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { Loader, LoaderContext } from "astro/loaders";
 import { z } from "astro/zod";
+import {
+	type AutoInstallOptions,
+	resolveAutoInstallOption,
+	resolveLilypondBinary,
+} from "./binary/index.js";
 import { type LilypondContent, LY_EXTENSIONS } from "./index.js";
 import type { PluginOptions } from "./plugins/index.js";
 import { defaultOptions, render, resolveCrop } from "./render.js";
@@ -48,6 +53,15 @@ export interface LilypondLoaderOptions extends PluginOptions {
 	 * @default the file's path relative to `base`, POSIX-separated, with its extension stripped.
 	 */
 	generateId?: (options: GenerateIdOptions) => string;
+
+	/**
+	 * When no `lilypond` binary is found on `PATH`, download a matching
+	 * prebuilt release into a local cache and use that instead. Set to
+	 * `false` to only ever use a `PATH` install, or pass an object to pick
+	 * which version gets downloaded.
+	 * @default true
+	 */
+	autoInstall?: boolean | AutoInstallOptions;
 }
 
 export interface LilypondHeaderData extends KnownLyHeaderFields {
@@ -120,6 +134,7 @@ export function lilypondLoader(options: LilypondLoaderOptions): Loader {
 		format,
 		defaults,
 		timeout,
+		autoInstall,
 	} = options;
 
 	const resolved = resolveDefaults(defaults);
@@ -136,6 +151,11 @@ export function lilypondLoader(options: LilypondLoaderOptions): Loader {
 			const rootDir = fileURLToPath(config.root);
 			const baseUrl = resolveBaseUrl(base, config.root);
 			const baseDir = fileURLToPath(baseUrl);
+			const binaryPath = await resolveLilypondBinary({
+				...resolveAutoInstallOption(autoInstall),
+				log: (message) => logger.info(message),
+				warn: (message) => logger.warn(message),
+			});
 
 			async function syncEntry(entry: string): Promise<string | undefined> {
 				const filePath = join(baseDir, entry);
@@ -171,6 +191,7 @@ export function lilypondLoader(options: LilypondLoaderOptions): Loader {
 							crop,
 							defaults,
 							timeout,
+							binaryPath,
 							includePaths,
 							sourceName,
 						}),

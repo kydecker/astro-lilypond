@@ -21,6 +21,15 @@ vi.mock("./utils/emitLilypondAsset.js", () => ({
 	emitLilypondAsset: vi.fn(),
 }));
 
+vi.mock("./binary/index.js", async (importOriginal) => {
+	const actual = await importOriginal<typeof import("./binary/index.js")>();
+	return {
+		...actual,
+		resolveLilypondBinary: vi.fn().mockResolvedValue("lilypond"),
+	};
+});
+
+import { resolveLilypondBinary } from "./binary/index.js";
 import lilypond from "./index.js";
 import { render } from "./render.js";
 import { fakeEmitLilypondAsset } from "./utils/emitLilypondAsset.fake.js";
@@ -28,6 +37,7 @@ import { emitLilypondAsset } from "./utils/emitLilypondAsset.js";
 
 const mockRender = vi.mocked(render);
 const mockEmitLilypondAsset = vi.mocked(emitLilypondAsset);
+const mockResolveLilypondBinary = vi.mocked(resolveLilypondBinary);
 
 const FAKE_PUBLIC_DIR = new URL("file:///project/public/");
 
@@ -56,6 +66,7 @@ function baseConfig(
 
 beforeEach(() => {
 	fakeEmitLilypondAsset(mockEmitLilypondAsset);
+	mockResolveLilypondBinary.mockReset().mockResolvedValue("lilypond");
 });
 
 describe("lilypond integration", () => {
@@ -71,6 +82,106 @@ describe("lilypond integration", () => {
 	it("has an astro:config:setup hook", () => {
 		const integration = lilypond();
 		expect(typeof integration.hooks?.["astro:config:setup"]).toBe("function");
+	});
+
+	it("resolves the lilypond binary with the configured autoInstall.version, defaulting autoInstall to true", async () => {
+		vi.doMock("@astrojs/markdown-satteri", () => ({
+			satteri: vi.fn((o: unknown) => ({ name: "satteri", options: o })),
+			isSatteriProcessor: vi.fn(() => true),
+		}));
+
+		const integration = lilypond({ autoInstall: { version: "2.24.4" } });
+		await integration.hooks["astro:config:setup"]?.({
+			command: "build",
+			config: baseConfig({
+				markdown: { processor: { name: "satteri", options: {} } },
+			}),
+			updateConfig: vi.fn(),
+			logger: { info: vi.fn(), warn: vi.fn() },
+		} as never);
+		vi.doUnmock("@astrojs/markdown-satteri");
+
+		expect(mockResolveLilypondBinary).toHaveBeenCalledWith(
+			expect.objectContaining({ version: "2.24.4", autoInstall: true }),
+		);
+	});
+
+	it("does not derive the download version from defaults.version", async () => {
+		vi.doMock("@astrojs/markdown-satteri", () => ({
+			satteri: vi.fn((o: unknown) => ({ name: "satteri", options: o })),
+			isSatteriProcessor: vi.fn(() => true),
+		}));
+
+		const integration = lilypond({ defaults: { version: "2.24.4" } });
+		await integration.hooks["astro:config:setup"]?.({
+			command: "build",
+			config: baseConfig({
+				markdown: { processor: { name: "satteri", options: {} } },
+			}),
+			updateConfig: vi.fn(),
+			logger: { info: vi.fn(), warn: vi.fn() },
+		} as never);
+		vi.doUnmock("@astrojs/markdown-satteri");
+
+		expect(mockResolveLilypondBinary).toHaveBeenCalledWith(
+			expect.objectContaining({ version: undefined }),
+		);
+	});
+
+	it("respects autoInstall: false", async () => {
+		vi.doMock("@astrojs/markdown-satteri", () => ({
+			satteri: vi.fn((o: unknown) => ({ name: "satteri", options: o })),
+			isSatteriProcessor: vi.fn(() => true),
+		}));
+
+		const integration = lilypond({ autoInstall: false });
+		await integration.hooks["astro:config:setup"]?.({
+			command: "build",
+			config: baseConfig({
+				markdown: { processor: { name: "satteri", options: {} } },
+			}),
+			updateConfig: vi.fn(),
+			logger: { info: vi.fn(), warn: vi.fn() },
+		} as never);
+		vi.doUnmock("@astrojs/markdown-satteri");
+
+		expect(mockResolveLilypondBinary).toHaveBeenCalledWith(
+			expect.objectContaining({ autoInstall: false }),
+		);
+	});
+
+	it("threads the resolved binary path through to render()", async () => {
+		mockResolveLilypondBinary.mockResolvedValue(
+			"/cache/lilypond-2.26.0/bin/lilypond",
+		);
+		vi.doMock("@astrojs/markdown-satteri", () => ({
+			satteri: vi.fn((o: unknown) => ({ name: "satteri", options: o })),
+			isSatteriProcessor: vi.fn(() => true),
+		}));
+
+		const updateConfig = vi.fn();
+		const integration = lilypond();
+		await integration.hooks["astro:config:setup"]?.({
+			command: "build",
+			config: baseConfig({
+				markdown: { processor: { name: "satteri", options: {} } },
+			}),
+			updateConfig,
+			logger: { info: vi.fn(), warn: vi.fn() },
+		} as never);
+		vi.doUnmock("@astrojs/markdown-satteri");
+
+		const { plugins } = (
+			updateConfig.mock.calls[0][0] as { vite: { plugins: unknown[] } }
+		).vite;
+		const plugin = plugins[0] as {
+			transform: (src: string, id: string) => Promise<unknown>;
+		};
+		await plugin.transform("", "score.ly").catch(() => {});
+
+		expect(mockRender.mock.calls.at(-1)?.[1]).toMatchObject({
+			binaryPath: "/cache/lilypond-2.26.0/bin/lilypond",
+		});
 	});
 
 	it("registers the astro-emit-asset integration and the .ly vite plugin", async () => {

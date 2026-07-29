@@ -1,8 +1,11 @@
-import { execFile } from "node:child_process";
-import { promisify } from "node:util";
 import type { AstroIntegration } from "astro";
 import emitAssetIntegration from "astro-emit-asset";
 import type { Plugin } from "vite";
+import {
+	type AutoInstallOptions,
+	resolveAutoInstallOption,
+	resolveLilypondBinary,
+} from "./binary/index.js";
 import {
 	type PluginOptions,
 	rehypePlugin,
@@ -29,11 +32,13 @@ import {
 	titleFor,
 } from "./utils/index.js";
 
-const execFileAsync = promisify(execFile);
-
 export const LY_EXTENSIONS = [".ly", ".lilypond", ".ily"] as const;
 
-export type { LilypondDefaults, PluginOptions as LilypondPluginOptions };
+export type {
+	AutoInstallOptions,
+	LilypondDefaults,
+	PluginOptions as LilypondPluginOptions,
+};
 
 export interface LilypondPage {
 	src: string;
@@ -65,6 +70,15 @@ export interface LilypondOptions extends PluginOptions {
 	 * @default 60000
 	 */
 	timeout?: number;
+
+	/**
+	 * When no `lilypond` binary is found on `PATH`, download a matching
+	 * prebuilt release into a local cache and use that instead. Set to
+	 * `false` to only ever use a `PATH` install, or pass an object to pick
+	 * which version gets downloaded.
+	 * @default true
+	 */
+	autoInstall?: boolean | AutoInstallOptions;
 }
 
 function lyFilePlugin(options: PluginOptions): Plugin {
@@ -103,6 +117,7 @@ function lyFilePlugin(options: PluginOptions): Plugin {
 						crop,
 						defaults: options.defaults,
 						timeout: options.timeout,
+						binaryPath: options.binaryPath,
 						includePaths,
 						sourceName,
 					}),
@@ -125,15 +140,11 @@ export default function lilypond(
 		name: "astro-lilypond",
 		hooks: {
 			"astro:config:setup": async ({ config, updateConfig, logger }) => {
-				await execFileAsync("lilypond", ["--version"]).catch(
-					(err: NodeJS.ErrnoException) => {
-						if (err.code === "ENOENT") {
-							logger?.warn(
-								"astro-lilypond: `lilypond` binary not found — LilyPond blocks will render as errors. Install LilyPond and ensure it is on PATH.",
-							);
-						}
-					},
-				);
+				options.binaryPath = await resolveLilypondBinary({
+					...resolveAutoInstallOption(options.autoInstall),
+					log: (message) => logger?.info(message),
+					warn: (message) => logger?.warn(message),
+				});
 
 				updateConfig({
 					integrations: [emitAssetIntegration()],

@@ -4,4 +4,5 @@ export interface PluginOptions {
 	format?: "svg" | "png";
 	defaults?: LilypondDefaults;
 	timeout?: number;
+	binaryPath?: string;
 }

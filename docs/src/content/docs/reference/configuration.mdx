@@ -22,29 +22,42 @@ export default defineConfig({
 });
 ```
 
-## Top-level options
+## Options
 
-### `format`
+### `autoInstall`
 
-**Type:** `"svg" | "png"`  
-**Default:** `"svg"`
+**Type:** `boolean | { version?: string }`  
+**Default:** `true`
 
-The output format passed to the LilyPond binary. Controls how the rendered output is embedded in the page.
+When no `lilypond` binary is found on `PATH`, download a prebuilt release and use that instead. A `lilypond` already on `PATH` always takes priority over a downloaded one.
 
-```js {5}
+```js
 // astro.config.mjs
 lilypond({
-  format: "png"
+  autoInstall: false // only ever use a PATH install
 })
 ```
 
-## `defaults`
+To install a specific version, pass an object to pin the version downloaded:
+
+```js
+// astro.config.mjs
+lilypond({
+  autoInstall: {
+    version: "2.27.1"
+  }
+})
+```
+
+Downloads are cached per OS (e.g. `~/.cache/astro-lilypond` on Linux) — override with the `ASTRO_LILYPOND_CACHE_DIR` environment variable. Prebuilt releases are available for Linux (x86_64), macOS (x86_64/arm64), and Windows (x86_64); on other platforms, install LilyPond manually.
+
+### `defaults`
 
 **Type:** `object`
 
 Default settings applied when rendering each score. An individual `.ly` file can override `defaults` with its own settings.
 
-### `defaults.crop`
+#### `defaults.crop`
 
 **Type:** `boolean | "markdown-only"`  
 **Default:** `"markdown-only"`
@@ -57,7 +70,7 @@ When cropped, margins are removed and the page is cropped to fit the rendered st
 
 A `<LilyPond>` `.ly` import can always override this per-instance with `?crop` or `?nocrop` — see the [component guide](/guides/component/#disabling-full-page-output).
 
-### `defaults.cropScale`
+#### `defaults.cropScale`
 
 **Type:** `number`  
 **Default:** `1.5`
@@ -73,14 +86,14 @@ lilypond({
 })
 ```
 
-### `defaults.resolution`
+#### `defaults.resolution`
 
 **Type:** `number`  
 **Default:** `144`
 
 Resolution to render `.png` files, in DPI. Only applies when `format` is set to `png`.
 
-### `defaults.version`
+#### `defaults.version`
 
 **Type:** `string` of the shape `"2.<number>.<number>"`  
 **Default:** `"2.26.0"`
@@ -105,3 +118,17 @@ lilypond({
 Blocks with an explicit `\version` declaration always use that version, regardless of the global config.
 
 Information about the latest releases can be found on the [LilyPond news](https://lilypond.org/news.html) page.
+
+### `format`
+
+**Type:** `"svg" | "png"`  
+**Default:** `"svg"`
+
+The output format passed to the LilyPond binary. Controls how the rendered output is embedded in the page.
+
+```js {5}
+// astro.config.mjs
+lilypond({
+  format: "png"
+})
+```
