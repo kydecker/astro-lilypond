@@ -49,6 +49,7 @@ export const remarkPlugin: Plugin<[PluginOptions], Root> = (options) => {
 						crop,
 						defaults: options.defaults,
 						timeout: options.timeout,
+						binaryPath: options.binaryPath,
 						includePaths,
 						sourceName,
 					}),

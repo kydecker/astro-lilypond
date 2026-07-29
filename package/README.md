@@ -13,17 +13,13 @@ Read the docs: https://lilypond.ky.fyi
 
 ## Quick Start
 
-### 1. Install LilyPond
-
-Install the LilyPond binary directly from [lilypond.org](https://lilypond.org/download.html) or with `brew install lilypond` (Mac) or `apt install lilypond` (Linux).
-
-### 2. Install `astro-lilypond`
+### 1. Install `astro-lilypond`
 
 ```sh
 pnpm add astro-lilypond
 ```
 
-### 3. Add the integration to your Astro config
+### 2. Add the integration to your Astro config
 
 ```js
 // astro.config.mjs
@@ -35,7 +31,7 @@ export default defineConfig({
 });
 ```
 
-### 4. Write your music
+### 3. Write your music
 
 Write LilyPond code within fenced code blocks with the `lilypond`, `ly`, or `ily` language tag.
 

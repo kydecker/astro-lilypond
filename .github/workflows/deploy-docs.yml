@@ -25,21 +25,15 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # The docs build runs the real astro-lilypond integration, which
+      # downloads and caches LilyPond itself (autoInstall, on by default) —
+      # no manual install step needed. Just cache its download directory so
+      # repeat deploys don't re-download.
       - name: Cache LilyPond
-        id: cache-lilypond
         uses: actions/cache@v6
         with:
-          path: ~/lilypond-2.26.0
-          key: lilypond-2.26.0-linux-x86_64
-
-      - name: Install LilyPond
-        if: steps.cache-lilypond.outputs.cache-hit != 'true'
-        run: |
-          curl -sL -o /tmp/lilypond.tar.gz "https://gitlab.com/lilypond/lilypond/-/releases/v2.26.0/downloads/lilypond-2.26.0-linux-x86_64.tar.gz"
-          tar xzf /tmp/lilypond.tar.gz -C "$HOME"
-
-      - name: Add LilyPond to PATH
-        run: echo "$HOME/lilypond-2.26.0/bin" >> "$GITHUB_PATH"
+          path: ~/.cache/astro-lilypond
+          key: astro-lilypond-2.26.0-linux-x86_64
 
       - name: Build library
         run: pnpm --filter astro-lilypond build

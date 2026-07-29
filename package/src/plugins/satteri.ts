@@ -51,6 +51,7 @@ export function satteriPlugin(options: PluginOptions): MdastPluginDefinition {
 						crop,
 						defaults: options.defaults,
 						timeout: options.timeout,
+						binaryPath: options.binaryPath,
 						includePaths,
 						sourceName,
 					}),

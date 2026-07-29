@@ -74,6 +74,7 @@ export default defineConfig({
 						"guides/component",
 						"guides/collections",
 						"guides/styling",
+						"guides/deployment",
 					],
 				},
 				{
@@ -99,6 +100,9 @@ export default defineConfig({
 			],
 			editLink: {
 				baseUrl: "https://github.com/kydecker/astro-lilypond/edit/main/docs/",
+			},
+			tableOfContents: {
+				maxHeadingLevel: 4,
 			},
 		}),
 	],

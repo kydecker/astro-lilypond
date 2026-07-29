@@ -20,7 +20,7 @@ Here's how to get the `astro-lilypond` integration set up so you can begin writi
 
 2. [Install LilyPond](https://lilypond.org/download.html).
 
-   The LilyPond binary is required in order to compile music notation. Make sure it is installed on the computer or container used to `build` your website (locally, in GitHub workflows, etc).
+   The `lilypond` binary is required in order to compile scores. Install it for local development.
 
    <InstallLilyPond />
 
@@ -44,10 +44,12 @@ Here's how to get the `astro-lilypond` integration set up so you can begin writi
 
    :::caution
 
-   The `astro-lilypond` extension is intended for use on static sites and has not been tested with server-side rendering. Use caution if you have [`output: 'server'`](https://docs.astro.build/en/reference/configuration-reference/#output) in your Astro config or [`prerender = false`](https://docs.astro.build/en/reference/routing-reference/#prerender) in your file.
+   The `astro-lilypond` extension is intended for use on static sites and does not work with server-side rendering. Use caution if you have [`output: 'server'`](https://docs.astro.build/en/reference/configuration-reference/#output) in your Astro config or [`prerender = false`](https://docs.astro.build/en/reference/routing-reference/#prerender) in your file.
 
    :::
 
-5. Start writing music! You can do a lot with LilyPond; view the [examples](/examples/). Write your LilyPond code directly in [Markdown](/guides/markdown/), or render `.ly` files with a [component](/guides/component/).
+5. Start writing music!
+
+   You can do a lot with LilyPond; view the [examples](/examples/). Write your LilyPond code directly in [Markdown](/guides/markdown/), or render `.ly` files with a [component](/guides/component/).
 
 </Steps>

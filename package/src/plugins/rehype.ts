@@ -81,6 +81,7 @@ export function rehypePlugin(
 						crop,
 						defaults: options.defaults,
 						timeout: options.timeout,
+						binaryPath: options.binaryPath,
 						includePaths,
 						sourceName,
 					}),

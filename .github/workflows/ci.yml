@@ -25,27 +25,25 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Cache LilyPond
-        id: cache-lilypond
-        uses: actions/cache@v6
-        with:
-          path: ~/lilypond-2.26.0
-          key: lilypond-2.26.0-linux-x86_64
-
-      - name: Install LilyPond
-        if: steps.cache-lilypond.outputs.cache-hit != 'true'
-        run: |
-          curl -sL -o /tmp/lilypond.tar.gz "https://gitlab.com/lilypond/lilypond/-/releases/v2.26.0/downloads/lilypond-2.26.0-linux-x86_64.tar.gz"
-          tar xzf /tmp/lilypond.tar.gz -C "$HOME"
-
-      - name: Add LilyPond to PATH
-        run: echo "$HOME/lilypond-2.26.0/bin" >> "$GITHUB_PATH"
-
       - name: Build
         run: pnpm --filter astro-lilypond build
 
       - name: Test
         run: pnpm --filter astro-lilypond test --run
+
+      # test:integration calls render() directly against `lilypond` on PATH,
+      # bypassing the integration's own auto-install — so it still needs a
+      # real binary here. Everything else in CI (e.g. the docs build)
+      # downloads LilyPond itself via astro-lilypond's autoInstall, on demand.
+      - name: Cache LilyPond
+        id: cache-lilypond
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/astro-lilypond
+          key: astro-lilypond-2.26.0-linux-x86_64
+
+      - name: Install LilyPond
+        run: node .github/scripts/install-lilypond.mjs
 
       - name: Integration test
         run: pnpm --filter astro-lilypond test:integration

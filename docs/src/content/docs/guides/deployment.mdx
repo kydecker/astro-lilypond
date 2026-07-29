@@ -1,0 +1,63 @@
+---
+title: Building and Deploying
+description: Get LilyPond available in CI and other build environments.
+---
+
+`astro build` needs a `lilypond` binary to compile your scores. The binary can be downloaded by default, or you can manually install it yourself.
+
+## Automatic installation
+
+When [`autoInstall`](/reference/configuration/#autoinstall) is enabled, no extra steps are needed. Running `astro build` will download the `lilypond` binary and use it to compile your scores.
+
+### Caching
+
+To avoid re-downloading `lilypond` on every CI run, cache the download directory between runs. The path depends on the runner's OS:
+
+| OS      | Default path                          |
+| ------- | -------------------------------------- |
+| Linux   | `~/.cache/astro-lilypond`              |
+| macOS   | `~/Library/Caches/astro-lilypond`      |
+| Windows | `%LOCALAPPDATA%\astro-lilypond\Cache`  |
+
+For example, on a Linux-based runner in GitHub Workflows:
+
+```yaml title=".github/workflows/deploy.yml"
+- uses: actions/cache@v6
+  with:
+    path: ~/.cache/astro-lilypond
+    key: astro-lilypond-2.26.0-linux-x86_64
+```
+
+Match the `2.26.0` in the key to whatever version you're actually downloading — the default, or whatever you've set via [`autoInstall.version`](/reference/configuration/#autoinstall).
+
+Alternatively, set `ASTRO_LILYPOND_CACHE_DIR` to use the same path on every runner regardless of OS — handy for a build matrix spanning Linux, macOS, and Windows.
+
+```yaml title=".github/workflows/deploy.yml"
+- uses: actions/cache@v6
+  with:
+    path: ~/astro-lilypond-cache
+    key: astro-lilypond-2.26.0
+
+- run: pnpm build
+  env:
+    ASTRO_LILYPOND_CACHE_DIR: ~/astro-lilypond-cache
+```
+
+## Manual installation
+
+To manage the binary yourself, install it as its own CI step:
+
+```yaml title=".github/workflows/deploy.yml"
+- run: sudo apt-get update && sudo apt-get install -y lilypond
+```
+
+To fail the build if `lilypond` is not found, you can also set `autoInstall: false`:
+
+```js
+// astro.config.mjs
+lilypond({
+  autoInstall: false
+})
+```
+
+A `lilypond` binary available on `PATH` will always be used, but `autoInstall: false` will prevent the integration from falling back to a different binary if the manual installation isn't found.
