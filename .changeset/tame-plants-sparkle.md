@@ -7,3 +7,5 @@
 If you had previously set `outputDir` in your integration config or collection loader, remove it.
 
 Likewise, if you had previously configured `.gitattributes` or `.gitignore` to ignore the `_lilypond` directory, that config can be safely removed.
+
+If you were committing files in `outputDir` (e.g. `public/_lilypond`) to your repo, you can delete that directory.
