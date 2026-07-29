@@ -66,6 +66,22 @@ import bachInvention from "./bach-invention.ly";
 
 `pageLimit={1}` renders only the first page. `pageLimit={2}` renders the first two pages, etc. Passing a `pageLimit` larger than the number of available pages has no effect.
 
+## Page count
+
+Display an imported score's page count with `content.pages.length`:
+
+```astro title="ScoreWithPageCount.astro" {5,9}
+---
+import LilyPond from "astro-lilypond/component";
+import bachInvention from "./bach-invention.ly";
+
+const pageCount = bachInvention.pages.length;
+---
+
+<LilyPond content={bachInvention} />
+<p>{pageCount} {pageCount === 1 ? "page" : "pages"}</p>
+```
+
 ## Alt text
 
 `<LilyPond>` imports derive alt text automatically from the imported `.ly` file's `\header` block, displaying `alt="{title} by {composer}"`.

@@ -90,3 +90,26 @@ const entry = await getEntry("scores", "my-score");
 ```
 
 See the [collections reference](/reference/collections/#lilypondcollectionentry-type) for all available properties.
+
+## Showing page counts
+
+Display an entry's page count using `data.pages.length`:
+
+```astro {12} title="MyScores.astro"
+---
+import { getCollection } from "astro:content";
+import LilyPond from "astro-lilypond/component";
+
+const scores = await getCollection("scores");
+---
+
+<ul>
+  {scores.map((score) => (
+    <li>
+      <h3>{score.data.title}</h3>
+      <p>{score.data.pages.length} pages</p>
+      <LilyPond content={score.data} />
+    </li>
+  ))}
+</ul>
+```
