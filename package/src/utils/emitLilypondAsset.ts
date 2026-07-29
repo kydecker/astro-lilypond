@@ -34,6 +34,13 @@ export interface EmitLilypondAssetOptions {
 	 * cache miss.
 	 */
 	render: () => Promise<Buffer[]>;
+
+	/**
+	 * The resolved `lilypond` binary path. Only used here to confirm setup
+	 * (and therefore `astro-emit-asset` registration) already ran — every
+	 * caller already has this in hand for its own `render()` call.
+	 */
+	binaryPath: string | undefined;
 }
 
 type PageMeta = {
@@ -43,29 +50,24 @@ type PageMeta = {
 
 type GeneratedPage = { data: Buffer; meta: PageMeta };
 
-const EMIT_ASSET_GLOBAL_KEY = "astro-emit-asset";
-
-function assertEmitAssetRegistered(): void {
-	if ((globalThis as Record<string, unknown>)[EMIT_ASSET_GLOBAL_KEY]) return;
-	throw new Error(
-		"astro-lilypond: please add the `lilypond()` integration to your Astro config.",
-	);
-}
-
 export async function emitLilypondAsset(
 	options: EmitLilypondAssetOptions,
 ): Promise<LilypondPage[]> {
-	assertEmitAssetRegistered();
+	if (!options.binaryPath) {
+		throw new Error(
+			"astro-lilypond: please add the `lilypond()` integration to your Astro config.",
+		);
+	}
 
 	const { title, format, source, resolution, crop, sizeScale, render } =
 		options;
 
-	const result = await emitAsset<PageMeta>(
+	const assets = await emitAsset<PageMeta>(
 		`${title}.[hash].${format}`,
 		[source, format, resolution, crop, sizeScale],
-		async (): Promise<GeneratedPage | GeneratedPage[]> => {
+		async (): Promise<GeneratedPage[]> => {
 			const buffers = await render();
-			const pages = buffers.map((data) => {
+			return buffers.map((data) => {
 				const dimensions = imageDimensionsFor(format, data);
 				return {
 					data,
@@ -75,16 +77,8 @@ export async function emitLilypondAsset(
 					},
 				};
 			});
-			// Returning a 1-element array (instead of the bare object) makes
-			// astro-emit-asset insert a page index into the filename even for a
-			// single-page score (`title.0.hash.ext`) — return the object
-			// directly for that (overwhelmingly common) case so the file is
-			// named `title.hash.ext` instead.
-			return pages.length === 1 ? pages[0] : pages;
 		},
 	);
-
-	const assets = Array.isArray(result) ? result : [result];
 
 	return assets.map((asset) => ({
 		src: asset.src,

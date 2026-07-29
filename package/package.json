@@ -53,7 +53,7 @@
 		"astro": ">=7.0.0"
 	},
 	"dependencies": {
-		"astro-emit-asset": "^0.1.0",
+		"astro-emit-asset": "^0.1.4",
 		"unist-util-visit": "^5.1.0"
 	},
 	"devDependencies": {

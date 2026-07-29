@@ -45,6 +45,7 @@ export function satteriPlugin(options: PluginOptions): MdastPluginDefinition {
 				resolution,
 				crop,
 				sizeScale: crop ? cropScale : 1,
+				binaryPath: options.binaryPath,
 				render: () =>
 					render(source, {
 						format,
