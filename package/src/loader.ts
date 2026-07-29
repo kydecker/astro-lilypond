@@ -151,10 +151,6 @@ export function lilypondLoader(options: LilypondLoaderOptions): Loader {
 
 				const headerFields = parseLyHeaderFields(source);
 				const id = generateId({ entry, base: baseUrl, header: headerFields });
-				// Not short-circuited on a matching digest: that only proves the
-				// source is unchanged, not that we already have this entry's pages
-				// for this sync pass. `emitLilypondAsset()` does the real cache
-				// check (and is cheap on a hit).
 				const digest = generateDigest(source);
 
 				const src = prependVersion(source, resolved.version);

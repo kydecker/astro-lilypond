@@ -15,9 +15,7 @@ import {
 } from "../utils/index.js";
 import type { PluginOptions } from "./types.js";
 
-export type RemarkPluginOptions = PluginOptions;
-
-export const remarkPlugin: Plugin<[RemarkPluginOptions], Root> = (options) => {
+export const remarkPlugin: Plugin<[PluginOptions], Root> = (options) => {
 	return async (tree, file) => {
 		const promises: Promise<void>[] = [];
 		const includePaths = includePathsFor(file?.path);

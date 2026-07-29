@@ -22,27 +22,25 @@ vi.mock("../utils/emitLilypondAsset.js", () => ({
 }));
 
 import { render } from "../render.js";
+import {
+	fakeEmitLilypondAsset,
+	fakeEmitLilypondAssetPropagatingRenderErrors,
+} from "../utils/emitLilypondAsset.fake.js";
 import { emitLilypondAsset } from "../utils/emitLilypondAsset.js";
-import { type RehypePluginOptions, rehypePlugin } from "./rehype.js";
+import type { PluginOptions } from "./index.js";
+import { rehypePlugin } from "./rehype.js";
 
 const mockRender = vi.mocked(render);
 const mockEmitLilypondAsset = vi.mocked(emitLilypondAsset);
 
 const FAKE_SVG = "<svg xmlns='http://www.w3.org/2000/svg'><g>fake</g></svg>";
 
-const BASE_OPTIONS: RehypePluginOptions = {};
+const BASE_OPTIONS: PluginOptions = {};
 
 beforeEach(() => {
 	vi.clearAllMocks();
 	mockRender.mockResolvedValue([Buffer.from(FAKE_SVG)]);
-	// Mimics one page per rendered buffer, using a stable fake `src` (no real
-	// hash) so assertions on the emitted HTML stay simple.
-	mockEmitLilypondAsset.mockImplementation(async (opts) => {
-		const buffers = await opts.render();
-		return buffers.map((_, i) => ({
-			src: `/_lilypond/${opts.title}${i === 0 ? "" : `-p${i + 1}`}.${opts.format}`,
-		}));
-	});
+	fakeEmitLilypondAsset(mockEmitLilypondAsset, "/_lilypond");
 });
 
 interface HastText {
@@ -109,7 +107,7 @@ function makeTree(children: HastChild[]): HastRoot {
 
 async function runPlugin(
 	tree: HastRoot,
-	options: RehypePluginOptions = BASE_OPTIONS,
+	options: PluginOptions = BASE_OPTIONS,
 	file?: { path?: string },
 ): Promise<HastRoot> {
 	const transformer = rehypePlugin(options);
@@ -186,10 +184,7 @@ describe("rehypePlugin", () => {
 	});
 
 	it("propagates the error when a block fails to render", async () => {
-		mockEmitLilypondAsset.mockImplementation(async (opts) => {
-			await opts.render();
-			return [];
-		});
+		fakeEmitLilypondAssetPropagatingRenderErrors(mockEmitLilypondAsset);
 		mockRender.mockRejectedValue(new Error("bad lilypond"));
 		const tree = makeTree([makeLilypondPre("invalid")]);
 

@@ -19,6 +19,7 @@ import {
 	altTextFor,
 	emitLilypondAsset,
 	includePathsFor,
+	type LilypondPage,
 	lyTypeDeclarationsFor,
 	parseLyHeader,
 	parseLyImportQuery,
@@ -33,13 +34,11 @@ const execFileAsync = promisify(execFile);
 
 export const LY_EXTENSIONS = [".ly", ".lilypond", ".ily"] as const;
 
-export type { LilypondDefaults, PluginOptions as LilypondPluginOptions };
-
-export interface LilypondPage {
-	src: string;
-	width?: number;
-	height?: number;
-}
+export type {
+	LilypondDefaults,
+	LilypondPage,
+	PluginOptions as LilypondPluginOptions,
+};
 
 export interface LilypondContent {
 	pages: LilypondPage[];

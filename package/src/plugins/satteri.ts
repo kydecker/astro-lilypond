@@ -14,11 +14,7 @@ import {
 } from "../utils/index.js";
 import type { PluginOptions } from "./types.js";
 
-export type SatteriPluginOptions = PluginOptions;
-
-export function satteriPlugin(
-	options: SatteriPluginOptions,
-): MdastPluginDefinition {
+export function satteriPlugin(options: PluginOptions): MdastPluginDefinition {
 	return {
 		name: "astro-lilypond",
 		// Returning an mdast Html node (type: 'html') emits the value verbatim.

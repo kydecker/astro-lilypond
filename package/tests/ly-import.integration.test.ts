@@ -11,9 +11,10 @@ import { execFileSync } from "node:child_process";
 import { mkdtemp, readdir, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import lilypond, { type LilypondOptions } from "../src/index.js";
+import { registerEmitAsset } from "./registerEmitAsset.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const SCORES_DIR = join(__dirname, "scores");
@@ -65,16 +66,28 @@ describe.skipIf(!lilypondAvailable())(
 		let projectDir: string;
 		let publicDir: string;
 		let source: string;
+		let finalizeBuild: (dir: URL) => Promise<void>;
 
 		beforeEach(async () => {
 			projectDir = await mkdtemp(join(tmpdir(), "astro-lilypond-ly-import-"));
 			publicDir = join(projectDir, "public");
 			source = await readFile(join(SCORES_DIR, "multi-page-svg.ly"), "utf8");
+			({ finalizeBuild } = await registerEmitAsset({
+				cacheDir: pathToFileURL(`${join(projectDir, ".astro")}/`),
+			}));
 		});
 
 		afterEach(async () => {
 			await rm(projectDir, { recursive: true, force: true });
 		});
+
+		/** Copies whatever was emitted since the last call into a fresh `dist/_astro` and lists its `.svg` files. */
+		async function emittedSvgFiles(): Promise<string[]> {
+			const distDir = join(projectDir, "dist");
+			await finalizeBuild(pathToFileURL(`${distDir}/`));
+			const files = await readdir(join(distDir, "_astro"));
+			return files.filter((f) => f.endsWith(".svg"));
+		}
 
 		it("renders uncropped (every page) by default (defaults.crop defaults to markdown-only)", async () => {
 			const plugin = await getLyPlugin(new URL(`file://${publicDir}/`));
@@ -84,9 +97,7 @@ describe.skipIf(!lilypondAvailable())(
 			);
 
 			expect(contentOf(result?.code).pages).toHaveLength(2);
-
-			const files = await readdir(join(publicDir, "_lilypond"));
-			expect(files.filter((f) => f.endsWith(".svg"))).toHaveLength(2);
+			expect(await emittedSvgFiles()).toHaveLength(2);
 		});
 
 		it("renders a single cropped image when the import has a ?crop query param", async () => {
@@ -97,9 +108,7 @@ describe.skipIf(!lilypondAvailable())(
 			);
 
 			expect(contentOf(result?.code).pages).toHaveLength(1);
-
-			const files = await readdir(join(publicDir, "_lilypond"));
-			expect(files.filter((f) => f.endsWith(".svg"))).toHaveLength(1);
+			expect(await emittedSvgFiles()).toHaveLength(1);
 		});
 
 		it("follows a configured defaults.crop of true, rendering a single cropped image", async () => {
@@ -112,9 +121,7 @@ describe.skipIf(!lilypondAvailable())(
 			);
 
 			expect(contentOf(result?.code).pages).toHaveLength(1);
-
-			const files = await readdir(join(publicDir, "_lilypond"));
-			expect(files.filter((f) => f.endsWith(".svg"))).toHaveLength(1);
+			expect(await emittedSvgFiles()).toHaveLength(1);
 		});
 
 		it("overrides a configured defaults.crop of true with a ?nocrop query param", async () => {
@@ -127,9 +134,7 @@ describe.skipIf(!lilypondAvailable())(
 			);
 
 			expect(contentOf(result?.code).pages).toHaveLength(2);
-
-			const files = await readdir(join(publicDir, "_lilypond"));
-			expect(files.filter((f) => f.endsWith(".svg"))).toHaveLength(2);
+			expect(await emittedSvgFiles()).toHaveLength(2);
 		});
 	},
 );

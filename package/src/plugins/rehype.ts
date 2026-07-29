@@ -19,12 +19,10 @@ interface RawNode {
 	value: string;
 }
 
-export type RehypePluginOptions = PluginOptions;
-
 // Typed loosely so it's assignable to both RehypePlugin and the unified
 // Plugin generic regardless of which @types/hast version the host project pins.
 export function rehypePlugin(
-	options: RehypePluginOptions,
+	options: PluginOptions,
 	// biome-ignore lint/suspicious/noExplicitAny: see above
 ): (tree: any, file?: { path?: string }) => Promise<void> {
 	return async (tree, file) => {

@@ -30,6 +30,7 @@ vi.mock("./utils/emitLilypondAsset.js", () => ({
 
 import { lilypondEntrySchema, lilypondLoader } from "./loader.js";
 import { render } from "./render.js";
+import { fakeEmitLilypondAsset } from "./utils/emitLilypondAsset.fake.js";
 import { emitLilypondAsset } from "./utils/emitLilypondAsset.js";
 
 const mockRender = vi.mocked(render);
@@ -123,16 +124,8 @@ beforeEach(async () => {
 	await mkdir(publicDir, { recursive: true });
 	mockRender.mockClear();
 	mockRender.mockResolvedValue([Buffer.from("<svg></svg>")]);
-	// Mimics one page per rendered buffer, using a stable fake `src` (no real
-	// hash) so assertions on stored entries stay simple. Still invokes
-	// `opts.render()` so render-call-count assertions keep working.
 	mockEmitLilypondAsset.mockReset();
-	mockEmitLilypondAsset.mockImplementation(async (opts) => {
-		const buffers = await opts.render();
-		return buffers.map((_, i) => ({
-			src: `/_astro/${opts.title}${i === 0 ? "" : `-p${i + 1}`}.${opts.format}`,
-		}));
-	});
+	fakeEmitLilypondAsset(mockEmitLilypondAsset);
 });
 
 afterEach(async () => {

@@ -23,27 +23,25 @@ vi.mock("../utils/emitLilypondAsset.js", () => ({
 }));
 
 import { render } from "../render.js";
+import {
+	fakeEmitLilypondAsset,
+	fakeEmitLilypondAssetPropagatingRenderErrors,
+} from "../utils/emitLilypondAsset.fake.js";
 import { emitLilypondAsset } from "../utils/emitLilypondAsset.js";
-import { type SatteriPluginOptions, satteriPlugin } from "./satteri.js";
+import type { PluginOptions } from "./index.js";
+import { satteriPlugin } from "./satteri.js";
 
 const mockRender = vi.mocked(render);
 const mockEmitLilypondAsset = vi.mocked(emitLilypondAsset);
 
 const FAKE_SVG = "<svg xmlns='http://www.w3.org/2000/svg'><g>fake</g></svg>";
 
-const BASE_OPTIONS: SatteriPluginOptions = {};
+const BASE_OPTIONS: PluginOptions = {};
 
 beforeEach(() => {
 	vi.clearAllMocks();
 	mockRender.mockResolvedValue([Buffer.from(FAKE_SVG)]);
-	// Mimics one page per rendered buffer, using a stable fake `src` (no real
-	// hash) so assertions on the emitted HTML stay simple.
-	mockEmitLilypondAsset.mockImplementation(async (opts) => {
-		const buffers = await opts.render();
-		return buffers.map((_, i) => ({
-			src: `/_lilypond/${opts.title}${i === 0 ? "" : `-p${i + 1}`}.${opts.format}`,
-		}));
-	});
+	fakeEmitLilypondAsset(mockEmitLilypondAsset, "/_lilypond");
 });
 
 describe("satteriPlugin", () => {
@@ -120,10 +118,7 @@ describe("satteriPlugin", () => {
 	});
 
 	it("propagates the error when render throws", async () => {
-		mockEmitLilypondAsset.mockImplementation(async (opts) => {
-			await opts.render();
-			return [];
-		});
+		fakeEmitLilypondAssetPropagatingRenderErrors(mockEmitLilypondAsset);
 		mockRender.mockRejectedValue(new Error("bad syntax"));
 		const plugin = satteriPlugin(BASE_OPTIONS);
 		const node: Code = { type: "code", lang: "lilypond", value: "invalid" };

@@ -23,6 +23,7 @@ vi.mock("./utils/emitLilypondAsset.js", () => ({
 
 import lilypond from "./index.js";
 import { render } from "./render.js";
+import { fakeEmitLilypondAsset } from "./utils/emitLilypondAsset.fake.js";
 import { emitLilypondAsset } from "./utils/emitLilypondAsset.js";
 
 const mockRender = vi.mocked(render);
@@ -54,15 +55,7 @@ function baseConfig(
 }
 
 beforeEach(() => {
-	// Mimics one page per rendered buffer, using a stable fake `src` (no real
-	// hash) so assertions on the emitted content stay simple. Still invokes
-	// `opts.render()` so `render()`-focused assertions/rejections keep working.
-	mockEmitLilypondAsset.mockImplementation(async (opts) => {
-		const buffers = await opts.render();
-		return buffers.map((_, i) => ({
-			src: `/_astro/${opts.title}${i === 0 ? "" : `-p${i + 1}`}.${opts.format}`,
-		}));
-	});
+	fakeEmitLilypondAsset(mockEmitLilypondAsset);
 });
 
 describe("lilypond integration", () => {
