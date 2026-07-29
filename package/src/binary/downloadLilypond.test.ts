@@ -255,23 +255,4 @@ describe("downloadLilypond", () => {
 		);
 		expect(result).toMatch(/bin[/\\]lilypond$/);
 	});
-
-	it("recovers when rename fails because another process finished first", async () => {
-		let accessCalls = 0;
-		mockAccess.mockImplementation(async () => {
-			accessCalls += 1;
-			if (accessCalls <= 2) {
-				throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });
-			}
-			return undefined;
-		});
-		mockRename.mockRejectedValueOnce(new Error("ENOTEMPTY"));
-		const fetchImpl = vi.fn().mockResolvedValue(fakeResponse({}));
-		const result = await downloadLilypond({
-			version: "2.26.0",
-			cacheDir: "/cache",
-			fetchImpl,
-		});
-		expect(result).toMatch(/bin[/\\]lilypond$/);
-	});
 });

@@ -2,7 +2,7 @@ import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
-import type { DataEntry } from "astro/loaders";
+import type { DataStore } from "astro/loaders";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("./render.js", () => ({
@@ -48,10 +48,10 @@ const mockResolveLilypondBinary = vi.mocked(resolveLilypondBinary);
 
 /** Minimal in-memory stand-in for Astro's content-layer DataStore. */
 function createFakeStore() {
-	const data = new Map<string, DataEntry>();
+	const data = new Map<string, Parameters<DataStore["set"]>[0]>();
 	return {
 		get: (key: string) => data.get(key),
-		set: (entry: DataEntry) => {
+		set: (entry: Parameters<DataStore["set"]>[0]) => {
 			data.set(entry.id, entry);
 			return true;
 		},
