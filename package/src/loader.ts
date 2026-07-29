@@ -1,16 +1,14 @@
 import { glob, readFile } from "node:fs/promises";
-import { basename, join, posix, relative, sep } from "node:path";
+import { join, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { Loader, LoaderContext } from "astro/loaders";
 import { z } from "astro/zod";
-import { pruneOrphanedAssets } from "./deleteAssets.js";
 import { type LilypondContent, LY_EXTENSIONS } from "./index.js";
 import type { PluginOptions } from "./plugins/index.js";
 import { defaultOptions, render, resolveCrop } from "./render.js";
 import {
 	altTextFor,
-	assetsUrlBaseFor,
-	contentHashFor,
+	emitLilypondAsset,
 	includePathsFor,
 	type KnownLyHeaderFields,
 	parseLyHeaderFields,
@@ -20,7 +18,6 @@ import {
 	splitHeaderFields,
 	titleFor,
 } from "./utils/index.js";
-import { writeAssets } from "./writeAsset.js";
 
 const DEFAULT_PATTERN = `**/*.{${LY_EXTENSIONS.map((ext) => ext.slice(1)).join(",")}}`;
 
@@ -51,16 +48,6 @@ export interface LilypondLoaderOptions extends PluginOptions {
 	 * @default the file's path relative to `base`, POSIX-separated, with its extension stripped.
 	 */
 	generateId?: (options: GenerateIdOptions) => string;
-
-	/**
-	 * Directory name, relative to Astro's `publicDir`, that rendered assets
-	 * are written into. Exclusive to this collection — the loader prunes
-	 * anything under it that isn't currently referenced by one of its own
-	 * entries, so don't point two different collections (or the `lilypond()`
-	 * integration's own `outputDir`) at the same directory.
-	 * @default `"_lilypond/<collection name>"`
-	 */
-	outputDir?: string;
 }
 
 export interface LilypondHeaderData extends KnownLyHeaderFields {
@@ -133,7 +120,6 @@ export function lilypondLoader(options: LilypondLoaderOptions): Loader {
 		format,
 		defaults,
 		timeout,
-		outputDir,
 	} = options;
 
 	const resolved = resolveDefaults(defaults);
@@ -144,19 +130,9 @@ export function lilypondLoader(options: LilypondLoaderOptions): Loader {
 		name: "astro-lilypond-loader",
 		schema: lilypondEntrySchema,
 		async load(context: LoaderContext): Promise<void> {
-			const {
-				config,
-				collection,
-				store,
-				logger,
-				watcher,
-				generateDigest,
-				parseData,
-			} = context;
+			const { config, store, logger, watcher, generateDigest, parseData } =
+				context;
 
-			const outputDirName = outputDir ?? posix.join("_lilypond", collection);
-			const assetsDir = join(fileURLToPath(config.publicDir), outputDirName);
-			const assetsUrlBase = assetsUrlBaseFor(config.base, outputDirName);
 			const rootDir = fileURLToPath(config.root);
 			const baseUrl = resolveBaseUrl(base, config.root);
 			const baseDir = fileURLToPath(baseUrl);
@@ -175,30 +151,21 @@ export function lilypondLoader(options: LilypondLoaderOptions): Loader {
 
 				const headerFields = parseLyHeaderFields(source);
 				const id = generateId({ entry, base: baseUrl, header: headerFields });
-				// Not short-circuited on a matching digest: that only proves the
-				// source is unchanged, not that the asset file still exists on
-				// disk. `writeAssets()` does the real disk-backed cache check.
 				const digest = generateDigest(source);
 
 				const src = prependVersion(source, resolved.version);
 				const includePaths = includePathsFor(filePath);
 				const sourceName = sourceNameFor(filePath);
 				const title = titleFor(sourceName);
-				const hash = contentHashFor({
-					source: src,
-					format: resolvedFormat,
-					resolution: resolved.resolution,
-					crop,
-				});
 
-				const assets = await writeAssets({
-					hash,
+				const pages = await emitLilypondAsset({
 					title,
 					format: resolvedFormat,
-					outputDir: assetsDir,
-					urlBase: assetsUrlBase,
+					source: src,
+					resolution: resolved.resolution,
+					crop,
 					sizeScale: crop ? resolved.cropScale : 1,
-					getBuffers: () =>
+					render: () =>
 						render(src, {
 							format: resolvedFormat,
 							crop,
@@ -212,11 +179,7 @@ export function lilypondLoader(options: LilypondLoaderOptions): Loader {
 				const data = await parseData({
 					id,
 					data: {
-						pages: assets.map((asset) => ({
-							src: asset.url,
-							width: asset.width,
-							height: asset.height,
-						})),
+						pages,
 						alt: altTextFor({
 							title: headerFields.title,
 							composer: headerFields.composer,
@@ -268,17 +231,6 @@ export function lilypondLoader(options: LilypondLoaderOptions): Loader {
 					if (previousId) untouched.delete(previousId);
 				}
 				for (const id of untouched) store.delete(id);
-
-				// Sweep the directory against every currently-stored entry's pages
-				// (not just the ones touched this pass), so a removed/renamed
-				// source's leftover files get cleaned up without needing separate
-				// per-entry bookkeeping.
-				const referenced = new Set<string>();
-				for (const stored of store.values()) {
-					const pages = (stored.data as { pages?: { src: string }[] }).pages;
-					for (const page of pages ?? []) referenced.add(basename(page.src));
-				}
-				await pruneOrphanedAssets({ dir: assetsDir, referenced, logger });
 			}
 
 			await runSync();

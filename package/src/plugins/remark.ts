@@ -4,7 +4,7 @@ import { visit } from "unist-util-visit";
 import { defaultOptions, render, resolveCrop } from "../render.js";
 import {
 	altTextForBlock,
-	contentHashFor,
+	emitLilypondAsset,
 	includePathsFor,
 	isLilypondLang,
 	prependVersion,
@@ -13,15 +13,11 @@ import {
 	sourceNameFor,
 	titleFor,
 } from "../utils/index.js";
-import { writeAssets } from "../writeAsset.js";
-import type { ResolvedPluginOptions } from "./types.js";
+import type { PluginOptions } from "./types.js";
 
-export type RemarkPluginOptions = ResolvedPluginOptions;
-
-export const remarkPlugin: Plugin<[RemarkPluginOptions], Root> = (options) => {
+export const remarkPlugin: Plugin<[PluginOptions], Root> = (options) => {
 	return async (tree, file) => {
 		const promises: Promise<void>[] = [];
-		const fileNames: string[] = [];
 		const includePaths = includePathsFor(file?.path);
 		const sourceName = sourceNameFor(file?.path);
 		const title = titleFor(sourceName);
@@ -38,18 +34,16 @@ export const remarkPlugin: Plugin<[RemarkPluginOptions], Root> = (options) => {
 			const source = version ? prependVersion(node.value, version) : node.value;
 			const format = options.format ?? defaultOptions.format;
 			const crop = resolveCrop(cropSetting, "markdown");
-			const hash = contentHashFor({ source, format, resolution, crop });
 			const alt = altTextForBlock(node.meta, node.value);
 
-			const promise = writeAssets({
-				hash,
+			const promise = emitLilypondAsset({
 				title,
 				format,
-				outputDir: options.assetsDir,
-				urlBase: options.assetsUrlBase,
-				trackAsset: options.trackAsset,
+				source,
+				resolution,
+				crop,
 				sizeScale: crop ? cropScale : 1,
-				getBuffers: () =>
+				render: () =>
 					render(source, {
 						format,
 						crop,
@@ -58,11 +52,10 @@ export const remarkPlugin: Plugin<[RemarkPluginOptions], Root> = (options) => {
 						includePaths,
 						sourceName,
 					}),
-			}).then((assets): void => {
-				fileNames.push(...assets.map((asset) => asset.fileName));
+			}).then((pages): void => {
 				const htmlNode: Html = {
 					type: "html",
-					value: renderedHtml(assets, alt),
+					value: renderedHtml(pages, alt),
 				};
 				parent.children[index] = htmlNode;
 			});
@@ -71,9 +64,5 @@ export const remarkPlugin: Plugin<[RemarkPluginOptions], Root> = (options) => {
 		});
 
 		await Promise.all(promises);
-
-		if (file?.path) {
-			await options.pruneStaleAssets(file.path, fileNames);
-		}
 	};
 };

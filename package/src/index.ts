@@ -1,13 +1,10 @@
 import { execFile } from "node:child_process";
-import { join } from "node:path";
-import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import type { AstroIntegration } from "astro";
+import emitAssetIntegration from "astro-emit-asset";
 import type { Plugin } from "vite";
-import { pruneOrphanedAssets, pruneStaleAssets } from "./deleteAssets.js";
 import {
 	type PluginOptions,
-	type ResolvedPluginOptions,
 	rehypePlugin,
 	remarkPlugin,
 	satteriPlugin,
@@ -20,8 +17,7 @@ import {
 } from "./render.js";
 import {
 	altTextFor,
-	assetsUrlBaseFor,
-	contentHashFor,
+	emitLilypondAsset,
 	includePathsFor,
 	lyTypeDeclarationsFor,
 	parseLyHeader,
@@ -32,7 +28,6 @@ import {
 	sourceNameFor,
 	titleFor,
 } from "./utils/index.js";
-import { writeAssets } from "./writeAsset.js";
 
 const execFileAsync = promisify(execFile);
 
@@ -53,7 +48,7 @@ export interface LilypondContent {
 
 export interface LilypondOptions extends PluginOptions {
 	/**
-	 * Output format to be written to a file under `outputDir`.
+	 * Output format.
 	 * @default "svg"
 	 */
 	format?: "svg" | "png";
@@ -70,20 +65,9 @@ export interface LilypondOptions extends PluginOptions {
 	 * @default 60000
 	 */
 	timeout?: number;
-
-	/**
-	 * Directory name, relative to Astro's `publicDir`, that rendered assets
-	 * are written into by both `astro dev` and `astro build`. Filenames are
-	 * content-addressed, so unchanged scores are reused instead of being
-	 * re-rendered, and it's safe to commit this directory if you'd like
-	 * faster rebuilds.
-	 *
-	 * @default "_lilypond"
-	 */
-	outputDir?: string;
 }
 
-function lyFilePlugin(options: ResolvedPluginOptions): Plugin {
+function lyFilePlugin(options: PluginOptions): Plugin {
 	return {
 		name: "vite-plugin-astro-lilypond-ly",
 		enforce: "pre",
@@ -105,17 +89,15 @@ function lyFilePlugin(options: ResolvedPluginOptions): Plugin {
 			const includePaths = includePathsFor(pathname);
 			const sourceName = sourceNameFor(pathname);
 			const title = titleFor(sourceName);
-			const hash = contentHashFor({ source: src, format, resolution, crop });
 			const alt = altTextFor(parseLyHeader(source));
-			const assets = await writeAssets({
-				hash,
+			const pages = await emitLilypondAsset({
 				title,
 				format,
-				outputDir: options.assetsDir,
-				urlBase: options.assetsUrlBase,
+				source: src,
+				resolution,
+				crop,
 				sizeScale: crop ? cropScale : 1,
-				trackAsset: options.trackAsset,
-				getBuffers: () =>
+				render: () =>
 					render(src, {
 						format,
 						crop,
@@ -125,18 +107,8 @@ function lyFilePlugin(options: ResolvedPluginOptions): Plugin {
 						sourceName,
 					}),
 			});
-			// Keyed by the full id (including query) so `./score.ly` and
-			// `./score.ly?crop` are tracked as independent sources.
-			await options.pruneStaleAssets(
-				id,
-				assets.map((asset) => asset.fileName),
-			);
 			const content: LilypondContent = {
-				pages: assets.map((asset) => ({
-					src: asset.url,
-					width: asset.width,
-					height: asset.height,
-				})),
+				pages,
 				alt,
 			};
 			return {
@@ -149,10 +121,6 @@ function lyFilePlugin(options: ResolvedPluginOptions): Plugin {
 export default function lilypond(
 	options: LilypondOptions = {},
 ): AstroIntegration {
-	const referencedAssets = new Set<string>();
-	const assetsBySource = new Map<string, Set<string>>();
-	let assetsDir: string | undefined;
-
 	return {
 		name: "astro-lilypond",
 		hooks: {
@@ -167,32 +135,9 @@ export default function lilypond(
 					},
 				);
 
-				const outputDirName = options.outputDir ?? "_lilypond";
-				const assetsUrlBase = assetsUrlBaseFor(config.base, outputDirName);
-
-				const resolvedAssetsDir = join(
-					fileURLToPath(config.publicDir),
-					outputDirName,
-				);
-				assetsDir = resolvedAssetsDir;
-
-				const resolvedOptions: ResolvedPluginOptions = {
-					...options,
-					assetsDir,
-					assetsUrlBase,
-					trackAsset: (fileName) => referencedAssets.add(fileName),
-					pruneStaleAssets: (sourceKey, fileNames) =>
-						pruneStaleAssets({
-							assetsBySource,
-							sourceKey,
-							fileNames,
-							outputDir: resolvedAssetsDir,
-							logger,
-						}),
-				};
-
 				updateConfig({
-					vite: { plugins: [lyFilePlugin(resolvedOptions)] },
+					integrations: [emitAssetIntegration()],
+					vite: { plugins: [lyFilePlugin(options)] },
 				});
 
 				const existingProcessor = config.markdown?.processor;
@@ -216,7 +161,7 @@ export default function lilypond(
 								...existingOptions,
 								mdastPlugins: [
 									...(existingOptions.mdastPlugins ?? []),
-									satteriPlugin(resolvedOptions),
+									satteriPlugin(options),
 								],
 							}),
 						},
@@ -244,11 +189,11 @@ export default function lilypond(
 								...existingOptions,
 								remarkPlugins: [
 									...(existingOptions.remarkPlugins ?? []),
-									[remarkPlugin, resolvedOptions],
+									[remarkPlugin, options],
 								],
 								rehypePlugins: [
 									...(existingOptions.rehypePlugins ?? []),
-									[rehypePlugin, resolvedOptions],
+									[rehypePlugin, options],
 								],
 							}),
 						},
@@ -274,15 +219,6 @@ export default function lilypond(
 						LY_EXTENSIONS,
 						RECOGNIZED_QUERY_PARAMS,
 					),
-				});
-			},
-
-			"astro:build:done": async ({ logger }) => {
-				if (!assetsDir) return;
-				await pruneOrphanedAssets({
-					dir: assetsDir,
-					referenced: referencedAssets,
-					logger,
 				});
 			},
 		},

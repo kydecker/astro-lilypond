@@ -1,0 +1,216 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+const { emitAsset } = vi.hoisted(() => ({ emitAsset: vi.fn() }));
+vi.mock("astro-emit-asset/emit", () => ({ emitAsset }));
+
+const { emitLilypondAsset } = await import("./emitLilypondAsset.js");
+
+const REAL_SVG =
+	'<svg xmlns="http://www.w3.org/2000/svg" width="105" height="55" viewBox="0 0 105 55">content</svg>';
+
+const GLOBAL_KEY = "astro-emit-asset";
+
+/** Runs the real `generateAsset` thunk passed to the mocked `emitAsset`, like `astro-emit-asset` would on a cache miss. */
+async function resolveGenerated() {
+	const generateAsset = emitAsset.mock.calls.at(-1)?.[2];
+	return await generateAsset();
+}
+
+describe("emitLilypondAsset", () => {
+	beforeEach(() => {
+		// Stand in for what `astro-emit-asset`'s own integration would have set
+		// during `astro:config:setup` — see the "when astro-emit-asset isn't
+		// registered" describe block below for the unset case.
+		(globalThis as Record<string, unknown>)[GLOBAL_KEY] = {};
+	});
+
+	afterEach(() => {
+		(globalThis as Record<string, unknown>)[GLOBAL_KEY] = undefined;
+	});
+
+	it("calls emitAsset with '<title>.[hash].<format>' as the path (name before hash) and render deps, including sizeScale, as the cache key", async () => {
+		emitAsset.mockResolvedValue({ src: "/_astro/score.abc123.svg", meta: {} });
+
+		await emitLilypondAsset({
+			title: "bach-bwv610",
+			format: "svg",
+			source: "\\relative c' { c d e }",
+			resolution: 144,
+			crop: true,
+			sizeScale: 1,
+			render: vi.fn().mockResolvedValue([Buffer.from(REAL_SVG)]),
+		});
+
+		expect(emitAsset).toHaveBeenCalledWith(
+			"bach-bwv610.[hash].svg",
+			["\\relative c' { c d e }", "svg", 144, true, 1],
+			expect.any(Function),
+		);
+	});
+
+	it("busts the cache when sizeScale changes, even with identical source/format/resolution/crop", async () => {
+		emitAsset.mockResolvedValue({ src: "/_astro/score.abc123.svg", meta: {} });
+		const render = vi.fn().mockResolvedValue([Buffer.from(REAL_SVG)]);
+		const base = {
+			title: "score",
+			format: "svg" as const,
+			source: "...",
+			resolution: 144,
+			crop: true,
+			render,
+		};
+
+		await emitLilypondAsset({ ...base, sizeScale: 1 });
+		await emitLilypondAsset({ ...base, sizeScale: 2 });
+
+		const [, firstKey] = emitAsset.mock.calls[0];
+		const [, secondKey] = emitAsset.mock.calls[1];
+		expect(firstKey).not.toEqual(secondKey);
+	});
+
+	it("returns a single page when emitAsset resolves a bare object (the single-page shape)", async () => {
+		emitAsset.mockResolvedValue({
+			src: "/_astro/score.abc123.svg",
+			meta: { width: 1, height: 2 },
+		});
+
+		const pages = await emitLilypondAsset({
+			title: "score",
+			format: "svg",
+			source: "...",
+			resolution: 144,
+			crop: true,
+			sizeScale: 1,
+			render: vi.fn().mockResolvedValue([Buffer.from(REAL_SVG)]),
+		});
+
+		expect(pages).toEqual([
+			{ src: "/_astro/score.abc123.svg", width: 1, height: 2 },
+		]);
+	});
+
+	it("returns one page per emitted asset, in order, when emitAsset resolves an array (the multi-page shape)", async () => {
+		emitAsset.mockResolvedValue([
+			{ src: "/_astro/score.0.abc123.svg", meta: { width: 1, height: 2 } },
+			{ src: "/_astro/score.1.abc123.svg", meta: { width: 3, height: 4 } },
+		]);
+
+		const pages = await emitLilypondAsset({
+			title: "score",
+			format: "svg",
+			source: "...",
+			resolution: 144,
+			crop: false,
+			sizeScale: 1,
+			render: vi.fn().mockResolvedValue([Buffer.from("a"), Buffer.from("b")]),
+		});
+
+		expect(pages).toEqual([
+			{ src: "/_astro/score.0.abc123.svg", width: 1, height: 2 },
+			{ src: "/_astro/score.1.abc123.svg", width: 3, height: 4 },
+		]);
+	});
+
+	it("passes generateAsset a bare object (not an array) for a single-page render, so astro-emit-asset doesn't insert a page index into the filename", async () => {
+		emitAsset.mockResolvedValue({ src: "/_astro/score.abc123.svg", meta: {} });
+		const render = vi.fn().mockResolvedValue([Buffer.from(REAL_SVG)]);
+
+		await emitLilypondAsset({
+			title: "score",
+			format: "svg",
+			source: "...",
+			resolution: 144,
+			crop: true,
+			sizeScale: 1,
+			render,
+		});
+
+		const generated = await resolveGenerated();
+		expect(Array.isArray(generated)).toBe(false);
+		expect(generated).toEqual({
+			data: Buffer.from(REAL_SVG),
+			meta: { width: 105, height: 55 },
+		});
+	});
+
+	it("passes generateAsset an array for a multi-page render", async () => {
+		emitAsset.mockResolvedValue([
+			{ src: "/_astro/score.0.abc123.svg", meta: {} },
+			{ src: "/_astro/score.1.abc123.svg", meta: {} },
+		]);
+		const render = vi
+			.fn()
+			.mockResolvedValue([Buffer.from(REAL_SVG), Buffer.from(REAL_SVG)]);
+
+		await emitLilypondAsset({
+			title: "score",
+			format: "svg",
+			source: "...",
+			resolution: 144,
+			crop: false,
+			sizeScale: 1,
+			render,
+		});
+
+		const generated = await resolveGenerated();
+		expect(Array.isArray(generated)).toBe(true);
+		expect(generated).toHaveLength(2);
+	});
+
+	it("multiplies dimensions by sizeScale without touching the generated bytes", async () => {
+		emitAsset.mockResolvedValue({ src: "/_astro/score.abc123.svg", meta: {} });
+		const render = vi.fn().mockResolvedValue([Buffer.from(REAL_SVG)]);
+
+		await emitLilypondAsset({
+			title: "score",
+			format: "svg",
+			source: "...",
+			resolution: 144,
+			crop: true,
+			sizeScale: 1.5,
+			render,
+		});
+
+		const generated = await resolveGenerated();
+		expect(generated.data).toEqual(Buffer.from(REAL_SVG));
+		expect(generated.meta).toEqual({ width: 157.5, height: 82.5 });
+	});
+
+	it("leaves width/height undefined when dimensions can't be read from the bytes", async () => {
+		emitAsset.mockResolvedValue({ src: "/_astro/score.abc123.svg", meta: {} });
+		const render = vi.fn().mockResolvedValue([Buffer.from("not an svg")]);
+
+		await emitLilypondAsset({
+			title: "score",
+			format: "svg",
+			source: "...",
+			resolution: 144,
+			crop: true,
+			sizeScale: 1,
+			render,
+		});
+
+		const generated = await resolveGenerated();
+		expect(generated.meta).toEqual({ width: undefined, height: undefined });
+	});
+
+	describe("when astro-emit-asset isn't registered", () => {
+		it("throws a clear, actionable error instead of calling emitAsset", async () => {
+			(globalThis as Record<string, unknown>)[GLOBAL_KEY] = undefined;
+			emitAsset.mockClear();
+
+			await expect(
+				emitLilypondAsset({
+					title: "score",
+					format: "svg",
+					source: "...",
+					resolution: 144,
+					crop: true,
+					sizeScale: 1,
+					render: vi.fn(),
+				}),
+			).rejects.toThrow(/lilypond\(\).*Astro config/s);
+			expect(emitAsset).not.toHaveBeenCalled();
+		});
+	});
+});

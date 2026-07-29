@@ -5,7 +5,7 @@ describe("renderedHtml", () => {
 	it("wraps a single page in a plain lilypond img tag", () => {
 		expect(
 			renderedHtml(
-				[{ url: "/_lilypond/abc123.svg", width: undefined, height: undefined }],
+				[{ src: "/_lilypond/abc123.svg", width: undefined, height: undefined }],
 				"",
 			),
 		).toBe('<img data-lilypond-image src="/_lilypond/abc123.svg" alt="">');
@@ -14,7 +14,7 @@ describe("renderedHtml", () => {
 	it("includes width/height attributes when known", () => {
 		expect(
 			renderedHtml(
-				[{ url: "/_lilypond/abc123.svg", width: 158, height: 83 }],
+				[{ src: "/_lilypond/abc123.svg", width: 158, height: 83 }],
 				"",
 			),
 		).toBe(
@@ -25,7 +25,7 @@ describe("renderedHtml", () => {
 	it("omits width/height entirely when either is unknown", () => {
 		expect(
 			renderedHtml(
-				[{ url: "/_lilypond/abc123.svg", width: 158, height: undefined }],
+				[{ src: "/_lilypond/abc123.svg", width: 158, height: undefined }],
 				"",
 			),
 		).toBe('<img data-lilypond-image src="/_lilypond/abc123.svg" alt="">');
@@ -35,9 +35,9 @@ describe("renderedHtml", () => {
 		expect(
 			renderedHtml(
 				[
-					{ url: "/_lilypond/abc123.svg", width: 100, height: 50 },
-					{ url: "/_lilypond/abc123-p2.svg", width: 100, height: 60 },
-					{ url: "/_lilypond/abc123-p3.svg", width: 100, height: 70 },
+					{ src: "/_lilypond/abc123.svg", width: 100, height: 50 },
+					{ src: "/_lilypond/abc123-p2.svg", width: 100, height: 60 },
+					{ src: "/_lilypond/abc123-p3.svg", width: 100, height: 70 },
 				],
 				"",
 			),
@@ -53,7 +53,7 @@ describe("renderedHtml", () => {
 	it("applies a non-empty alt to a single page", () => {
 		expect(
 			renderedHtml(
-				[{ url: "/_lilypond/abc123.svg", width: undefined, height: undefined }],
+				[{ src: "/_lilypond/abc123.svg", width: undefined, height: undefined }],
 				"Sonata",
 			),
 		).toBe(
@@ -65,9 +65,9 @@ describe("renderedHtml", () => {
 		expect(
 			renderedHtml(
 				[
-					{ url: "/_lilypond/abc123.svg", width: undefined, height: undefined },
+					{ src: "/_lilypond/abc123.svg", width: undefined, height: undefined },
 					{
-						url: "/_lilypond/abc123-p2.svg",
+						src: "/_lilypond/abc123-p2.svg",
 						width: undefined,
 						height: undefined,
 					},
@@ -85,7 +85,7 @@ describe("renderedHtml", () => {
 	it("escapes special characters in the alt attribute", () => {
 		expect(
 			renderedHtml(
-				[{ url: "/_lilypond/abc123.svg", width: undefined, height: undefined }],
+				[{ src: "/_lilypond/abc123.svg", width: undefined, height: undefined }],
 				'Bach & "Sons"',
 			),
 		).toBe(
@@ -97,9 +97,9 @@ describe("renderedHtml", () => {
 		expect(
 			renderedHtml(
 				[
-					{ url: "/_lilypond/abc123.svg", width: undefined, height: undefined },
+					{ src: "/_lilypond/abc123.svg", width: undefined, height: undefined },
 					{
-						url: "/_lilypond/abc123-p2.svg",
+						src: "/_lilypond/abc123-p2.svg",
 						width: undefined,
 						height: undefined,
 					},

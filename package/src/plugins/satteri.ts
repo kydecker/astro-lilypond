@@ -3,7 +3,7 @@ import type { MdastPluginDefinition, MdastVisitorContext } from "satteri";
 import { defaultOptions, render, resolveCrop } from "../render.js";
 import {
 	altTextForBlock,
-	contentHashFor,
+	emitLilypondAsset,
 	includePathsFor,
 	isLilypondLang,
 	prependVersion,
@@ -12,14 +12,9 @@ import {
 	sourceNameFor,
 	titleFor,
 } from "../utils/index.js";
-import { writeAssets } from "../writeAsset.js";
-import type { ResolvedPluginOptions } from "./types.js";
+import type { PluginOptions } from "./types.js";
 
-export type SatteriPluginOptions = ResolvedPluginOptions;
-
-export function satteriPlugin(
-	options: SatteriPluginOptions,
-): MdastPluginDefinition {
+export function satteriPlugin(options: PluginOptions): MdastPluginDefinition {
 	return {
 		name: "astro-lilypond",
 		// Returning an mdast Html node (type: 'html') emits the value verbatim.
@@ -42,17 +37,15 @@ export function satteriPlugin(
 			const sourceName = sourceNameFor(ctx.fileURL);
 			const title = titleFor(sourceName);
 			const crop = resolveCrop(cropSetting, "markdown");
-			const hash = contentHashFor({ source, format, resolution, crop });
 			const alt = altTextForBlock(node.meta, node.value);
-			const assets = await writeAssets({
-				hash,
+			const pages = await emitLilypondAsset({
 				title,
 				format,
-				outputDir: options.assetsDir,
-				urlBase: options.assetsUrlBase,
-				trackAsset: options.trackAsset,
+				source,
+				resolution,
+				crop,
 				sizeScale: crop ? cropScale : 1,
-				getBuffers: () =>
+				render: () =>
 					render(source, {
 						format,
 						crop,
@@ -63,18 +56,9 @@ export function satteriPlugin(
 					}),
 			});
 
-			// Sätteri has no per-file "done" hook, so prune per block instead.
-			if (ctx.fileURL) {
-				const index = ctx.indexOf(node) ?? "root";
-				await options.pruneStaleAssets(
-					`${ctx.fileURL.href}#${index}`,
-					assets.map((asset) => asset.fileName),
-				);
-			}
-
 			return {
 				type: "html",
-				value: renderedHtml(assets, alt),
+				value: renderedHtml(pages, alt),
 			};
 		},
 	};

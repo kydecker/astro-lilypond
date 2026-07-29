@@ -1,8 +1,9 @@
 /**
  * Exercises `lilypondLoader()` against the real `lilypond` binary: real SVG
- * files should land on disk under a temp `outputDir`, and header metadata
- * (including a nested `\score`-level `\markup` field and a non-standard
- * `extra` field) should be parsed correctly from real fixture files.
+ * files should be emitted via `astro-emit-asset` and land on disk once the
+ * build is finalized, and header metadata (including a nested `\score`-level
+ * `\markup` field and a non-standard `extra` field) should be parsed
+ * correctly from real fixture files.
  *
  * Skips entirely if `lilypond` isn't on PATH. Run explicitly with
  * `npm run test:integration`.
@@ -15,6 +16,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import type { DataEntry, LoaderContext } from "astro/loaders";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { lilypondLoader } from "../src/loader.js";
+import { registerEmitAsset } from "./registerEmitAsset.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const SCORES_DIR = join(__dirname, "scores", "collection");
@@ -70,10 +72,14 @@ describe.skipIf(!lilypondAvailable())(
 	() => {
 		let root: string;
 		let publicDir: string;
+		let finalizeBuild: (dir: URL) => Promise<void>;
 
 		beforeEach(async () => {
 			root = await mkdtemp(join(tmpdir(), "astro-lilypond-loader-int-"));
 			publicDir = join(root, "public");
+			({ finalizeBuild } = await registerEmitAsset({
+				cacheDir: pathToFileURL(`${join(root, ".astro")}/`),
+			}));
 		});
 
 		afterEach(async () => {
@@ -85,15 +91,11 @@ describe.skipIf(!lilypondAvailable())(
 			const context = createFakeContext(root, publicDir);
 			await loader.load(context);
 
-			const files = await readdir(join(publicDir, "_lilypond", "scores"));
-			const svgFiles = files.filter((f) => f.endsWith(".svg"));
-			expect(svgFiles.length).toBeGreaterThanOrEqual(2);
-
 			const sonata = context.store.get("sonata");
 			expect(sonata).toBeDefined();
 			const sonataData = sonata?.data as { pages: { width?: number }[] };
 			expect(sonataData).toMatchObject({
-				pages: [{ src: expect.stringMatching(/^\/_lilypond\/scores\//) }],
+				pages: [{ src: expect.stringMatching(/^\/_astro\//) }],
 				alt: "Sonata, by Beethoven",
 				title: "Sonata",
 				composer: "Beethoven",
@@ -105,6 +107,15 @@ describe.skipIf(!lilypondAvailable())(
 			expect(prelude?.data).toMatchObject({
 				piece: "Prelude",
 			});
+
+			// Verify the real SVG files actually land on disk once the build
+			// is finalized (astro-emit-asset's active-asset copy step).
+			const distDir = join(root, "dist");
+			await finalizeBuild(pathToFileURL(`${distDir}/`));
+			const files = await readdir(join(distDir, "_astro"));
+			expect(
+				files.filter((f) => f.endsWith(".svg")).length,
+			).toBeGreaterThanOrEqual(2);
 		});
 	},
 );

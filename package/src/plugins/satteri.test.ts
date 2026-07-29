@@ -18,41 +18,30 @@ vi.mock("../render.js", () => ({
 	},
 }));
 
-vi.mock("../writeAsset.js", () => ({
-	writeAssets: vi.fn(),
+vi.mock("../utils/emitLilypondAsset.js", () => ({
+	emitLilypondAsset: vi.fn(),
 }));
 
 import { render } from "../render.js";
-import { writeAssets } from "../writeAsset.js";
-import { type SatteriPluginOptions, satteriPlugin } from "./satteri.js";
+import {
+	fakeEmitLilypondAsset,
+	fakeEmitLilypondAssetPropagatingRenderErrors,
+} from "../utils/emitLilypondAsset.fake.js";
+import { emitLilypondAsset } from "../utils/emitLilypondAsset.js";
+import type { PluginOptions } from "./index.js";
+import { satteriPlugin } from "./satteri.js";
 
 const mockRender = vi.mocked(render);
-const mockWriteAssets = vi.mocked(writeAssets);
+const mockEmitLilypondAsset = vi.mocked(emitLilypondAsset);
 
 const FAKE_SVG = "<svg xmlns='http://www.w3.org/2000/svg'><g>fake</g></svg>";
 
-const BASE_OPTIONS: SatteriPluginOptions = {
-	assetsDir: "/project/public/_lilypond",
-	assetsUrlBase: "/_lilypond",
-	trackAsset: vi.fn(),
-	pruneStaleAssets: vi.fn(),
-};
+const BASE_OPTIONS: PluginOptions = {};
 
 beforeEach(() => {
 	vi.clearAllMocks();
 	mockRender.mockResolvedValue([Buffer.from(FAKE_SVG)]);
-	// Uses the real `opts.hash` (computed by the plugin from the block's
-	// content) so filename assertions can still check the real hash format.
-	mockWriteAssets.mockImplementation(async (opts) => {
-		const buffers = await opts.getBuffers();
-		return buffers.map((_, i) => {
-			const fileName =
-				i === 0
-					? `${opts.hash}.${opts.title}.${opts.format}`
-					: `${opts.hash}.${opts.title}-p${i + 1}.${opts.format}`;
-			return { fileName, url: `/_lilypond/${fileName}` };
-		});
-	});
+	fakeEmitLilypondAsset(mockEmitLilypondAsset, "/_lilypond");
 });
 
 describe("satteriPlugin", () => {
@@ -62,7 +51,7 @@ describe("satteriPlugin", () => {
 		expect(typeof plugin.code).toBe("function");
 	});
 
-	it("transforms a lilypond code node to an html node with an img tag pointing at the written asset", async () => {
+	it("transforms a lilypond code node to an html node with an img tag pointing at the emitted asset", async () => {
 		const plugin = satteriPlugin(BASE_OPTIONS);
 		const node: Code = { type: "code", lang: "lilypond", value: "\\score { }" };
 
@@ -74,19 +63,18 @@ describe("satteriPlugin", () => {
 			defaults: undefined,
 			includePaths: [],
 		});
-		expect(mockWriteAssets).toHaveBeenCalledWith(
+		expect(mockEmitLilypondAsset).toHaveBeenCalledWith(
 			expect.objectContaining({
 				title: "score",
 				format: "svg",
-				outputDir: BASE_OPTIONS.assetsDir,
-				urlBase: BASE_OPTIONS.assetsUrlBase,
-				trackAsset: BASE_OPTIONS.trackAsset,
+				source: "\\score { }",
+				crop: true,
 			}),
 		);
 		const html = result as Html;
 		expect(html.type).toBe("html");
-		expect(html.value).toMatch(
-			/^<img data-lilypond-image src="\/_lilypond\/[0-9a-f]+\.score\.svg" alt="">$/,
+		expect(html.value).toBe(
+			'<img data-lilypond-image src="/_lilypond/score.svg" alt="">',
 		);
 	});
 
@@ -97,7 +85,7 @@ describe("satteriPlugin", () => {
 		const result = await plugin.code?.(node, {} as never);
 
 		expect(mockRender).not.toHaveBeenCalled();
-		expect(mockWriteAssets).not.toHaveBeenCalled();
+		expect(mockEmitLilypondAsset).not.toHaveBeenCalled();
 		expect(result).toBeUndefined();
 	});
 
@@ -130,6 +118,7 @@ describe("satteriPlugin", () => {
 	});
 
 	it("propagates the error when render throws", async () => {
+		fakeEmitLilypondAssetPropagatingRenderErrors(mockEmitLilypondAsset);
 		mockRender.mockRejectedValue(new Error("bad syntax"));
 		const plugin = satteriPlugin(BASE_OPTIONS);
 		const node: Code = { type: "code", lang: "lilypond", value: "invalid" };
@@ -180,12 +169,10 @@ describe("satteriPlugin", () => {
 
 		const result = await plugin.code?.(node, {} as never);
 
-		expect((result as Html).value).toMatch(
-			/src="\/_lilypond\/[0-9a-f]+\.score\.svg"/,
-		);
+		expect((result as Html).value).toContain('src="/_lilypond/score.svg"');
 	});
 
-	it("passes format: png through to render and writeAsset", async () => {
+	it("passes format: png through to render and emitLilypondAsset", async () => {
 		const fakePng = Buffer.from([0x89, 0x50, 0x4e, 0x47]);
 		mockRender.mockResolvedValue([fakePng]);
 		const plugin = satteriPlugin({ ...BASE_OPTIONS, format: "png" });
@@ -199,8 +186,8 @@ describe("satteriPlugin", () => {
 			defaults: undefined,
 			includePaths: [],
 		});
-		expect((result as Html).value).toMatch(
-			/^<img data-lilypond-image src="\/_lilypond\/[0-9a-f]+\.score\.png" alt="">$/,
+		expect((result as Html).value).toBe(
+			'<img data-lilypond-image src="/_lilypond/score.png" alt="">',
 		);
 	});
 
@@ -222,6 +209,9 @@ describe("satteriPlugin", () => {
 			defaults: { resolution: 300 },
 			includePaths: [],
 		});
+		expect(mockEmitLilypondAsset).toHaveBeenCalledWith(
+			expect.objectContaining({ resolution: 300 }),
+		);
 	});
 
 	it("renders cropped by default (defaults.crop unset)", async () => {
@@ -252,13 +242,12 @@ describe("satteriPlugin", () => {
 	});
 
 	describe("multi-page output", () => {
-		it("wraps multiple pages in an <ol><li> and prunes every page's filename", async () => {
+		it("wraps multiple pages in an <ol><li>, one per emitted page", async () => {
 			mockRender.mockResolvedValue([
 				Buffer.from("page1"),
 				Buffer.from("page2"),
 			]);
-			const pruneStaleAssets = vi.fn();
-			const plugin = satteriPlugin({ ...BASE_OPTIONS, pruneStaleAssets });
+			const plugin = satteriPlugin(BASE_OPTIONS);
 			const node: Code = {
 				type: "code",
 				lang: "lilypond",
@@ -275,13 +264,6 @@ describe("satteriPlugin", () => {
 			expect(html.type).toBe("html");
 			expect(html.value).toMatch(/^<ol data-lilypond-group>/);
 			expect(html.value.match(/<li>/g)).toHaveLength(2);
-
-			expect(pruneStaleAssets).toHaveBeenCalledTimes(1);
-			const [, fileNames] = pruneStaleAssets.mock.calls[0] as [
-				string,
-				string[],
-			];
-			expect(fileNames).toHaveLength(2);
 		});
 	});
 
@@ -341,10 +323,9 @@ describe("satteriPlugin", () => {
 		});
 	});
 
-	describe("pruning stale assets", () => {
-		it("prunes keyed by fileURL and the block's position among siblings", async () => {
-			const pruneStaleAssets = vi.fn();
-			const plugin = satteriPlugin({ ...BASE_OPTIONS, pruneStaleAssets });
+	describe("title derivation from ctx.fileURL", () => {
+		it("derives the asset title from the source file's basename", async () => {
+			const plugin = satteriPlugin(BASE_OPTIONS);
 			const node: Code = {
 				type: "code",
 				lang: "lilypond",
@@ -352,33 +333,14 @@ describe("satteriPlugin", () => {
 			};
 			const ctx = {
 				fileURL: new URL("file:///project/docs/syntax.md"),
-				indexOf: vi.fn().mockReturnValue(2),
+				indexOf: vi.fn().mockReturnValue(0),
 			};
 
 			await plugin.code?.(node, ctx as never);
 
-			expect(pruneStaleAssets).toHaveBeenCalledTimes(1);
-			const [sourceKey, fileNames] = pruneStaleAssets.mock.calls[0] as [
-				string,
-				string[],
-			];
-			expect(sourceKey).toBe("file:///project/docs/syntax.md#2");
-			expect(fileNames).toHaveLength(1);
-			expect(fileNames[0]).toMatch(/^[0-9a-f]+\.syntax\.svg$/);
-		});
-
-		it("skips pruning when fileURL is unavailable", async () => {
-			const pruneStaleAssets = vi.fn();
-			const plugin = satteriPlugin({ ...BASE_OPTIONS, pruneStaleAssets });
-			const node: Code = {
-				type: "code",
-				lang: "lilypond",
-				value: "\\score { }",
-			};
-
-			await plugin.code?.(node, {} as never);
-
-			expect(pruneStaleAssets).not.toHaveBeenCalled();
+			expect(mockEmitLilypondAsset).toHaveBeenCalledWith(
+				expect.objectContaining({ title: "syntax" }),
+			);
 		});
 	});
 });
