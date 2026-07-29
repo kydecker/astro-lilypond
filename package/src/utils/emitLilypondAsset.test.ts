@@ -209,7 +209,7 @@ describe("emitLilypondAsset", () => {
 					sizeScale: 1,
 					render: vi.fn(),
 				}),
-			).rejects.toThrow(/lilypond\(\).*integrations.*astro\.config/s);
+			).rejects.toThrow(/lilypond\(\).*Astro config/s);
 			expect(emitAsset).not.toHaveBeenCalled();
 		});
 	});
