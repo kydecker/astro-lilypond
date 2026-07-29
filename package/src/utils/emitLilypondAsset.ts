@@ -1,7 +1,7 @@
 import { emitAsset } from "astro-emit-asset/emit";
+import type { LilypondPage } from "../index.js";
 import type { Format } from "../render.js";
 import { imageDimensionsFor } from "./imageDimensions.js";
-import type { LilypondPage } from "./lilypondPage.js";
 
 export interface EmitLilypondAssetOptions {
 	/**

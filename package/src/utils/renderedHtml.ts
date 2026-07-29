@@ -1,5 +1,5 @@
+import type { LilypondPage } from "../index.js";
 import { escapeHtmlAttribute } from "./escapeHtmlAttribute.js";
-import type { LilypondPage } from "./lilypondPage.js";
 
 function imgTag(page: LilypondPage, escapedAlt: string): string {
 	const size =

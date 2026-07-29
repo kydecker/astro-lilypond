@@ -9,7 +9,6 @@ export type { ImageDimensions } from "./imageDimensions.js";
 export { imageDimensionsFor } from "./imageDimensions.js";
 export { includePathsFor } from "./includePathsFor.js";
 export { isLilypondLang } from "./isLilypondLang.js";
-export type { LilypondPage } from "./lilypondPage.js";
 export {
 	parseLyImportQuery,
 	RECOGNIZED_QUERY_PARAMS,
