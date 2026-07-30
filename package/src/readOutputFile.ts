@@ -24,9 +24,7 @@ function byPageNumber(a: RegExpMatchArray, b: RegExpMatchArray): number {
 
 /**
  * Multi-page naming convention per format: SVG uses `<base>-1.<ext>`; PNG
- * uses `<base>-page1.<ext>`. `pdf` is listed for type completeness only — a
- * single-book score always renders to one `<base>.pdf`, caught by the
- * `entries.includes(...)` branch above before this table is consulted.
+ * uses `<base>-page1.<ext>`. `pdf` always renders to one `<base>.pdf`.
  */
 const PAGE_NUMBER_INFIX: Record<Format, string> = {
 	svg: "-",
