@@ -8,14 +8,6 @@ export interface EmitLilypondPdfAssetOptions {
 	render: () => Promise<Buffer[]>;
 }
 
-/**
- * Emits a single downloadable PDF asset for a score. Unlike
- * `emitLilypondAsset()`, a PDF isn't embedded as an `<img>`, so there's no
- * width/height meta to compute — just a `src` URL.
- *
- * A `.ly` file containing multiple `\book`s (rare) would render to more than
- * one PDF file; only the first is surfaced here.
- */
 export async function emitLilypondPdfAsset(
 	options: EmitLilypondPdfAssetOptions,
 ): Promise<LilypondPdfResult> {
