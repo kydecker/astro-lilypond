@@ -5,7 +5,7 @@ description: Options accepted by lilypondLoader() and the shape of each entry it
 
 `lilypondLoader()`, imported from `astro-lilypond/loader`, accepts the following options.
 
-## Options
+## `lilypondLoader()` Options
 
 ### `base`
 
@@ -51,24 +51,18 @@ Same as the integration's [`autoInstall`](/reference/configuration/#autoinstall)
 
 ## `LilypondCollectionEntry` type
 
-Each collection entry's `data` **is** a `LilypondScore` — the exact same lazy handle a plain `.ly` import gives you, header metadata included. Nothing is rendered until you call `render()` on it.
-
 ```ts
 interface LilypondCollectionEntry {
-  // Lazy handle fields — pass entry.data directly to render()
   source: string;
   alt: string;
   sourceName?: string;
   includePaths: string[];
   assetTitle: string;
-
-  // Fields parsed from the file's \header block(s) — see LilypondMetadata
-  // in the render() reference. Same shape a plain .ly import's meta has.
   meta: LilypondMetadata;
 }
 ```
 
-Call [`render()`](/reference/render/) on `entry.data`, exactly as you would a plain `.ly` import:
+Each collection entry's `data` is a `LilypondScore`, and can be passed directly to [`render()`](/reference/render/):
 
 ```astro {6} title="MyScore.astro"
 ---
@@ -82,5 +76,3 @@ const { Score, meta } = await render(entry.data);
 <h3>{meta.title}</h3>
 <Score />
 ```
-
-See [rendering a PDF download](/guides/collections/#rendering-a-pdf-download) for using `pdf: true` with a collection entry.

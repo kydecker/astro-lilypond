@@ -68,7 +68,7 @@ When cropped, margins are removed and the page is cropped to fit the rendered st
 - `true` crops everywhere, including any `render()` call that omits `crop`.
 - `false` never crops by default.
 
-A `render()` call can always override this with an explicit `crop: true`/`crop: false` — see the [component guide](/guides/component/#cropping).
+A `render()` call can always override this with an explicit `crop: true`/`crop: false` — see the [rendering guide](/guides/rendering/#cropping).
 
 #### `defaults.cropScale`
 
@@ -124,7 +124,7 @@ Information about the latest releases can be found on the [LilyPond news](https:
 **Type:** `"svg" | "png"`  
 **Default:** `"svg"`
 
-The output format used by [Markdown](/guides/markdown/) fences. Does not affect `.ly`/`.ily` imports or [`lilypondLoader()`](/guides/collections/) entries, which are format-agnostic until a [`render()`](/reference/render/) call picks a format (including `"pdf"`, for a downloadable rendering — see [PDF download](/guides/component/#pdf-download)).
+The output format used by [Markdown](/guides/markdown/) fences. Does not affect `.ly`/`.ily` imports or [`lilypondLoader()`](/guides/collections/) entries, which are format-agnostic until a [`render()`](/reference/render/) call picks a format.
 
 ```js {3}
 // astro.config.mjs

@@ -71,7 +71,7 @@ export default defineConfig({
 					label: "Guides",
 					items: [
 						"guides/markdown",
-						"guides/component",
+						"guides/rendering",
 						"guides/collections",
 						"guides/styling",
 						"guides/deployment",
@@ -107,8 +107,9 @@ export default defineConfig({
 		}),
 	],
 	redirects: {
-		"/usage": "/guides/component",
-		"/component": "/guides/component",
+		"/usage": "/guides/rendering",
+		"/component": "/guides/rendering",
+		"/guides/component": "/guides/rendering",
 		"/markdown": "/guides/markdown",
 		"/styling": "/guides/styling",
 		"/lilypond-syntax": "/resources/syntax",

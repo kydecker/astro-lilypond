@@ -3,7 +3,9 @@ title: Render Reference
 description: Signature and types for the exported render() function, and the props Score accepts.
 ---
 
-`render()`, imported from `astro-lilypond`, turns a `LilypondScore` handle into a renderable `<Score />` component, optionally alongside a downloadable PDF (`pdf`).
+`render()`, imported from `astro-lilypond`, turns LilyPond code into a renderable `<Score />` component.
+
+## `render()`
 
 ```ts
 import { render } from "astro-lilypond";
@@ -14,41 +16,63 @@ function render(
 ): Promise<RenderResult>;
 ```
 
-## `render()` Parameters
+:::caution
+Only call `render()` from statically-prerendered pages/components. On an on-demand/SSR route that isn't marked `export const prerender = true`, it would shell out to the `lilypond` binary on every request.
+:::
 
-### `score`
+### Parameters
+
+#### `score`
 
 **Type:** `LilypondScore`
 
-A lazy handle carrying a score's source text and derived metadata, but nothing rendered yet. You get one from:
+The score's source text and derived metadata. You get one from:
 
-- Importing a `.ly`/`.ily`/`.lilypond` file directly — the default export is a `LilypondScore`.
-- A [`lilypondLoader()`](/reference/collections/) content-collection entry — `entry.data` **is** a `LilypondScore`, so `render(entry.data)` works exactly like a plain `.ly` import.
+- Importing a `.ly`/`.ily`/`.lilypond` file directly.
+- A [`lilypondLoader()`](/reference/collections/) content-collection entry; `entry.data` is a `LilypondScore`.
 
-### `options`
+#### `options`
 
-#### `options.format`
+**Type:** `RenderOptions`
+
+##### `options.format`
 
 **Type:** `"svg" | "png"`  
 **Default:** `"svg"`
 
 Output format for `Score`.
 
-#### `options.crop`
+##### `options.crop`
 
 **Type:** `boolean`  
 **Default:** resolved from [`defaults.crop`](/reference/configuration/#defaultscrop)
 
-Crops `Score` to a single tightly-fit image instead of full pages. Defaults to `defaults.crop` resolved for component usage when omitted — see the [component guide](/guides/component/#cropping).
+Crops `Score` to a single tightly-fit image instead of full pages. Defaults to `defaults.crop` resolved for component usage when omitted — see the [rendering guide](/guides/rendering/#cropping).
 
-#### `options.pdf`
+##### `options.pdf`
 
 **Type:** `boolean`  
 **Default:** `false`
 
-When `true`, also renders a downloadable PDF of the same score, returned as `pdf`. Always rendered as full, uncropped pages — a cropped/merged image isn't a sensible printable document — so `crop` has no effect on it.
+When `true`, also renders a downloadable PDF of the same score, returned as `pdf`.
 
-## Return value
+```astro title="ScoreWithPdf.astro"
+---
+import { render } from "astro-lilypond";
+import bachInvention from "./bach-invention.ly";
+
+const { Score, pdf, meta } = await render(
+  bachInvention,
+  { crop: true, pdf: true }
+);
+---
+
+<h3>{meta.title}</h3>
+<Score />
+<a href={pdf.src} download>Download PDF</a>
+```
+
+### Returns
 
 **Type:** `RenderResult`
 
@@ -66,30 +90,60 @@ interface LilypondPdfResult {
 }
 ```
 
-`raw` is the exact source text rendered — handy for displaying the score's source alongside `<Score />` without a separate `?raw` import.
+See [`<Score /> props`](#score--props) below for what `Score` accepts, and [`LilypondMetadata`](#lilypondmetadata) for the shape of `meta`.
 
+You can rename `Score` however you like when destructuring:
 
-```astro title="ScoreWithDownload.astro"
+```astro
 ---
 import { render } from "astro-lilypond";
 import bachInvention from "./bach-invention.ly";
 
-const { Score, pdf, meta } = await render(
-  bachInvention,
-  { crop: true, pdf: true }
-);
+const { Score: BachInvention } = await render(bachInvention);
 ---
 
-<h3>{meta.title}</h3>
-<Score />
-<a href={pdf.src} download>Download PDF</a>
+<BachInvention />
 ```
 
-## `LilypondMetadata`
+## `renderAll()`
 
-**Type:** `LilypondMetadata`
+The same as `render()`, but for an array of scores.
 
-Fields parsed from the score's `\header` block(s).
+```ts
+import { renderAll } from "astro-lilypond";
+
+function renderAll(
+  scores: LilypondScore[],
+  options?: RenderOptions,
+): Promise<RenderResult[]>;
+```
+
+It only takes plain `LilypondScore` values, not content collection entries, so pull `.data` out yourself first:
+
+```astro title="MyScores.astro"
+---
+import { getCollection } from "astro:content";
+import { renderAll } from "astro-lilypond";
+
+const scores = await getCollection("scores");
+const rendered = await renderAll(scores.map((score) => score.data));
+---
+
+<ul>
+  {rendered.map(({ Score, meta }) => (
+    <li>
+      <h3>{meta.title}</h3>
+      <Score />
+    </li>
+  ))}
+</ul>
+```
+
+See the [rendering guide](/guides/rendering/) for more usage patterns. See the [collections guide](/guides/collections/#rendering-a-pdf-download) for using `render()` with content collections.
+
+## `LilypondMetadata` type
+
+Fields parsed from the score's `\header` block(s) — the shape of `meta` on both `render()` and `renderAll()` results.
 
 ```ts
 interface LilypondMetadata {
@@ -112,68 +166,15 @@ interface LilypondMetadata {
 }
 ```
 
-You can rename `Score` however you like when destructuring:
-
-```astro
----
-import { render } from "astro-lilypond";
-import bachInvention from "./bach-invention.ly";
-
-const { Score: BachInvention } = await render(bachInvention);
----
-
-<BachInvention />
-```
-
-See the [component guide](/guides/component/) for more usage patterns (cropping, PDF downloads, page counts, alt text) and the [collections guide](/guides/collections/#rendering-a-pdf-download) for using `render()` with content-collection entries — the same call works on either input.
-
-:::caution
-Only call `render()` from statically-prerendered pages/components. On an on-demand/SSR route that isn't marked `export const prerender = true`, it would shell out to the `lilypond` binary on every request.
-:::
-
-## `renderAll()`
-
-Renders many scores at once — every score gets the same `options`, run concurrently, with results returned in the same order as the input:
-
-```ts
-import { renderAll } from "astro-lilypond";
-
-function renderAll(
-  scores: LilypondScore[],
-  options?: RenderOptions,
-): Promise<RenderResult[]>;
-```
-
-It only takes plain `LilypondScore` values, not content-collection entries, so pull `.data` out yourself first — the same step you'd need before a single `render()` call:
-
-```astro title="MyScores.astro"
----
-import { getCollection } from "astro:content";
-import { renderAll } from "astro-lilypond";
-
-const scores = await getCollection("scores");
-const rendered = await renderAll(scores.map((score) => score.data));
----
-
-<ul>
-  {rendered.map(({ Score, meta }) => (
-    <li>
-      <h3>{meta.title}</h3>
-      <Score />
-    </li>
-  ))}
-</ul>
-```
-
 ## `<Score />` props
 
-`Score` forwards any props you pass to the underlying `<LilyPond>` component it wraps.
+`Score` accepts the following props:
 
 ### `pageLimit`
 
 **Type:** `number`
 
-Render only the first `n` pages. If omitted, all pages render. See [limiting rendered pages](/guides/component/#limiting-rendered-pages).
+Render only the first `n` pages. If omitted, all pages render. See [limiting rendered pages](/guides/rendering/#limiting-rendered-pages).
 
 ### `class`
 
@@ -191,4 +192,4 @@ Inline styles applied directly to the rendered element.
 
 **Type:** `string`
 
-Overrides the automatically-derived alt text. Takes precedence over any `title`/`composer` found in the `.ly` file's `\header` block. See also: [alt text](/guides/component/#alt-text).
+Overrides the automatically-derived alt text. Takes precedence over any `title`/`composer` found in the `.ly` file's `\header` block. See also: [alt text](/guides/rendering/#alt-text).

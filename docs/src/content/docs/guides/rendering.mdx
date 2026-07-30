@@ -1,6 +1,6 @@
 ---
-title: Component Usage
-description: How to render LilyPond notation using the Astro component.
+title: Rendering Scores
+description: How to render LilyPond notation using the render() function.
 ---
 
 import { Code } from "@astrojs/starlight/components";
@@ -19,9 +19,28 @@ When a score renders to more than one page, as above, the pages are wrapped in a
 Only call `render()` from prerendered pages and components. `astro-lilypond` doesn't currently support on-demand rendering.
 :::
 
+## Displaying metadata
+
+`render()`'s `meta` carries the fields parsed from the score's `\header` block, such as `title`, `composer`, and `opus`.
+
+```astro title="ScoreWithTitle.astro" {5,8-9}
+---
+import { render } from "astro-lilypond";
+import bachInvention from "./bach-invention.ly";
+
+const { Score, meta } = await render(bachInvention);
+---
+
+<h3>{meta.title}</h3>
+<p>by {meta.composer}</p>
+<Score />
+```
+
+For a full list of metadata fields, see the [render reference](/reference/render/#lilypondmetadata-type).
+
 ## Cropping
 
-By default, `render()` renders a score as a full page (or multiple pages), preserving page sizes and margins set via the imported LilyPond file.
+By default, `render()` outputs scores as full pages, preserving page sizes and margins set via the imported LilyPond file.
 
 If you'd prefer _not_ to use full pages, and instead crop all content to a single, potentially large image, pass `crop: true`:
 
@@ -39,7 +58,11 @@ const { Score } = await render(
 <Score />
 ```
 
-Update your configuration to set [`defaults.crop`](/reference/configuration/#defaultscrop) to `true` if you'd like every `render()` call that omits `crop` to be cropped by default. An explicit `crop: false` always overrides that default:
+### Changing the default
+
+If you'd like every `render()` call to be cropped by default, update your configuration to set [`defaults.crop`](/reference/configuration/#defaultscrop) to `true`.
+
+An explicit `crop: false` will override that default:
 
 ```astro title="UncroppedScore.astro" {9}
 ---
@@ -57,9 +80,9 @@ const { Score } = await render(
 <Score />
 ```
 
-## PDF download
+## PDFs
 
-Pass `pdf: true` to also get a downloadable PDF rendering of the same score, returned as `pdf` — LilyPond always renders it as full, uncropped pages, since a cropped/merged image isn't a sensible printable document:
+Pass `pdf: true` to also get a downloadable PDF rendering of the same score, returned as `pdf`:
 
 ```astro title="ScoreWithDownload.astro" {5-8,12}
 ---
@@ -108,6 +131,25 @@ const { Score, pageCount } = await render(bachInvention);
 <Score />
 <p>{pageCount} {pageCount === 1 ? "page" : "pages"}</p>
 ```
+
+## Displaying the source
+
+`render()`'s `raw` returns your LilyPond source code as a string. Use it wherever you need to show the text itself, rather than the rendered image.
+
+```astro title="ScoreWithSource.astro" {6,10}
+---
+import { render } from "astro-lilypond";
+import { Code } from "@astrojs/starlight/components";
+import bachInvention from "./bach-invention.ly";
+
+const { Score, raw } = await render(bachInvention);
+---
+
+<Score />
+<Code code={raw} lang="lilypond" title="bach-invention.ly" />
+```
+
+See the [`render reference`](/reference/render/#lilypondmetadata) for the full list of standard fields.
 
 ## Alt text
 

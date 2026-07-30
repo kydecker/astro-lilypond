@@ -47,3 +47,5 @@ const { Score, pdf } = await render(bachInvention, { pdf: true });
 <Score />
 <a href={pdf.src} download>Download PDF</a>
 ```
+
+Metadata is also exposed for each score via the `meta`
