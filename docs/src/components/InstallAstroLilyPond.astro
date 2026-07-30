@@ -27,7 +27,7 @@ const manualIntegration = String`
 <details>
   <summary>Not working?</summary>
 
-  <p>If <code>astro add</code> can't install the package and update your config automatically, do it manually:</p>
+  <p>If <code>astro add</code> can't install the package and update your config automatically, manually install the package...</p>
 
   <Tabs syncKey="packageManager">
     <TabItem label="pnpm">
@@ -40,6 +40,8 @@ const manualIntegration = String`
       <Code lang="sh" code="yarn add astro-lilypond" />
     </TabItem>
   </Tabs>
+
+  <p>...then add the integration to your Astro config:</p>
 
   <Code lang="js" useDiffSyntax code={manualIntegration} />
 </details>
