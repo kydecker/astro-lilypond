@@ -49,7 +49,7 @@ vi.mock("fs/promises", async (importOriginal) => {
 
 import { execFile } from "node:child_process";
 import { readdir, readFile } from "node:fs/promises";
-import { defaultOptions, render } from "../render.js";
+import { defaultOptions, render, resolveCrop } from "../render.js";
 
 const mockExecFile = vi.mocked(execFile);
 const mockReaddir = vi.mocked(readdir) as unknown as MockedFunction<
@@ -285,5 +285,18 @@ describe("render", () => {
 		expect(result[0].toString()).toBe("fake-png-page1");
 		const [path] = mockReadFile.mock.calls[0] as unknown as [string];
 		expect(String(path)).toMatch(/-page1\.png$/);
+	});
+});
+
+describe("resolveCrop", () => {
+	it.each([
+		["markdown", true, true],
+		["markdown", false, false],
+		["markdown", "markdown-only", true],
+		["component", true, true],
+		["component", false, false],
+		["component", "markdown-only", false],
+	] as const)("resolves %s + %s to %s", (context, cropSetting, expected) => {
+		expect(resolveCrop(cropSetting, context)).toBe(expected);
 	});
 });

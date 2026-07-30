@@ -416,6 +416,58 @@ describe("lilypond integration", () => {
 		vi.doUnmock("@astrojs/markdown-remark");
 	});
 
+	it('throws when the processor reports name "satteri" but fails the isSatteriProcessor check', async () => {
+		const updateConfig = vi.fn();
+		const logger = { info: vi.fn(), warn: vi.fn() };
+
+		vi.doMock("@astrojs/markdown-satteri", () => ({
+			satteri: vi.fn((opts: unknown) => ({ name: "satteri", options: opts })),
+			isSatteriProcessor: vi.fn(() => false),
+		}));
+
+		const config = baseConfig({
+			markdown: { processor: { name: "satteri", options: {} } },
+		});
+
+		const integration = lilypond();
+		await expect(
+			integration.hooks["astro:config:setup"]?.({
+				command: "build",
+				config,
+				updateConfig,
+				logger,
+			} as never),
+		).rejects.toThrow("failed the isSatteriProcessor check");
+
+		vi.doUnmock("@astrojs/markdown-satteri");
+	});
+
+	it('throws when the processor reports name "unified" but fails the isUnifiedProcessor check', async () => {
+		const updateConfig = vi.fn();
+		const logger = { info: vi.fn(), warn: vi.fn() };
+
+		vi.doMock("@astrojs/markdown-remark", () => ({
+			unified: vi.fn((opts: unknown) => ({ name: "unified", options: opts })),
+			isUnifiedProcessor: vi.fn(() => false),
+		}));
+
+		const config = baseConfig({
+			markdown: { processor: { name: "unified", options: {} } },
+		});
+
+		const integration = lilypond();
+		await expect(
+			integration.hooks["astro:config:setup"]?.({
+				command: "build",
+				config,
+				updateConfig,
+				logger,
+			} as never),
+		).rejects.toThrow("failed the isUnifiedProcessor check");
+
+		vi.doUnmock("@astrojs/markdown-remark");
+	});
+
 	it("throws when no processor-based config is present", async () => {
 		const updateConfig = vi.fn();
 		const logger = { info: vi.fn(), warn: vi.fn() };

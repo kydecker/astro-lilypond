@@ -255,4 +255,45 @@ describe("downloadLilypond", () => {
 		);
 		expect(result).toMatch(/bin[/\\]lilypond$/);
 	});
+
+	it("reuses a concurrently-completed install when rename() loses the race, instead of throwing", async () => {
+		let accessCalls = 0;
+		mockAccess.mockImplementation(async () => {
+			accessCalls += 1;
+			// 1st check: not installed yet, so the download proceeds. 2nd check
+			// (just before rm+rename): still not installed, so rename is
+			// attempted and fails below. 3rd check (inside the catch): the
+			// concurrent process has since finished installing.
+			if (accessCalls >= 3) return undefined;
+			throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });
+		});
+		mockRename.mockRejectedValueOnce(new Error("EEXIST: already exists"));
+		const fetchImpl = vi.fn().mockResolvedValue(fakeResponse({}));
+		const log = vi.fn();
+		const result = await downloadLilypond({
+			version: "2.26.0",
+			cacheDir: "/cache",
+			fetchImpl,
+			log,
+		});
+		expect(mockRename).toHaveBeenCalled();
+		expect(log).toHaveBeenCalledWith(
+			expect.stringContaining("installed concurrently"),
+		);
+		expect(result).toMatch(/bin[/\\]lilypond$/);
+	});
+
+	it("rethrows the original error when rename() fails and no concurrent install completed", async () => {
+		let accessCalls = 0;
+		mockAccess.mockImplementation(async () => {
+			accessCalls += 1;
+			throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });
+		});
+		mockRename.mockRejectedValueOnce(new Error("EACCES: permission denied"));
+		const fetchImpl = vi.fn().mockResolvedValue(fakeResponse({}));
+		await expect(
+			downloadLilypond({ version: "2.26.0", cacheDir: "/cache", fetchImpl }),
+		).rejects.toThrow("EACCES: permission denied");
+		expect(accessCalls).toBeGreaterThanOrEqual(3);
+	});
 });
