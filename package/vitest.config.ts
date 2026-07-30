@@ -1,6 +1,6 @@
-import { getViteConfig } from "astro/config";
+import { coverageConfigDefaults, defineConfig } from "vitest/config";
 
-export default getViteConfig({
+export default defineConfig({
 	test: {
 		projects: [
 			{
@@ -21,5 +21,17 @@ export default getViteConfig({
 				},
 			},
 		],
+		coverage: {
+			reporter: ["text", "json-summary", "json"],
+			reportOnFailure: true,
+			include: ["src/**/*.ts"],
+			exclude: [...coverageConfigDefaults.exclude, "src/**/__tests__/**"],
+			thresholds: {
+				lines: 90,
+				statements: 90,
+				functions: 90,
+				branches: 90,
+			},
+		},
 	},
 });

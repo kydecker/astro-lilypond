@@ -1,0 +1,99 @@
+name: Coverage
+
+on:
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - ".changeset/**"
+      - ".vscode/**"
+      - "docs/**"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # Test coverage for the branch under review.
+  test-coverage-branch:
+    name: Test Coverage
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6.0.9
+        with:
+          run_install: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v7.0.0
+        with:
+          node-version: "24.x"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Test coverage
+        run: pnpm --filter astro-lilypond test:coverage
+
+      - name: Upload coverage
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-branch
+          path: package/coverage
+          overwrite: true
+
+  report-coverage:
+    needs: [test-coverage-branch]
+    name: Report Coverage
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Download coverage (branch)
+        uses: actions/download-artifact@v8
+        with:
+          name: coverage-branch
+          path: coverage
+
+      - name: Restore coverage (main)
+        id: download-main
+        uses: actions/cache/restore@v6.1.0
+        with:
+          path: package/coverage
+          key: coverage-main-${{ github.sha }}
+          restore-keys: coverage-main-
+
+      - name: Move coverage (main)
+        if: steps.download-main.outputs.cache-matched-key != ''
+        run: mv package/coverage coverage-main
+
+      - name: Report coverage and comparison
+        if: always() && hashFiles('coverage-main/coverage-summary.json') != ''
+        uses: davelosert/vitest-coverage-report-action@v2.12.2
+        with:
+          vite-config-path: package/vitest.config.ts
+          json-summary-compare-path: coverage-main/coverage-summary.json
+
+        # Fallback to report branch coverage without comparison
+        # if coverage from main is not available
+      - name: Report coverage
+        if: always() && hashFiles('coverage-main/coverage-summary.json') == ''
+        uses: davelosert/vitest-coverage-report-action@v2.12.2
+        with:
+          vite-config-path: package/vitest.config.ts
