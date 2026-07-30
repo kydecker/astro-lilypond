@@ -103,18 +103,10 @@ export interface LilypondPdfResult {
 }
 
 export interface RenderResult {
-	/**
-	 * A renderable component — use it directly as `<Score />`, forwarding
-	 * `class`/`style`/`pageLimit`/`alt` props. Mirrors Astro's own `Content`
-	 * component from `render()` on a Markdown/content-collection entry.
-	 */
 	Score: AstroComponentFactory;
-	/** How many pages `Score` renders — read this instead of reaching inside the component. */
 	pageCount: number;
 	pdf?: LilypondPdfResult;
-	/** The rendered score's `meta`, passed straight through from the input `LilypondScore`. */
 	meta: LilypondMetadata;
-	/** The exact source text rendered. */
 	raw: string;
 }
 
@@ -141,16 +133,8 @@ function createScoreComponent(
 }
 
 /**
- * Renders a `LilypondScore` handle (from a `.ly`/`.ily`/`.lilypond` import,
- * or a `lilypondLoader()` entry) to a renderable `<Score />` component,
- * optionally alongside a downloadable PDF (`pdf`). Both are independent
- * `lilypond` invocations — LilyPond's SVG backend can't be combined with
- * other formats in a single run — so they're rendered concurrently when
- * both are requested.
- *
- * Only call this from statically-prerendered pages/components. On an
- * on-demand SSR route it would shell out to the `lilypond` binary on every
- * request.
+ * Renders a `LilypondScore` (from a `.ly`/`.ily`/`.lilypond` import,
+ * or a `lilypondLoader()` entry) to a renderable `<Score />` component.
  */
 export async function render(
 	score: LilypondScore,
@@ -213,11 +197,6 @@ export async function render(
 	return { Score, pageCount, pdf, meta: score.meta, raw: score.source };
 }
 
-/**
- * Renders many scores concurrently, e.g. every entry in a `getCollection()`
- * result. Only takes plain `LilypondScore` values, not content-collection
- * entries — pass `entry.data` yourself, same as a single `render()` call.
- */
 export async function renderAll(
 	scores: LilypondScore[],
 	options: RenderOptions = {},
@@ -228,30 +207,24 @@ export async function renderAll(
 export interface LilypondOptions extends PluginOptions {
 	/**
 	 * Output format used by Markdown fences and `lilypondLoader()` entries.
-	 * Does not affect plain `.ly`/`.ily` imports, which are format-agnostic
-	 * until a `render()` call picks a format per request.
 	 * @default "svg"
 	 */
 	format?: "svg" | "png";
 
 	/**
-	 * Defaults passed to each score.
-	 * Defaults can still be overridden by individual `.ly` files.
+	 * Defaults passed to each score; can be overridden at render time.
 	 */
 	defaults?: LilypondDefaults;
 
 	/**
-	 * Milliseconds to wait for a single `lilypond` invocation before
-	 * aborting it.
+	 * Ms to wait for a single `lilypond` invocation before aborting.
 	 * @default 60000
 	 */
 	timeout?: number;
 
 	/**
 	 * When no `lilypond` binary is found on `PATH`, download a matching
-	 * prebuilt release into a local cache and use that instead. Set to
-	 * `false` to only ever use a `PATH` install, or pass an object to pick
-	 * which version gets downloaded.
+	 * prebuilt release into a local cache and use that instead.
 	 * @default true
 	 */
 	autoInstall?: boolean | AutoInstallOptions;
@@ -262,9 +235,6 @@ function lyFilePlugin(options: PluginOptions): Plugin {
 		name: "vite-plugin-astro-lilypond-ly",
 		enforce: "pre",
 		async transform(source, id) {
-			// No query params are recognized on `.ly`-family imports anymore —
-			// fall through to Vite's own handling (e.g. `?raw`, `?url`).
-			if (id.includes("?")) return;
 			if (!LY_EXTENSIONS.some((ext) => id.endsWith(ext))) return;
 
 			const { version } = resolveDefaults(options.defaults);

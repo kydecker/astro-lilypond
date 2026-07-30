@@ -1,24 +1,14 @@
+import { addAttribute } from "astro/runtime/server/index.js";
 import type { LilypondPage } from "../index.js";
-import { escapeHtmlAttribute } from "./escapeHtmlAttribute.js";
 
-function sizeAttrs(page: LilypondPage): string {
-	return page.width !== undefined && page.height !== undefined
-		? ` width="${page.width}" height="${page.height}"`
-		: "";
-}
-
-function attr(name: string, value: string | undefined): string {
-	return value === undefined ? "" : ` ${name}="${escapeHtmlAttribute(value)}"`;
-}
-
-function imgTag(page: LilypondPage, escapedAlt: string): string {
-	return `<img data-lilypond-image src="${page.src}"${sizeAttrs(page)} alt="${escapedAlt}">`;
+function imgTag(page: LilypondPage, alt: string): string {
+	return `<img data-lilypond-image${addAttribute(page.src, "src")}${addAttribute(page.width, "width")}${addAttribute(page.height, "height")}${addAttribute(alt, "alt")}>`;
 }
 
 export interface RenderedHtmlOptions {
-	/** Applied to the single `<img>`, or the wrapping `<ol>` for a multi-page group — never to individual `<li><img>`s. */
+	/** Class applied to the outer `<img>` or `<ol>` tag. */
 	class?: string;
-	/** Same placement as `class` — the single `<img>`, or the wrapping `<ol>`. */
+	/** Inline styles applied to the outer `<img>` or `<ol>`. */
 	style?: string;
 	/** Render only the first `n` pages. */
 	pageLimit?: number;
@@ -34,16 +24,15 @@ export function renderedHtml(
 		pageLimit === undefined ? pages : pages.slice(0, pageLimit);
 	if (limitedPages.length === 0) return "";
 
-	const escapedAlt = escapeHtmlAttribute(alt);
-	const classAttr = attr("class", className);
-	const styleAttr = attr("style", style);
+	const classAttr = addAttribute(className, "class");
+	const styleAttr = addAttribute(style, "style");
 
 	if (limitedPages.length === 1) {
 		const page = limitedPages[0];
-		return `<img data-lilypond-image${classAttr} src="${page.src}"${sizeAttrs(page)} alt="${escapedAlt}"${styleAttr}>`;
+		return `<img data-lilypond-image${classAttr}${addAttribute(page.src, "src")}${addAttribute(page.width, "width")}${addAttribute(page.height, "height")}${addAttribute(alt, "alt")}${styleAttr}>`;
 	}
 
 	return `<ol data-lilypond-group${classAttr}${styleAttr}>${limitedPages
-		.map((page) => `<li>${imgTag(page, escapedAlt)}</li>`)
+		.map((page) => `<li>${imgTag(page, alt)}</li>`)
 		.join("")}</ol>`;
 }

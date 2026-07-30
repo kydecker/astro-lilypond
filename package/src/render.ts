@@ -14,12 +14,9 @@ export type Format = (typeof FORMATS)[number];
  * Controls whether rendered output is cropped tightly to the content
  * bounding box, or left as full, potentially multi-page, output.
  *
- * - `true` — crop everywhere: Markdown fences, and any `render()` request
- *   that doesn't explicitly pass its own `crop`.
- * - `false` — never crop by default (a `render()` request can still opt in
- *   with `crop: true`).
- * - `"markdown-only"` — crop Markdown fences, but leave `render()` requests
- *   uncropped by default unless the request passes `crop: true`.
+ * - `true` — crop everywhere
+ * - `false` — never crop by default
+ * - `"markdown-only"` — crop Markdown fences, but leave `render()` uncropped by default
  */
 export type CropSetting = boolean | "markdown-only";
 
@@ -39,7 +36,6 @@ export function resolveCrop(
 
 /**
  * Defaults passed to each score for rendering.
- * Individual instances can override.
  */
 export interface LilypondDefaults {
 	/**

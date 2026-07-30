@@ -74,7 +74,7 @@ describe("satteriPlugin", () => {
 		const html = result as Html;
 		expect(html.type).toBe("html");
 		expect(html.value).toBe(
-			'<img data-lilypond-image src="/_lilypond/score.svg" alt="">',
+			'<img data-lilypond-image src="/_lilypond/score.svg" alt>',
 		);
 	});
 
@@ -187,7 +187,7 @@ describe("satteriPlugin", () => {
 			includePaths: [],
 		});
 		expect((result as Html).value).toBe(
-			'<img data-lilypond-image src="/_lilypond/score.png" alt="">',
+			'<img data-lilypond-image src="/_lilypond/score.png" alt>',
 		);
 	});
 
@@ -306,7 +306,7 @@ describe("satteriPlugin", () => {
 
 			const result = await plugin.code?.(node, {} as never);
 
-			expect((result as Html).value).toContain('alt=""');
+			expect((result as Html).value).toContain(" alt>");
 		});
 
 		it("leaves alt empty when there's neither a header nor a meta override", async () => {
@@ -319,7 +319,7 @@ describe("satteriPlugin", () => {
 
 			const result = await plugin.code?.(node, {} as never);
 
-			expect((result as Html).value).toContain('alt=""');
+			expect((result as Html).value).toContain(" alt>");
 		});
 	});
 

@@ -92,7 +92,7 @@ describe("remarkLilypondPlugin", () => {
 		const html = tree.children[0] as Html;
 		expect(html.type).toBe("html");
 		expect(html.value).toBe(
-			'<img data-lilypond-image src="/_lilypond/test.svg" alt="">',
+			'<img data-lilypond-image src="/_lilypond/test.svg" alt>',
 		);
 	});
 
@@ -245,7 +245,7 @@ describe("remarkLilypondPlugin", () => {
 			sourceName: "test.md",
 		});
 		expect((tree.children[0] as Html).value).toBe(
-			'<img data-lilypond-image src="/_lilypond/test.png" alt="">',
+			'<img data-lilypond-image src="/_lilypond/test.png" alt>',
 		);
 	});
 
@@ -325,9 +325,9 @@ describe("remarkLilypondPlugin", () => {
 			expect(html.type).toBe("html");
 			expect(html.value).toMatch(/^<ol data-lilypond-group>/);
 			expect(html.value.match(/<li>/g)).toHaveLength(3);
-			expect(html.value).toMatch(/\/test\.svg" alt=""/);
-			expect(html.value).toMatch(/\/test-p2\.svg" alt=""/);
-			expect(html.value).toMatch(/\/test-p3\.svg" alt=""/);
+			expect(html.value).toMatch(/\/test\.svg" alt>/);
+			expect(html.value).toMatch(/\/test-p2\.svg" alt>/);
+			expect(html.value).toMatch(/\/test-p3\.svg" alt>/);
 		});
 	});
 
@@ -375,7 +375,7 @@ describe("remarkLilypondPlugin", () => {
 
 			await runPlugin(tree);
 
-			expect((tree.children[0] as Html).value).toContain('alt=""');
+			expect((tree.children[0] as Html).value).toContain(" alt>");
 		});
 
 		it("leaves alt empty when there's neither a header nor a meta override", async () => {
@@ -385,7 +385,7 @@ describe("remarkLilypondPlugin", () => {
 
 			await runPlugin(tree);
 
-			expect((tree.children[0] as Html).value).toContain('alt=""');
+			expect((tree.children[0] as Html).value).toContain(" alt>");
 		});
 
 		it("applies the same header-derived alt text to every image in a group", async () => {
