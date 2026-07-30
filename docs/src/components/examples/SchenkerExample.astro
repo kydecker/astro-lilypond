@@ -2,9 +2,8 @@
 import { render } from "astro-lilypond";
 import LilyPondExample from "#components/LilyPondExample.astro";
 import score from "./scores/bach-schenker.ly";
-import code from "./scores/bach-schenker.ly?raw";
 
-const { Score } = await render(score, { crop: true });
+const result = await render(score, { crop: true });
 ---
 
-<LilyPondExample Score={Score} code={code} title="bach-schenker.ly" />
+<LilyPondExample {...result} title="bach-schenker.ly" />

@@ -513,6 +513,11 @@ describe("render()", () => {
 		expect(meta).toEqual(SCORE.meta);
 	});
 
+	it("returns the score's source as raw, alongside Score", async () => {
+		const { raw } = await publicRender(SCORE);
+		expect(raw).toBe(SCORE.source);
+	});
+
 	it("returns pageCount alongside Score", async () => {
 		mockEmitLilypondAsset.mockResolvedValueOnce([
 			{ src: "/_astro/a.svg" },

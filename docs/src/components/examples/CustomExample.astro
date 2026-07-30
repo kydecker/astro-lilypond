@@ -2,13 +2,8 @@
 import { render } from "astro-lilypond";
 import LilyPondExample from "#components/LilyPondExample.astro";
 import score from "./scores/stockhausen-klavierstueckII.ly";
-import code from "./scores/stockhausen-klavierstueckII.ly?raw";
 
-const { Score } = await render(score, { crop: true });
+const result = await render(score, { crop: true });
 ---
 
-<LilyPondExample
-  Score={Score}
-  code={code}
-  title="stockhausen-klavierstueckII.ly"
-/>
+<LilyPondExample {...result} title="stockhausen-klavierstueckII.ly" />

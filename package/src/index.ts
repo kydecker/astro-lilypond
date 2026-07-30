@@ -124,6 +124,8 @@ export interface RenderResult {
 	pdf?: LilypondPdfResult;
 	/** The rendered score's `meta`, passed straight through from the input `LilypondScore`. */
 	meta: LilypondMetadata;
+	/** The exact source text rendered. */
+	raw: string;
 }
 
 interface ScoreProps {
@@ -218,7 +220,7 @@ export async function render(
 			: Promise.resolve(undefined),
 	]);
 
-	return { Score, pageCount, pdf, meta: score.meta };
+	return { Score, pageCount, pdf, meta: score.meta, raw: score.source };
 }
 
 /**

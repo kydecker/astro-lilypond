@@ -2,9 +2,8 @@
 import { render } from "astro-lilypond";
 import LilyPondExample from "#components/LilyPondExample.astro";
 import score from "./scores/aucun-snippet.ly";
-import code from "./scores/aucun-snippet.ly?raw";
 
-const { Score } = await render(score, { crop: true });
+const result = await render(score, { crop: true });
 ---
 
-<LilyPondExample Score={Score} code={code} title="aucun-snippet.ly" />
+<LilyPondExample {...result} title="aucun-snippet.ly" />

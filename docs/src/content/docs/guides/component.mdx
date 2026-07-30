@@ -76,8 +76,6 @@ const { Score, pdf } = await render(
 <a href={pdf.src} download>Download PDF</a>
 ```
 
-`Score` and `pdf` are independent `lilypond` invocations, run concurrently — LilyPond's SVG backend can't be combined with other formats in a single run.
-
 ## Limiting rendered pages
 
 By default, `<Score />` renders every page. To show only an excerpt — the first page as a preview, for example — pass a `pageLimit`:

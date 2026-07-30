@@ -58,12 +58,15 @@ interface RenderResult {
   pageCount: number;
   pdf?: LilypondPdfResult; // present only when options.pdf is true
   meta: LilypondMetadata;
+  raw: string;
 }
 
 interface LilypondPdfResult {
   src: string;
 }
 ```
+
+`raw` is the exact source text rendered — handy for displaying the score's source alongside `<Score />` without a separate `?raw` import.
 
 
 ```astro title="ScoreWithDownload.astro"
