@@ -85,6 +85,14 @@ describe("readOutputFile", () => {
 		expect(mockReadFile).toHaveBeenCalledTimes(1);
 	});
 
+	it("stringifies a non-Error rejection in the thrown message", async () => {
+		mockReadFile.mockRejectedValueOnce("disk full");
+
+		await expect(readOutputFile("/tmp/output", "svg", true)).rejects.toThrow(
+			"expected cropped output at /tmp/output.cropped.svg but it was not found: disk full",
+		);
+	});
+
 	it("reads <base>.<format> directly when crop is false and it's the only output", async () => {
 		mockReaddir.mockResolvedValue(["output.svg"]);
 		mockReadFile.mockResolvedValueOnce(Buffer.from("<svg>page</svg>"));

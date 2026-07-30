@@ -174,6 +174,24 @@ describe("downloadLilypond", () => {
 		expect(result).toMatch(/bin[/\\]lilypond$/);
 	});
 
+	it("hashes response body chunks that aren't already Buffer instances", async () => {
+		const fetchImpl = vi
+			.fn()
+			.mockResolvedValue(
+				fakeResponse({ body: [new Uint8Array(ARCHIVE_BYTES)] }),
+			);
+		const result = await downloadLilypond({
+			version: "2.26.0",
+			cacheDir: "/cache",
+			fetchImpl,
+		});
+		expect(mockWriteFile).toHaveBeenCalledWith(
+			expect.stringContaining("archive.tar.gz"),
+			ARCHIVE_BYTES,
+		);
+		expect(result).toMatch(/bin[/\\]lilypond$/);
+	});
+
 	it("extracts .zip archives with PowerShell instead of tar", async () => {
 		mockResolvePlatformTarget.mockReturnValue({
 			platform: "mingw",

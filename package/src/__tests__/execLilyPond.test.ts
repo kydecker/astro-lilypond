@@ -193,6 +193,11 @@ describe("execLilyPond", () => {
 		await expect(execLilyPond(baseOptions)).rejects.toThrow("spawn ENOENT");
 	});
 
+	it("stringifies a non-Error failure that has no stderr", async () => {
+		mockExecFileResult((cb) => cb("boom"));
+		await expect(execLilyPond(baseOptions)).rejects.toThrow("boom");
+	});
+
 	it("throws a clear timeout message when the invocation is aborted", async () => {
 		mockExecFileResult((cb) =>
 			cb(

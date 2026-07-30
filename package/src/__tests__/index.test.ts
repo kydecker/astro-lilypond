@@ -288,6 +288,13 @@ describe("lilypond integration", () => {
 			},
 		);
 
+		it("prepends \\version when defaults.version is set", async () => {
+			const plugin = await getVitePlugin({ defaults: { version: "2.26.0" } });
+			const result = await plugin.transform("\\score { }", "score.ly");
+			const score = scoreFrom(result);
+			expect(score.source).toBe('\\version "2.26.0"\n\\score { }');
+		});
+
 		it("derives sourceName/includePaths from the id", async () => {
 			const plugin = await getVitePlugin();
 			const result = await plugin.transform(
@@ -378,6 +385,37 @@ describe("lilypond integration", () => {
 		vi.doUnmock("@astrojs/markdown-satteri");
 	});
 
+	it("defaults to an empty options object when the satteri processor reports none", async () => {
+		const updateConfig = vi.fn();
+		const logger = { info: vi.fn(), warn: vi.fn() };
+
+		vi.doMock("@astrojs/markdown-satteri", () => ({
+			satteri: vi.fn((opts: unknown) => ({ name: "satteri", options: opts })),
+			isSatteriProcessor: vi.fn(() => true),
+		}));
+
+		const config = baseConfig({
+			markdown: { processor: { name: "satteri" } },
+		});
+
+		const integration = lilypond();
+		await integration.hooks["astro:config:setup"]?.({
+			command: "build",
+			config,
+			updateConfig,
+			logger,
+		} as never);
+
+		const { mdastPlugins } = (
+			updateConfig.mock.calls[1][0] as {
+				markdown: { processor: { options: { mdastPlugins: unknown[] } } };
+			}
+		).markdown.processor.options;
+		expect(mdastPlugins).toHaveLength(1);
+
+		vi.doUnmock("@astrojs/markdown-satteri");
+	});
+
 	it("registers remark/rehype plugins when processor is unified", async () => {
 		const updateConfig = vi.fn();
 		const logger = { info: vi.fn(), warn: vi.fn() };
@@ -412,6 +450,42 @@ describe("lilypond integration", () => {
 		).markdown.processor.options;
 		expect(remarkPlugins.length).toBeGreaterThan(0);
 		expect(rehypePlugins.length).toBeGreaterThan(0);
+
+		vi.doUnmock("@astrojs/markdown-remark");
+	});
+
+	it("defaults to an empty options object when the unified processor reports none", async () => {
+		const updateConfig = vi.fn();
+		const logger = { info: vi.fn(), warn: vi.fn() };
+
+		vi.doMock("@astrojs/markdown-remark", () => ({
+			unified: vi.fn((opts: unknown) => ({ name: "unified", options: opts })),
+			isUnifiedProcessor: vi.fn(() => true),
+		}));
+
+		const config = baseConfig({
+			markdown: { processor: { name: "unified" } },
+		});
+
+		const integration = lilypond();
+		await integration.hooks["astro:config:setup"]?.({
+			command: "build",
+			config,
+			updateConfig,
+			logger,
+		} as never);
+
+		const { remarkPlugins, rehypePlugins } = (
+			updateConfig.mock.calls[1][0] as {
+				markdown: {
+					processor: {
+						options: { remarkPlugins: unknown[]; rehypePlugins: unknown[] };
+					};
+				};
+			}
+		).markdown.processor.options;
+		expect(remarkPlugins).toHaveLength(1);
+		expect(rehypePlugins).toHaveLength(1);
 
 		vi.doUnmock("@astrojs/markdown-remark");
 	});
@@ -587,6 +661,18 @@ describe("render()", () => {
 		expect(html).toContain('src="/_astro/a.svg"');
 		expect(html).toContain("data-lilypond-image");
 		expect(html).toContain(`alt="${SCORE.alt}"`);
+	});
+
+	it("falls back to an empty alt when neither the score nor the props provide one", async () => {
+		mockEmitLilypondAsset.mockResolvedValueOnce([{ src: "/_astro/a.svg" }]);
+		const { Score } = await publicRender({
+			...SCORE,
+			alt: undefined as unknown as string,
+		});
+		const container = await AstroContainer.create();
+		const html = await container.renderToString(Score, { props: {} });
+		expect(html).toContain('src="/_astro/a.svg"');
+		expect(html).not.toContain(SCORE.alt);
 	});
 
 	it("forwards props like class through Score to the rendered markup", async () => {

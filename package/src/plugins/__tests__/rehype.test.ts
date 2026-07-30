@@ -183,6 +183,29 @@ describe("rehypePlugin", () => {
 		expect(tree.children[0]).toBe(pre);
 	});
 
+	it("leaves a <pre><code> with no className untouched", async () => {
+		const pre: HastElement = {
+			type: "element",
+			tagName: "pre",
+			properties: {},
+			children: [
+				{
+					type: "element",
+					tagName: "code",
+					properties: {},
+					children: [{ type: "text", value: "const x = 1" }],
+				},
+			],
+		};
+		const tree = makeTree([pre]);
+
+		await runPlugin(tree);
+
+		expect(mockRender).not.toHaveBeenCalled();
+		expect(mockEmitLilypondAsset).not.toHaveBeenCalled();
+		expect(tree.children[0]).toBe(pre);
+	});
+
 	it("propagates the error when a block fails to render", async () => {
 		fakeEmitLilypondAssetPropagatingRenderErrors(mockEmitLilypondAsset);
 		mockRender.mockRejectedValue(new Error("bad lilypond"));
