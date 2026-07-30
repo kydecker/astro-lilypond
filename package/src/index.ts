@@ -53,20 +53,15 @@ export interface LilypondPage {
 }
 
 /**
- * A lazy handle produced by importing a `.ly`/`.ily`/`.lilypond` file, or by
- * a `lilypondLoader()` content-collection entry — carries everything
- * `render()` needs (source text, derived metadata), but nothing has been
- * rendered to any format yet. The same `render()` call works on either kind
- * of handle.
+ * The result of a `.ly`/`.ily`/`.lilypond` import
+ * or `lilypondLoader()` collection entry.
  */
 export interface LilypondScore {
 	source: string;
 	alt: string;
 	sourceName: string | undefined;
 	includePaths: string[];
-	/** Base name used to title the emitted asset file. Not a display title. */
 	assetTitle: string;
-	/** Fields parsed from the score's `\header` block(s). */
 	meta: LilypondMetadata;
 }
 
@@ -84,10 +79,7 @@ export interface RenderOptions {
 	crop?: boolean;
 
 	/**
-	 * Also render a downloadable PDF of the same score, returned as `pdf`.
-	 * Always rendered uncropped/full-page, regardless of `crop` — cropping
-	 * merges multi-page scores into one tall image, which is wrong for a
-	 * printable document.
+	 * Render a downloadable PDF of the same score, returned as `pdf`.
 	 * @default false
 	 */
 	pdf?: boolean;
@@ -117,7 +109,6 @@ interface ScoreProps {
 	alt?: string;
 }
 
-/** Wraps a rendered image as a `<Score />`-able component, using the same markup `renderedHtml()` produces for the Markdown-fence path. */
 function createScoreComponent(
 	content: LilypondImageResult,
 ): AstroComponentFactory {
