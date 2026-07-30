@@ -205,8 +205,8 @@ function parseFieldValue(
 		let i = start + MARKUP.length;
 		while (/\s/.test(body[i])) i++;
 		if (body[i] !== "{") return null;
+		// body is itself a properly-nested brace sequence (see allHeaderBodies), so this `{` always has a matching `}`.
 		const end = matchBalancedBraces(body, i);
-		if (end === -1) return null;
 		const value = extractMarkupText(body.slice(i + 1, end));
 		return value ? { value, end: end + 1 } : null;
 	}
