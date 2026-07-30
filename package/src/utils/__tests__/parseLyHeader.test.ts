@@ -136,6 +136,22 @@ describe("parseLyHeader", () => {
 			title: "50% Cadence",
 		});
 	});
+
+	it("does not crash when a quoted string's escaping backslash is the last character in the source", () => {
+		expect(parseLyHeader('\\header { title = "abc\\')).toEqual({});
+	});
+
+	it("does not crash on an unterminated %{ %} block comment running to the end of the source", () => {
+		expect(
+			parseLyHeader('\\header { title = "Real" }\n%{ unterminated'),
+		).toEqual({ title: "Real" });
+	});
+
+	it("does not crash on a % line comment with no trailing newline at the end of the source", () => {
+		expect(
+			parseLyHeader('\\header { title = "Real" }\n% unterminated line comment'),
+		).toEqual({ title: "Real" });
+	});
 });
 
 describe("parseLyHeaderFields", () => {
@@ -222,6 +238,10 @@ describe("extractMarkupText", () => {
 
 	it("stops parsing at an unterminated quoted string", () => {
 		expect(extractMarkupText('"Unterminated')).toBe("");
+	});
+
+	it('skips an unterminated bare #"..." scheme literal, consuming to the end', () => {
+		expect(extractMarkupText('#"unterminated')).toBe("");
 	});
 
 	it("skips a #(...) scheme literal containing an escaped quote, keeping a trailing quoted string", () => {
