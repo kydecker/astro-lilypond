@@ -54,10 +54,10 @@ import { getEntry } from "astro:content";
 import { render } from "astro-lilypond";
 
 const sonata = await getEntry("scores", "sonata");
-const { Score, meta } = await render(sonata.data);
+const { Score } = await render(sonata.data);
 ---
 
-<h3>{meta.title}</h3>
+<h3>{sonata.data.meta.title}</h3>
 <Score />
 ```
 
