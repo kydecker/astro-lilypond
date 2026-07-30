@@ -24,16 +24,9 @@ function byPageNumber(a: RegExpMatchArray, b: RegExpMatchArray): number {
 
 /**
  * Multi-page naming convention per format: SVG uses `<base>-1.<ext>`; PNG
- * uses `<base>-page1.<ext>`. Listed explicitly so adding a format means
- * stating its convention here, not guessing among known patterns.
- *
- * `pdf` is included for type completeness (`Record<Format, string>`), but
- * isn't load-bearing for the common case: verified directly against the
- * `lilypond` binary that a single-book multi-page score renders to PDF as
- * one `<base>.pdf` file (PDF natively supports multiple pages per file,
- * unlike SVG/PNG), caught by the `entries.includes(...)` branch above
- * before this table is ever consulted. It would only matter for a `.ly`
- * file defining multiple `\book`s, which is unverified.
+ * uses `<base>-page1.<ext>`. `pdf` is listed for type completeness only — a
+ * single-book score always renders to one `<base>.pdf`, caught by the
+ * `entries.includes(...)` branch above before this table is consulted.
  */
 const PAGE_NUMBER_INFIX: Record<Format, string> = {
 	svg: "-",
@@ -59,9 +52,7 @@ export async function readOutputFile(
 		}
 	}
 
-	// Regular output: single page → <base>.<format>; multi-page → numbered
-	// per `PAGE_NUMBER_INFIX`. List the directory once so the full page
-	// count is known up front, rather than probing paths one at a time.
+	// Single page → <base>.<format>; multi-page → numbered per PAGE_NUMBER_INFIX.
 	const dir = dirname(base);
 	const prefix = basename(base);
 	const entries = await readdir(dir);

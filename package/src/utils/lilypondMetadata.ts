@@ -16,11 +16,8 @@ export interface KnownLyHeaderFields {
 
 /**
  * Header metadata extracted from a score's `\header` block(s). LilyPond's
- * standard fields are named above (`title`, `composer`, etc.); anything else
- * the file declares (e.g. `mutopiacomposer`) sits alongside them on the same
- * object, keyed by its own field name, rather than under a separate nested
- * bag — so the shape is identical whether it came from a plain `.ly` import
- * or a `lilypondLoader()` collection entry.
+ * standard fields are named above; anything else the file declares (e.g.
+ * `mutopiacomposer`) sits alongside them on the same object.
  */
 export interface LilypondMetadata extends KnownLyHeaderFields {
 	[field: string]: string | undefined;

@@ -113,4 +113,80 @@ describe("renderedHtml", () => {
 				"</ol>",
 		);
 	});
+
+	describe("class/style/pageLimit options", () => {
+		it("applies class and style to a single page's img", () => {
+			expect(
+				renderedHtml(
+					[{ src: "/a.svg", width: undefined, height: undefined }],
+					"",
+					{ class: "extra", style: "width: 50%" },
+				),
+			).toBe(
+				'<img data-lilypond-image class="extra" src="/a.svg" alt="" style="width: 50%">',
+			);
+		});
+
+		it("applies class and style to the <ol>, not the individual <li><img>s", () => {
+			expect(
+				renderedHtml(
+					[
+						{ src: "/a.svg", width: undefined, height: undefined },
+						{ src: "/b.svg", width: undefined, height: undefined },
+					],
+					"",
+					{ class: "extra", style: "width: 50%" },
+				),
+			).toBe(
+				'<ol data-lilypond-group class="extra" style="width: 50%">' +
+					'<li><img data-lilypond-image src="/a.svg" alt=""></li>' +
+					'<li><img data-lilypond-image src="/b.svg" alt=""></li>' +
+					"</ol>",
+			);
+		});
+
+		it("escapes special characters in class/style", () => {
+			expect(
+				renderedHtml(
+					[{ src: "/a.svg", width: undefined, height: undefined }],
+					"",
+					{ class: '"onmouseover=alert(1)' },
+				),
+			).toBe(
+				'<img data-lilypond-image class="&quot;onmouseover=alert(1)" src="/a.svg" alt="">',
+			);
+		});
+
+		it("limits rendered pages to pageLimit", () => {
+			expect(
+				renderedHtml(
+					[
+						{ src: "/a.svg", width: undefined, height: undefined },
+						{ src: "/b.svg", width: undefined, height: undefined },
+						{ src: "/c.svg", width: undefined, height: undefined },
+					],
+					"",
+					{ pageLimit: 2 },
+				),
+			).toBe(
+				"<ol data-lilypond-group>" +
+					'<li><img data-lilypond-image src="/a.svg" alt=""></li>' +
+					'<li><img data-lilypond-image src="/b.svg" alt=""></li>' +
+					"</ol>",
+			);
+		});
+
+		it("a pageLimit of 1 collapses to a plain single img, not a one-item <ol>", () => {
+			expect(
+				renderedHtml(
+					[
+						{ src: "/a.svg", width: undefined, height: undefined },
+						{ src: "/b.svg", width: undefined, height: undefined },
+					],
+					"",
+					{ pageLimit: 1 },
+				),
+			).toBe('<img data-lilypond-image src="/a.svg" alt="">');
+		});
+	});
 });

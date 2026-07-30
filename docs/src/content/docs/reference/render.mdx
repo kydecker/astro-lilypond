@@ -189,17 +189,3 @@ Inline styles applied directly to the rendered element.
 **Type:** `string`
 
 Overrides the automatically-derived alt text. Takes precedence over any `title`/`composer` found in the `.ly` file's `\header` block. See also: [alt text](/guides/component/#alt-text).
-
-## The underlying `<LilyPond>` component
-
-`Score` is a thin wrapper around `<LilyPond>` (importable from `astro-lilypond/component`), which does the actual `<img>`/`<ol>` rendering from a plain `{pages, alt?}` object. You won't normally need it directly — `render()` already gives you a ready-to-use `Score` — but it's available if you ever have pre-rendered page data from somewhere other than `render()`:
-
-```astro
----
-import LilyPond from "astro-lilypond/component";
-
-const content = { pages: [{ src: "/some/pre-rendered.svg" }] };
----
-
-<LilyPond content={content} />
-```

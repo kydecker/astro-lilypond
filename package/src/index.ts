@@ -2,8 +2,8 @@ import type { AstroIntegration } from "astro";
 import {
 	type AstroComponentFactory,
 	createComponent,
-	renderComponent,
 	renderTemplate,
+	unescapeHTML,
 } from "astro/runtime/server/index.js";
 import emitAssetIntegration from "astro-emit-asset";
 import type { Plugin } from "vite";
@@ -33,6 +33,7 @@ import {
 	lyTypeDeclarationsFor,
 	parseLyHeaderFields,
 	prependVersion,
+	renderedHtml,
 	resolveDefaults,
 	sourceNameFor,
 	titleFor,
@@ -113,10 +114,9 @@ export interface LilypondPdfResult {
 
 export interface RenderResult {
 	/**
-	 * A renderable component — use it directly as `<Score />` (any props you
-	 * pass through, e.g. `class`/`style`/`pageLimit`/`alt`, forward to the
-	 * underlying `<LilyPond>`). Mirrors Astro's own `Content` component from
-	 * `render()` on a Markdown/content-collection entry.
+	 * A renderable component — use it directly as `<Score />`, forwarding
+	 * `class`/`style`/`pageLimit`/`alt` props. Mirrors Astro's own `Content`
+	 * component from `render()` on a Markdown/content-collection entry.
 	 */
 	Score: AstroComponentFactory;
 	/** How many pages `Score` renders — read this instead of reaching inside the component. */
@@ -126,31 +126,25 @@ export interface RenderResult {
 	meta: LilypondMetadata;
 }
 
-/**
- * Wraps a rendered image as a `<Score />`-able component, forwarding any
- * props to `<LilyPond>`. Imports `LilyPond.astro` lazily, at actual render
- * time — deferring `.astro`-file resolution until Astro's compiler Vite
- * plugin is definitely active, rather than whenever this module first
- * loads (e.g. while Astro is still loading `astro.config.mjs` itself).
- */
+interface ScoreProps {
+	pageLimit?: number;
+	class?: string;
+	style?: string;
+	alt?: string;
+}
+
+/** Wraps a rendered image as a `<Score />`-able component, using the same markup `renderedHtml()` produces for the Markdown-fence path. */
 function createScoreComponent(
 	content: LilypondImageResult,
 ): AstroComponentFactory {
-	return createComponent(async (result, props, slots) => {
-		const { default: LilyPondComponent } = await import(
-			"../components/LilyPond.astro"
-		);
-		// A bare renderComponent() call isn't itself a valid factory return
-		// value — it must be wrapped in renderTemplate (the `render` tag
-		// compiled `.astro` output always uses), which is what actually
-		// produces a RenderTemplateResult Astro's pipeline knows how to render.
-		return renderTemplate`${renderComponent(
-			result,
-			"LilyPond",
-			LilyPondComponent,
-			{ content, ...props },
-			slots,
-		)}`;
+	return createComponent((_result, props: ScoreProps) => {
+		const alt = props.alt ?? content.alt ?? "";
+		const html = renderedHtml(content.pages, alt, {
+			class: props.class,
+			style: props.style,
+			pageLimit: props.pageLimit,
+		});
+		return renderTemplate`${unescapeHTML(html)}`;
 	});
 }
 
@@ -228,14 +222,9 @@ export async function render(
 }
 
 /**
- * Convenience wrapper for rendering many scores at once, e.g. every entry in
- * a `getCollection()` result — `renderAll(scores.map((s) => s.data))` instead
- * of hand-rolling `Promise.all(scores.map((s) => render(s.data)))`. Every
- * score is rendered concurrently, with the same `options` applied to each.
- *
- * Only takes plain `LilypondScore` values, not content-collection entries —
- * pass `entry.data` (or `.map((s) => s.data)` across a collection) yourself,
- * same as a single `render()` call.
+ * Renders many scores concurrently, e.g. every entry in a `getCollection()`
+ * result. Only takes plain `LilypondScore` values, not content-collection
+ * entries — pass `entry.data` yourself, same as a single `render()` call.
  */
 export async function renderAll(
 	scores: LilypondScore[],

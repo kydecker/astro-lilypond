@@ -522,7 +522,7 @@ describe("render()", () => {
 		expect(pageCount).toBe(2);
 	});
 
-	it("renders Score to the same markup <LilyPond> would produce for the same content", async () => {
+	it("renders Score to the expected <img> markup", async () => {
 		mockEmitLilypondAsset.mockResolvedValueOnce([{ src: "/_astro/a.svg" }]);
 		const { Score } = await publicRender(SCORE);
 		const container = await AstroContainer.create();
@@ -532,7 +532,7 @@ describe("render()", () => {
 		expect(html).toContain(`alt="${SCORE.alt}"`);
 	});
 
-	it("forwards props like class through Score to the underlying <LilyPond>", async () => {
+	it("forwards props like class through Score to the rendered markup", async () => {
 		mockEmitLilypondAsset.mockResolvedValueOnce([{ src: "/_astro/a.svg" }]);
 		const { Score } = await publicRender(SCORE);
 		const container = await AstroContainer.create();
@@ -540,6 +540,43 @@ describe("render()", () => {
 			props: { class: "extra" },
 		});
 		expect(html).toContain('class="extra"');
+	});
+
+	it("forwards style through Score to the rendered markup", async () => {
+		mockEmitLilypondAsset.mockResolvedValueOnce([{ src: "/_astro/a.svg" }]);
+		const { Score } = await publicRender(SCORE);
+		const container = await AstroContainer.create();
+		const html = await container.renderToString(Score, {
+			props: { style: "width: 50%" },
+		});
+		expect(html).toContain('style="width: 50%"');
+	});
+
+	it("renders multiple pages as an <ol data-lilypond-group> of <li><img>s", async () => {
+		mockEmitLilypondAsset.mockResolvedValueOnce([
+			{ src: "/_astro/a.svg" },
+			{ src: "/_astro/b.svg" },
+		]);
+		const { Score } = await publicRender(SCORE);
+		const container = await AstroContainer.create();
+		const html = await container.renderToString(Score, { props: {} });
+		expect(html).toContain("data-lilypond-group");
+		expect(html).toContain('src="/_astro/a.svg"');
+		expect(html).toContain('src="/_astro/b.svg"');
+	});
+
+	it("forwards pageLimit through Score, limiting rendered pages", async () => {
+		mockEmitLilypondAsset.mockResolvedValueOnce([
+			{ src: "/_astro/a.svg" },
+			{ src: "/_astro/b.svg" },
+		]);
+		const { Score } = await publicRender(SCORE);
+		const container = await AstroContainer.create();
+		const html = await container.renderToString(Score, {
+			props: { pageLimit: 1 },
+		});
+		expect(html).toContain('src="/_astro/a.svg"');
+		expect(html).not.toContain('src="/_astro/b.svg"');
 	});
 
 	it("uses the requested format", async () => {

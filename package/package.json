@@ -17,15 +17,13 @@
 			"types": "./dist/index.d.ts",
 			"import": "./dist/index.js"
 		},
-		"./component": "./components/LilyPond.astro",
 		"./loader": {
 			"types": "./dist/loader.d.ts",
 			"import": "./dist/loader.js"
 		}
 	},
 	"files": [
-		"dist",
-		"components/*.astro"
+		"dist"
 	],
 	"scripts": {
 		"build": "tsc --project tsconfig.build.json",

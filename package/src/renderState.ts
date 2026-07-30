@@ -7,13 +7,10 @@ export interface RenderState {
 }
 
 /**
- * Keyed on `globalThis`, not module-scope state — some Astro adapters (e.g.
- * `@astrojs/cloudflare`) bundle the page-render step as a separate chunk
- * with its own copy of this module's top-level scope, so a plain module
- * `let` wouldn't survive from `astro:config:setup` into an actual render.
- * `globalThis` is the one thing guaranteed shared across those bundles
- * within the same process — this mirrors `astro-emit-asset`'s own
- * `globalThis`-keyed cache config for exactly the same reason.
+ * Keyed on `globalThis` rather than module-scope state — some Astro adapters
+ * bundle the render step as a separate chunk with its own copy of this
+ * module, so a plain module `let` wouldn't survive from
+ * `astro:config:setup` into an actual render.
  */
 const GLOBAL_KEY = "astro-lilypond:renderState";
 
@@ -30,12 +27,7 @@ export function setRenderState(next: RenderState): void {
 	globalStore()[GLOBAL_KEY] = next;
 }
 
-/**
- * Read by the public `render()` function, which is called from arbitrary
- * user code (component frontmatter) rather than from within the
- * integration's own closures — this is the only way it can reach the
- * resolved `binaryPath`/`defaults`.
- */
+/** Read by the public `render()`, called from user code rather than the integration's own closures. */
 export function getRenderState(): RenderState {
 	const state = globalStore()[GLOBAL_KEY];
 	if (!state) {
