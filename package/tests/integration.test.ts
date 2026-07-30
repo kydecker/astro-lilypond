@@ -445,14 +445,16 @@ describe("lilypondLoader() against the real lilypond binary", () => {
 		expect(sonataData).toMatchObject({
 			source: expect.stringContaining("\\version"),
 			alt: "Sonata, by Beethoven",
-			title: "Sonata",
-			composer: "Beethoven",
-			extra: { mutopiacomposer: "BeethovenLV" },
+			meta: {
+				title: "Sonata",
+				composer: "Beethoven",
+				mutopiacomposer: "BeethovenLV",
+			},
 		});
 
 		const prelude = context.store.get("prelude");
 		expect(prelude?.data).toMatchObject({
-			piece: "Prelude",
+			meta: { piece: "Prelude" },
 		});
 	});
 

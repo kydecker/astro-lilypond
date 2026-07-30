@@ -32,6 +32,8 @@ export function renderedHtml(
 	const { class: className, style, pageLimit } = options;
 	const limitedPages =
 		pageLimit === undefined ? pages : pages.slice(0, pageLimit);
+	if (limitedPages.length === 0) return "";
+
 	const escapedAlt = escapeHtmlAttribute(alt);
 	const classAttr = attr("class", className);
 	const styleAttr = attr("style", style);

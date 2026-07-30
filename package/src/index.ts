@@ -7,11 +7,7 @@ import {
 } from "astro/runtime/server/index.js";
 import emitAssetIntegration from "astro-emit-asset";
 import type { Plugin } from "vite";
-import {
-	type AutoInstallOptions,
-	resolveAutoInstallOption,
-	resolveLilypondBinary,
-} from "./binary/index.js";
+import type { AutoInstallOptions } from "./binary/index.js";
 import {
 	type PluginOptions,
 	rehypePlugin,
@@ -23,7 +19,7 @@ import {
 	render as renderScore,
 	resolveCrop,
 } from "./render.js";
-import { getRenderState, setRenderState } from "./renderState.js";
+import { getRenderState, resolveAndSetRenderState } from "./renderState.js";
 import {
 	altTextFor,
 	emitLilypondAsset,
@@ -54,12 +50,6 @@ export interface LilypondPage {
 	src: string;
 	width?: number;
 	height?: number;
-}
-
-/** The rendered output of a Markdown fence or `lilypondLoader()` entry. */
-export interface LilypondContent {
-	pages: LilypondPage[];
-	alt?: string;
 }
 
 /**
@@ -307,15 +297,11 @@ export default function lilypond(
 		name: "astro-lilypond",
 		hooks: {
 			"astro:config:setup": async ({ config, updateConfig, logger }) => {
-				options.binaryPath = await resolveLilypondBinary({
-					...resolveAutoInstallOption(options.autoInstall),
-					log: (message) => logger?.info(message),
-					warn: (message) => logger?.warn(message),
-				});
-				setRenderState({
-					binaryPath: options.binaryPath,
+				options.binaryPath = await resolveAndSetRenderState({
+					autoInstall: options.autoInstall,
 					defaults: options.defaults,
 					timeout: options.timeout,
+					logger,
 				});
 
 				updateConfig({

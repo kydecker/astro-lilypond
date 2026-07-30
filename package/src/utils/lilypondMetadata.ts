@@ -1,18 +1,22 @@
-export interface KnownLyHeaderFields {
-	arranger?: string;
-	composer?: string;
-	copyright?: string;
-	dedication?: string;
-	instrument?: string;
-	meter?: string;
-	opus?: string;
-	piece?: string;
-	poet?: string;
-	subsubtitle?: string;
-	subtitle?: string;
-	tagline?: string;
-	title?: string;
-}
+export const STANDARD_HEADER_FIELDS = [
+	"arranger",
+	"composer",
+	"copyright",
+	"dedication",
+	"instrument",
+	"meter",
+	"opus",
+	"piece",
+	"poet",
+	"subsubtitle",
+	"subtitle",
+	"tagline",
+	"title",
+] as const;
+
+export type KnownLyHeaderFields = {
+	[K in (typeof STANDARD_HEADER_FIELDS)[number]]?: string;
+};
 
 /**
  * Header metadata extracted from a score's `\header` block(s). LilyPond's

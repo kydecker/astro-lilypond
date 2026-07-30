@@ -3,20 +3,17 @@ import { join, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { Loader, LoaderContext } from "astro/loaders";
 import { z } from "astro/zod";
-import {
-	type AutoInstallOptions,
-	resolveAutoInstallOption,
-	resolveLilypondBinary,
-} from "./binary/index.js";
+import type { AutoInstallOptions } from "./binary/index.js";
 import { type LilypondScore, LY_EXTENSIONS } from "./index.js";
 import type { LilypondDefaults } from "./render.js";
-import { setRenderState } from "./renderState.js";
+import { resolveAndSetRenderState } from "./renderState.js";
 import {
 	altTextFor,
 	includePathsFor,
 	parseLyHeaderFields,
 	prependVersion,
 	resolveDefaults,
+	STANDARD_HEADER_FIELDS,
 	sourceNameFor,
 	titleFor,
 	toLilypondMetadata,
@@ -83,25 +80,20 @@ export interface LilypondLoaderOptions {
  */
 export type LilypondCollectionEntry = LilypondScore;
 
-// `.catchall()` lets any other header field (e.g. `mutopiacomposer`) sit
-// alongside the standard ones, typed as `string` — matching `LilypondMetadata`'s
-// index signature.
+type StandardHeaderFieldSchemaShape = {
+	[K in (typeof STANDARD_HEADER_FIELDS)[number]]: z.ZodOptional<z.ZodString>;
+};
+
+// Built from the same `STANDARD_HEADER_FIELDS` list `KnownLyHeaderFields` is
+// derived from, so the two can't drift. `.catchall()` lets any other header
+// field (e.g. `mutopiacomposer`) sit alongside the standard ones, typed as
+// `string` — matching `LilypondMetadata`'s index signature.
 const lilypondMetadataSchema = z
-	.object({
-		arranger: z.string().optional(),
-		composer: z.string().optional(),
-		copyright: z.string().optional(),
-		dedication: z.string().optional(),
-		instrument: z.string().optional(),
-		meter: z.string().optional(),
-		opus: z.string().optional(),
-		piece: z.string().optional(),
-		poet: z.string().optional(),
-		subsubtitle: z.string().optional(),
-		subtitle: z.string().optional(),
-		tagline: z.string().optional(),
-		title: z.string().optional(),
-	})
+	.object(
+		Object.fromEntries(
+			STANDARD_HEADER_FIELDS.map((field) => [field, z.string().optional()]),
+		) as StandardHeaderFieldSchemaShape,
+	)
 	.catchall(z.string());
 
 export const lilypondEntrySchema = z.object({
@@ -163,15 +155,15 @@ export function lilypondLoader(options: LilypondLoaderOptions): Loader {
 			const rootDir = fileURLToPath(config.root);
 			const baseUrl = resolveBaseUrl(base, config.root);
 			const baseDir = fileURLToPath(baseUrl);
-			const binaryPath = await resolveLilypondBinary({
-				...resolveAutoInstallOption(autoInstall),
-				log: (message) => logger.info(message),
-				warn: (message) => logger.warn(message),
-			});
 			// Populates the shared render() state, so this collection's entries
 			// can be rendered even when the `lilypond()` integration itself
 			// isn't registered.
-			setRenderState({ binaryPath, defaults, timeout });
+			await resolveAndSetRenderState({
+				autoInstall,
+				defaults,
+				timeout,
+				logger,
+			});
 
 			async function syncEntry(entry: string): Promise<string | undefined> {
 				const filePath = join(baseDir, entry);

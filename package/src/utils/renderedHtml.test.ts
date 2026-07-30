@@ -188,5 +188,18 @@ describe("renderedHtml", () => {
 				),
 			).toBe('<img data-lilypond-image src="/a.svg" alt="">');
 		});
+
+		it("a pageLimit of 0 renders nothing, rather than an empty <ol>", () => {
+			expect(
+				renderedHtml(
+					[
+						{ src: "/a.svg", width: undefined, height: undefined },
+						{ src: "/b.svg", width: undefined, height: undefined },
+					],
+					"",
+					{ pageLimit: 0 },
+				),
+			).toBe("");
+		});
 	});
 });
