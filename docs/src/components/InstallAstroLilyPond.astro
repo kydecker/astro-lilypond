@@ -1,15 +1,45 @@
 ---
 import { Code, TabItem, Tabs } from "@astrojs/starlight/components";
+
+const manualIntegration = String`
+  // astro.config.mjs
+  import { defineConfig } from 'astro/config';
++ import lilypond from 'astro-lilypond';
+
+  export default defineConfig({
++   integrations: [lilypond()],
+  });
+`;
 ---
 
 <Tabs syncKey="packageManager">
   <TabItem label="pnpm">
-    <Code lang="sh" code="pnpm add astro-lilypond" />
+    <Code lang="sh" code="pnpm astro add astro-lilypond" />
   </TabItem>
   <TabItem label="npm">
-    <Code lang="sh" code="npm install astro-lilypond" />
+    <Code lang="sh" code="npx astro add astro-lilypond" />
   </TabItem>
   <TabItem label="yarn">
-    <Code lang="sh" code="yarn add astro-lilypond" />
+    <Code lang="sh" code="yarn astro add astro-lilypond" />
   </TabItem>
 </Tabs>
+
+<details>
+  <summary>Not working?</summary>
+
+  <p>If <code>astro add</code> can't install the package and update your config automatically, do it manually:</p>
+
+  <Tabs syncKey="packageManager">
+    <TabItem label="pnpm">
+      <Code lang="sh" code="pnpm add astro-lilypond" />
+    </TabItem>
+    <TabItem label="npm">
+      <Code lang="sh" code="npm install astro-lilypond" />
+    </TabItem>
+    <TabItem label="yarn">
+      <Code lang="sh" code="yarn add astro-lilypond" />
+    </TabItem>
+  </Tabs>
+
+  <Code lang="js" useDiffSyntax code={manualIntegration} />
+</details>

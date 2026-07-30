@@ -18,36 +18,20 @@ Here's how to get the `astro-lilypond` integration set up so you can begin writi
 
    <InstallAstro />
 
-2. [Install LilyPond](https://lilypond.org/download.html).
-
-   <InstallLilyPond />
-
-3. Install `astro-lilypond`.
+2. Install the `astro-lilypond` integration.
 
    <InstallAstroLilyPond />
 
-4. Add the integration to your Astro config.
-
-   ```diff lang="js"
-     // astro.config.mjs
-     import { defineConfig } from 'astro/config';
-   + import lilypond from 'astro-lilypond';
-
-     export default defineConfig({
-   +   integrations: [lilypond()],
-     });
-   ```
-
-   See the [configuration reference](/reference/configuration/) for available options.
-
-   :::caution
-
-   The `astro-lilypond` extension is intended for use on static sites and does not work with server-side rendering. Use caution if you have [`output: 'server'`](https://docs.astro.build/en/reference/configuration-reference/#output) in your Astro config or [`prerender = false`](https://docs.astro.build/en/reference/routing-reference/#prerender) in your file.
-
-   :::
-
-5. Start writing music!
+3. Start writing music!
 
    You can do a lot with LilyPond; view the [examples](/examples/). Write your LilyPond code directly in [Markdown](/guides/markdown/), or render `.ly` files with [`render()`](/guides/rendering/).
 
 </Steps>
+
+## Installing LilyPond (optional)
+
+When writing music locally, it's recommended to install the LilyPond binary so that you can compile scores in other tools. If the binary is unavailable (for example, when [building and deploying](/guides/deployment/) your site), `astro-lilypond` will install it automatically.
+
+### Download
+
+<InstallLilyPond />
