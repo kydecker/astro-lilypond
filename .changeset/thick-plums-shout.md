@@ -41,9 +41,7 @@ import { render } from "astro-lilypond";
 + <h3>{entry.data.meta.title}</h3>
 ```
 
-Plain `.ly`/`.ily` imports get the same `meta` object, so a score's metadata reads identically whether it came from a collection or a direct import.
-
-Additionally, there is now support for generating `pdf` files from scores which can be exposed as download links. Set `{ pdf: true }` in the `render()` config, then use and display `pdf` from the result:
+Additionally, you can now return `pdf` files from scores which can be exposed as download links. Set `{ pdf: true }` in the `render()` config, then use `pdf.src` from the result:
 
 ```astro
 ---
@@ -59,6 +57,6 @@ const { Score, pdf } = await render(bachInvention, { pdf: true });
 
 `render()` also returns `pageCount` and `raw` (the exact LilyPond source text).
 
-A new `renderAll()` function renders many scores at once; every entry in a `getCollection()` result.
+A new `renderAll()` function renders many scores at once; this is helpful for `getCollection()` results.
 
 `<Score>` accepts the same props as `<LilyPond>` did: `pageLimit`, `class`, `style`, and `alt` props. Once you've set up your `render` function, you should be able to swap out `<LilyPond content={...} />` for `<Score />`.
