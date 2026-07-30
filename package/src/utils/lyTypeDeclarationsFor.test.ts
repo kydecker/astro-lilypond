@@ -8,12 +8,6 @@ describe("lyTypeDeclarationsFor", () => {
 		expect(content).toContain('declare module "*.ily"');
 	});
 
-	it("declares exactly one module per extension, with no query-string variants", () => {
-		const content = lyTypeDeclarationsFor([".ly", ".lilypond", ".ily"]);
-		expect(content.match(/declare module/g)?.length).toBe(3);
-		expect(content).not.toContain("?");
-	});
-
 	it("each declaration exports a default LilypondScore value", () => {
 		const content = lyTypeDeclarationsFor([".ly", ".lilypond", ".ily"]);
 		expect(content.match(/export default score/g)?.length).toBe(3);

@@ -64,8 +64,8 @@ Default settings applied when rendering each score. An individual `.ly` file can
 
 When cropped, margins are removed and the page is cropped to fit the rendered staves, producing a single image. When not cropped, the full page (or pages, for a multi-page score) is preserved.
 
-- `"markdown-only"` (default) crops [Markdown](/guides/markdown/) fences, but leaves [`render()`](/reference/render/) calls full-page unless the call passes `crop: true`.
-- `true` crops everywhere, including any `render()` call that omits `crop`.
+- `"markdown-only"` (default) crops [Markdown](/guides/markdown/) fences, but leaves [`render()`](/reference/render/) calls full-page.
+- `true` crops everywhere.
 - `false` never crops by default.
 
 A `render()` call can always override this with an explicit `crop: true`/`crop: false` — see the [rendering guide](/guides/rendering/#cropping).
