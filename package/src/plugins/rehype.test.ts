@@ -142,7 +142,7 @@ describe("rehypePlugin", () => {
 		const raw = tree.children[0] as HastRaw;
 		expect(raw.type).toBe("raw");
 		expect(raw.value).toBe(
-			'<img data-lilypond-image src="/_lilypond/score.svg" alt="">',
+			'<img data-lilypond-image src="/_lilypond/score.svg" alt>',
 		);
 	});
 
@@ -245,7 +245,7 @@ describe("rehypePlugin", () => {
 			includePaths: [],
 		});
 		expect((tree.children[0] as HastRaw).value).toBe(
-			'<img data-lilypond-image src="/_lilypond/score.png" alt="">',
+			'<img data-lilypond-image src="/_lilypond/score.png" alt>',
 		);
 	});
 
@@ -340,7 +340,7 @@ describe("rehypePlugin", () => {
 
 			await runPlugin(tree);
 
-			expect((tree.children[0] as HastRaw).value).toContain('alt=""');
+			expect((tree.children[0] as HastRaw).value).toContain(" alt>");
 		});
 
 		it("leaves alt empty when there's neither a header nor a meta override", async () => {
@@ -348,7 +348,7 @@ describe("rehypePlugin", () => {
 
 			await runPlugin(tree);
 
-			expect((tree.children[0] as HastRaw).value).toContain('alt=""');
+			expect((tree.children[0] as HastRaw).value).toContain(" alt>");
 		});
 	});
 });

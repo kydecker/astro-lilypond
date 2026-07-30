@@ -1,11 +1,13 @@
 import type { AstroIntegration } from "astro";
+import {
+	type AstroComponentFactory,
+	createComponent,
+	renderTemplate,
+	unescapeHTML,
+} from "astro/runtime/server/index.js";
 import emitAssetIntegration from "astro-emit-asset";
 import type { Plugin } from "vite";
-import {
-	type AutoInstallOptions,
-	resolveAutoInstallOption,
-	resolveLilypondBinary,
-} from "./binary/index.js";
+import type { AutoInstallOptions } from "./binary/index.js";
 import {
 	type PluginOptions,
 	rehypePlugin,
@@ -13,30 +15,34 @@ import {
 	satteriPlugin,
 } from "./plugins/index.js";
 import {
-	defaultOptions,
 	type LilypondDefaults,
-	render,
+	render as renderScore,
 	resolveCrop,
 } from "./render.js";
+import { getRenderState, resolveAndSetRenderState } from "./renderState.js";
 import {
 	altTextFor,
 	emitLilypondAsset,
+	emitLilypondPdfAsset,
 	includePathsFor,
+	type LilypondMetadata,
 	lyTypeDeclarationsFor,
-	parseLyHeader,
-	parseLyImportQuery,
+	parseLyHeaderFields,
 	prependVersion,
-	RECOGNIZED_QUERY_PARAMS,
+	renderedHtml,
 	resolveDefaults,
 	sourceNameFor,
 	titleFor,
+	toLilypondMetadata,
 } from "./utils/index.js";
 
 export const LY_EXTENSIONS = [".ly", ".lilypond", ".ily"] as const;
 
 export type {
+	AstroComponentFactory,
 	AutoInstallOptions,
 	LilypondDefaults,
+	LilypondMetadata,
 	PluginOptions as LilypondPluginOptions,
 };
 
@@ -46,36 +52,170 @@ export interface LilypondPage {
 	height?: number;
 }
 
-export interface LilypondContent {
-	pages: LilypondPage[];
-	alt?: string;
+/**
+ * The result of a `.ly`/`.ily`/`.lilypond` import
+ * or `lilypondLoader()` collection entry.
+ */
+export interface LilypondScore {
+	source: string;
+	alt: string;
+	sourceName: string | undefined;
+	includePaths: string[];
+	assetTitle: string;
+	meta: LilypondMetadata;
 }
 
-export interface LilypondOptions extends PluginOptions {
+export interface RenderOptions {
 	/**
-	 * Output format.
+	 * Output format for `Score`.
 	 * @default "svg"
 	 */
 	format?: "svg" | "png";
 
 	/**
-	 * Defaults passed to each score.
-	 * Defaults can still be overridden by individual `.ly` files.
+	 * Crop `Score` to a single tightly-fit image instead of full pages.
+	 * @default resolved from the integration's `defaults.crop`
+	 */
+	crop?: boolean;
+
+	/**
+	 * Render a downloadable PDF of the same score, returned as `pdf`.
+	 * @default false
+	 */
+	pdf?: boolean;
+}
+
+export interface LilypondImageResult {
+	pages: LilypondPage[];
+	alt?: string;
+}
+
+export interface LilypondPdfResult {
+	src: string;
+}
+
+export interface RenderResult {
+	Score: AstroComponentFactory;
+	pageCount: number;
+	pdf?: LilypondPdfResult;
+	meta: LilypondMetadata;
+	raw: string;
+}
+
+interface ScoreProps {
+	pageLimit?: number;
+	class?: string;
+	style?: string;
+	alt?: string;
+}
+
+function createScoreComponent(
+	content: LilypondImageResult,
+): AstroComponentFactory {
+	return createComponent((_result, props: ScoreProps) => {
+		const alt = props.alt ?? content.alt ?? "";
+		const html = renderedHtml(content.pages, alt, {
+			class: props.class,
+			style: props.style,
+			pageLimit: props.pageLimit,
+		});
+		return renderTemplate`${unescapeHTML(html)}`;
+	});
+}
+
+/**
+ * Renders a `LilypondScore` (from a `.ly`/`.ily`/`.lilypond` import,
+ * or a `lilypondLoader()` entry) to a renderable `<Score />` component.
+ */
+export async function render(
+	score: LilypondScore,
+	options: RenderOptions = {},
+): Promise<RenderResult> {
+	const state = getRenderState();
+	const {
+		resolution,
+		crop: cropSetting,
+		cropScale,
+	} = resolveDefaults(state.defaults);
+	const format = options.format ?? "svg";
+	const crop = options.crop ?? resolveCrop(cropSetting, "component");
+
+	const [{ Score, pageCount }, pdf] = await Promise.all([
+		(async (): Promise<{ Score: AstroComponentFactory; pageCount: number }> => {
+			const pages = await emitLilypondAsset({
+				title: score.assetTitle,
+				format,
+				source: score.source,
+				resolution,
+				crop,
+				sizeScale: crop ? cropScale : 1,
+				binaryPath: state.binaryPath,
+				render: () =>
+					renderScore(score.source, {
+						format,
+						crop,
+						defaults: state.defaults,
+						timeout: state.timeout,
+						binaryPath: state.binaryPath,
+						includePaths: score.includePaths,
+						sourceName: score.sourceName,
+					}),
+			});
+			return {
+				Score: createScoreComponent({ pages, alt: score.alt }),
+				pageCount: pages.length,
+			};
+		})(),
+		options.pdf
+			? emitLilypondPdfAsset({
+					title: score.assetTitle,
+					source: score.source,
+					binaryPath: state.binaryPath,
+					render: () =>
+						renderScore(score.source, {
+							format: "pdf",
+							crop: false,
+							defaults: state.defaults,
+							timeout: state.timeout,
+							binaryPath: state.binaryPath,
+							includePaths: score.includePaths,
+							sourceName: score.sourceName,
+						}),
+				})
+			: Promise.resolve(undefined),
+	]);
+
+	return { Score, pageCount, pdf, meta: score.meta, raw: score.source };
+}
+
+export async function renderAll(
+	scores: LilypondScore[],
+	options: RenderOptions = {},
+): Promise<RenderResult[]> {
+	return Promise.all(scores.map((score) => render(score, options)));
+}
+
+export interface LilypondOptions extends PluginOptions {
+	/**
+	 * Output format used by Markdown fences and `lilypondLoader()` entries.
+	 * @default "svg"
+	 */
+	format?: "svg" | "png";
+
+	/**
+	 * Defaults passed to each score; can be overridden at render time.
 	 */
 	defaults?: LilypondDefaults;
 
 	/**
-	 * Milliseconds to wait for a single `lilypond` invocation before
-	 * aborting it.
+	 * Ms to wait for a single `lilypond` invocation before aborting.
 	 * @default 60000
 	 */
 	timeout?: number;
 
 	/**
 	 * When no `lilypond` binary is found on `PATH`, download a matching
-	 * prebuilt release into a local cache and use that instead. Set to
-	 * `false` to only ever use a `PATH` install, or pass an object to pick
-	 * which version gets downloaded.
+	 * prebuilt release into a local cache and use that instead.
 	 * @default true
 	 */
 	autoInstall?: boolean | AutoInstallOptions;
@@ -86,49 +226,26 @@ function lyFilePlugin(options: PluginOptions): Plugin {
 		name: "vite-plugin-astro-lilypond-ly",
 		enforce: "pre",
 		async transform(source, id) {
-			const query = parseLyImportQuery(id);
-			if (!query) return;
-			const { pathname, cropOverride } = query;
-			if (!LY_EXTENSIONS.some((ext) => pathname.endsWith(ext))) return;
+			if (!LY_EXTENSIONS.some((ext) => id.endsWith(ext))) return;
 
-			const {
-				version,
-				resolution,
-				crop: cropSetting,
-				cropScale,
-			} = resolveDefaults(options.defaults);
-			const crop = cropOverride ?? resolveCrop(cropSetting, "component");
+			const { version } = resolveDefaults(options.defaults);
 			const src = version ? prependVersion(source, version) : source;
-			const format = options.format ?? defaultOptions.format;
-			const includePaths = includePathsFor(pathname);
-			const sourceName = sourceNameFor(pathname);
-			const title = titleFor(sourceName);
-			const alt = altTextFor(parseLyHeader(source));
-			const pages = await emitLilypondAsset({
-				title,
-				format,
+			const includePaths = includePathsFor(id);
+			const sourceName = sourceNameFor(id);
+			const assetTitle = titleFor(sourceName);
+			const meta = toLilypondMetadata(parseLyHeaderFields(source));
+			const alt = altTextFor(meta);
+
+			const score: LilypondScore = {
 				source: src,
-				resolution,
-				crop,
-				sizeScale: crop ? cropScale : 1,
-				binaryPath: options.binaryPath,
-				render: () =>
-					render(src, {
-						format,
-						crop,
-						defaults: options.defaults,
-						timeout: options.timeout,
-						binaryPath: options.binaryPath,
-						includePaths,
-						sourceName,
-					}),
-			});
-			const content: LilypondContent = {
-				pages,
 				alt,
+				sourceName,
+				includePaths,
+				assetTitle,
+				meta,
 			};
 			return {
-				code: `export default ${JSON.stringify(content)}`,
+				code: `export default ${JSON.stringify(score)}`,
 			};
 		},
 	};
@@ -141,10 +258,11 @@ export default function lilypond(
 		name: "astro-lilypond",
 		hooks: {
 			"astro:config:setup": async ({ config, updateConfig, logger }) => {
-				options.binaryPath = await resolveLilypondBinary({
-					...resolveAutoInstallOption(options.autoInstall),
-					log: (message) => logger?.info(message),
-					warn: (message) => logger?.warn(message),
+				options.binaryPath = await resolveAndSetRenderState({
+					autoInstall: options.autoInstall,
+					defaults: options.defaults,
+					timeout: options.timeout,
+					logger,
 				});
 
 				updateConfig({
@@ -227,10 +345,7 @@ export default function lilypond(
 			"astro:config:done": ({ injectTypes }) => {
 				injectTypes({
 					filename: "ly-types.d.ts",
-					content: lyTypeDeclarationsFor(
-						LY_EXTENSIONS,
-						RECOGNIZED_QUERY_PARAMS,
-					),
+					content: lyTypeDeclarationsFor(LY_EXTENSIONS),
 				});
 			},
 		},

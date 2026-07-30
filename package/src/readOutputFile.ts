@@ -23,14 +23,13 @@ function byPageNumber(a: RegExpMatchArray, b: RegExpMatchArray): number {
 }
 
 /**
- * Multi-page naming convention per format: SVG (and PDF/PS/EPS, should they
- * be added to `FORMATS`) uses `<base>-1.<ext>`; PNG uses `<base>-page1.<ext>`.
- * Listed explicitly so adding a format means stating its convention here,
- * not guessing among known patterns.
+ * Multi-page naming convention per format: SVG uses `<base>-1.<ext>`; PNG
+ * uses `<base>-page1.<ext>`. `pdf` always renders to one `<base>.pdf`.
  */
 const PAGE_NUMBER_INFIX: Record<Format, string> = {
 	svg: "-",
 	png: "-page",
+	pdf: "-",
 };
 
 export async function readOutputFile(
@@ -51,9 +50,7 @@ export async function readOutputFile(
 		}
 	}
 
-	// Regular output: single page → <base>.<format>; multi-page → numbered
-	// per `PAGE_NUMBER_INFIX`. List the directory once so the full page
-	// count is known up front, rather than probing paths one at a time.
+	// Single page → <base>.<format>; multi-page → numbered per PAGE_NUMBER_INFIX.
 	const dir = dirname(base);
 	const prefix = basename(base);
 	const entries = await readdir(dir);

@@ -1,0 +1,187 @@
+---
+title: Render Reference
+description: Signature and types for the exported render() function, and the props Score accepts.
+---
+
+`render()`, imported from `astro-lilypond`, turns LilyPond code into a renderable `<Score />` component.
+
+## `render()` parameters
+
+```ts
+import { render } from "astro-lilypond";
+
+function render(
+  score: LilypondScore,
+  options?: RenderOptions,
+): Promise<RenderResult>;
+
+interface RenderResult {
+  Score: AstroComponentFactory;
+  pageCount: number;
+  pdf?: LilypondPdfResult; // when options.pdf is true
+  meta: LilypondMetadata;
+  raw: string;
+}
+
+interface LilypondPdfResult {
+  src: string;
+}
+```
+
+:::caution
+Only call `render()` from statically-prerendered pages/components. On an on-demand/SSR route that isn't marked `export const prerender = true`, it would shell out to the `lilypond` binary on every request.
+:::
+
+### `score`
+
+**Type:** `LilypondScore`
+
+The score's source text and derived metadata. You get one from:
+
+- Importing a `.ly`/`.ily`/`.lilypond` file directly.
+- A [`lilypondLoader()`](/reference/collections/) content-collection entry; `entry.data` is a `LilypondScore`.
+
+### `options`
+
+**Type:** `RenderOptions`
+
+#### `options.format`
+
+**Type:** `"svg" | "png"`  
+**Default:** `"svg"`
+
+Output format for `Score`.
+
+#### `options.crop`
+
+**Type:** `boolean`  
+**Default:** resolved from [`defaults.crop`](/reference/configuration/#defaultscrop)
+
+Crops `Score` to a single tightly-fit image instead of full pages. Defaults to `defaults.crop` resolved for component usage when omitted — see the [rendering guide](/guides/rendering/#cropping).
+
+#### `options.pdf`
+
+**Type:** `boolean`  
+**Default:** `false`
+
+When `true`, also renders a downloadable PDF of the same score, returned as `pdf`.
+
+```astro title="ScoreWithPdf.astro"
+---
+import { render } from "astro-lilypond";
+import bachInvention from "./bach-invention.ly";
+
+const { Score, pdf, meta } = await render(
+  bachInvention,
+  { crop: true, pdf: true }
+);
+---
+
+<h3>{meta.title}</h3>
+<Score />
+<a href={pdf.src} download>Download PDF</a>
+```
+
+See [`<Score /> props`](#score--props) below for what `Score` accepts, and [`LilypondMetadata`](#lilypondmetadata) for the shape of `meta`.
+
+You can rename `Score` however you like when destructuring:
+
+```astro
+---
+import { render } from "astro-lilypond";
+import bachInvention from "./bach-invention.ly";
+
+const { Score: BachInvention } = await render(bachInvention);
+---
+
+<BachInvention />
+```
+
+## `renderAll()`
+
+The same as `render()`, but for an array of scores.
+
+```ts
+import { renderAll } from "astro-lilypond";
+
+function renderAll(
+  scores: LilypondScore[],
+  options?: RenderOptions,
+): Promise<RenderResult[]>;
+```
+
+It only takes plain `LilypondScore` values, not content collection entries, so pull `.data` out yourself first:
+
+```astro title="MyScores.astro"
+---
+import { getCollection } from "astro:content";
+import { renderAll } from "astro-lilypond";
+
+const scores = await getCollection("scores");
+const rendered = await renderAll(scores.map((score) => score.data));
+---
+
+<ul>
+  {rendered.map(({ Score, meta }) => (
+    <li>
+      <h3>{meta.title}</h3>
+      <Score />
+    </li>
+  ))}
+</ul>
+```
+
+See the [rendering guide](/guides/rendering/) for more usage patterns. See the [collections guide](/guides/collections/#rendering-a-pdf-download) for using `render()` with content collections.
+
+## `LilypondMetadata` type
+
+Fields parsed from the score's `\header` block(s) — the shape of `meta` on both `render()` and `renderAll()` results.
+
+```ts
+interface LilypondMetadata {
+  arranger?: string;
+  composer?: string;
+  copyright?: string;
+  dedication?: string;
+  instrument?: string;
+  meter?: string;
+  opus?: string;
+  piece?: string;
+  poet?: string;
+  subsubtitle?: string;
+  subtitle?: string;
+  tagline?: string;
+  title?: string;
+
+  // Any other unknown or uncommon fields
+  [field: string]: string | undefined;
+}
+```
+
+## `<Score />` props
+
+`Score` accepts the following props:
+
+### `pageLimit`
+
+**Type:** `number`
+
+Render only the first `n` pages. If omitted, all pages render. See [limiting rendered pages](/guides/rendering/#limiting-rendered-pages).
+
+### `class`
+
+**Type:** `string`
+
+Class name(s) applied to the rendered `<img>` (or `<ol>`, for multi-page scores). See the [styling guide](/guides/styling/).
+
+### `style`
+
+**Type:** `string`
+
+Inline styles applied directly to the rendered element.
+
+### `alt`
+
+**Type:** `string`
+
+Overrides the automatically-derived alt text. Takes precedence over any `title`/`composer` found in the `.ly` file's `\header` block. See also: [alt text](/guides/rendering/#alt-text).

@@ -3,25 +3,20 @@ import { join, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { Loader, LoaderContext } from "astro/loaders";
 import { z } from "astro/zod";
-import {
-	type AutoInstallOptions,
-	resolveAutoInstallOption,
-	resolveLilypondBinary,
-} from "./binary/index.js";
-import { type LilypondContent, LY_EXTENSIONS } from "./index.js";
-import type { PluginOptions } from "./plugins/index.js";
-import { defaultOptions, render, resolveCrop } from "./render.js";
+import type { AutoInstallOptions } from "./binary/index.js";
+import { type LilypondScore, LY_EXTENSIONS } from "./index.js";
+import type { LilypondDefaults } from "./render.js";
+import { resolveAndSetRenderState } from "./renderState.js";
 import {
 	altTextFor,
-	emitLilypondAsset,
 	includePathsFor,
-	type KnownLyHeaderFields,
 	parseLyHeaderFields,
 	prependVersion,
 	resolveDefaults,
+	STANDARD_HEADER_FIELDS,
 	sourceNameFor,
-	splitHeaderFields,
 	titleFor,
+	toLilypondMetadata,
 } from "./utils/index.js";
 
 const DEFAULT_PATTERN = `**/*.{${LY_EXTENSIONS.map((ext) => ext.slice(1)).join(",")}}`;
@@ -35,7 +30,7 @@ export interface GenerateIdOptions {
 	header: Record<string, string>;
 }
 
-export interface LilypondLoaderOptions extends PluginOptions {
+export interface LilypondLoaderOptions {
 	/**
 	 * Glob pattern(s) matching score files, relative to `base`.
 	 * @default "**\/*.{ly,ily,lilypond}"
@@ -55,6 +50,20 @@ export interface LilypondLoaderOptions extends PluginOptions {
 	generateId?: (options: GenerateIdOptions) => string;
 
 	/**
+	 * Defaults used when `render()` is later called on one of this
+	 * collection's entries.
+	 */
+	defaults?: LilypondDefaults;
+
+	/**
+	 * Milliseconds to wait for a single `lilypond` invocation before
+	 * aborting it, when `render()` is later called on one of this
+	 * collection's entries.
+	 * @default 60000
+	 */
+	timeout?: number;
+
+	/**
 	 * When no `lilypond` binary is found on `PATH`, download a matching
 	 * prebuilt release into a local cache and use that instead. Set to
 	 * `false` to only ever use a `PATH` install, or pass an object to pick
@@ -64,38 +73,36 @@ export interface LilypondLoaderOptions extends PluginOptions {
 	autoInstall?: boolean | AutoInstallOptions;
 }
 
-export interface LilypondHeaderData extends KnownLyHeaderFields {
-	/** Header fields outside LilyPond's standard set (e.g. `mutopiacomposer`). */
-	extra: Record<string, string>;
-}
+/**
+ * A collection entry is itself a `LilypondScore` (its `meta` carries the
+ * file's `\header` fields) — pass `entry.data` directly to the exported
+ * `render()`, exactly as you would a plain `.ly` import.
+ */
+export type LilypondCollectionEntry = LilypondScore;
 
-export interface LilypondCollectionEntry
-	extends LilypondContent,
-		LilypondHeaderData {}
+type StandardHeaderFieldSchemaShape = {
+	[K in (typeof STANDARD_HEADER_FIELDS)[number]]: z.ZodOptional<z.ZodString>;
+};
+
+// Built from the same `STANDARD_HEADER_FIELDS` list `KnownLyHeaderFields` is
+// derived from, so the two can't drift. `.catchall()` lets any other header
+// field (e.g. `mutopiacomposer`) sit alongside the standard ones, typed as
+// `string` — matching `LilypondMetadata`'s index signature.
+const lilypondMetadataSchema = z
+	.object(
+		Object.fromEntries(
+			STANDARD_HEADER_FIELDS.map((field) => [field, z.string().optional()]),
+		) as StandardHeaderFieldSchemaShape,
+	)
+	.catchall(z.string());
 
 export const lilypondEntrySchema = z.object({
-	pages: z.array(
-		z.object({
-			src: z.string(),
-			width: z.number().optional(),
-			height: z.number().optional(),
-		}),
-	),
-	alt: z.string().optional(),
-	dedication: z.string().optional(),
-	title: z.string().optional(),
-	subtitle: z.string().optional(),
-	subsubtitle: z.string().optional(),
-	instrument: z.string().optional(),
-	poet: z.string().optional(),
-	composer: z.string().optional(),
-	meter: z.string().optional(),
-	arranger: z.string().optional(),
-	piece: z.string().optional(),
-	opus: z.string().optional(),
-	copyright: z.string().optional(),
-	tagline: z.string().optional(),
-	extra: z.record(z.string(), z.string()),
+	source: z.string(),
+	alt: z.string(),
+	sourceName: z.string().optional(),
+	includePaths: z.array(z.string()),
+	assetTitle: z.string(),
+	meta: lilypondMetadataSchema,
 });
 
 function stripLyExtension(entryPath: string): string {
@@ -131,15 +138,12 @@ export function lilypondLoader(options: LilypondLoaderOptions): Loader {
 		pattern = DEFAULT_PATTERN,
 		base,
 		generateId = defaultGenerateId,
-		format,
 		defaults,
 		timeout,
 		autoInstall,
 	} = options;
 
 	const resolved = resolveDefaults(defaults);
-	const crop = resolveCrop(resolved.crop, "component");
-	const resolvedFormat = format ?? defaultOptions.format;
 
 	return {
 		name: "astro-lilypond-loader",
@@ -151,10 +155,14 @@ export function lilypondLoader(options: LilypondLoaderOptions): Loader {
 			const rootDir = fileURLToPath(config.root);
 			const baseUrl = resolveBaseUrl(base, config.root);
 			const baseDir = fileURLToPath(baseUrl);
-			const binaryPath = await resolveLilypondBinary({
-				...resolveAutoInstallOption(autoInstall),
-				log: (message) => logger.info(message),
-				warn: (message) => logger.warn(message),
+			// Populates the shared render() state, so this collection's entries
+			// can be rendered even when the `lilypond()` integration itself
+			// isn't registered.
+			await resolveAndSetRenderState({
+				autoInstall,
+				defaults,
+				timeout,
+				logger,
 			});
 
 			async function syncEntry(entry: string): Promise<string | undefined> {
@@ -176,37 +184,19 @@ export function lilypondLoader(options: LilypondLoaderOptions): Loader {
 				const src = prependVersion(source, resolved.version);
 				const includePaths = includePathsFor(filePath);
 				const sourceName = sourceNameFor(filePath);
-				const title = titleFor(sourceName);
-
-				const pages = await emitLilypondAsset({
-					title,
-					format: resolvedFormat,
-					source: src,
-					resolution: resolved.resolution,
-					crop,
-					sizeScale: crop ? resolved.cropScale : 1,
-					binaryPath,
-					render: () =>
-						render(src, {
-							format: resolvedFormat,
-							crop,
-							defaults,
-							timeout,
-							binaryPath,
-							includePaths,
-							sourceName,
-						}),
-				});
+				const assetTitle = titleFor(sourceName);
+				const meta = toLilypondMetadata(headerFields);
+				const alt = altTextFor(meta);
 
 				const data = await parseData({
 					id,
 					data: {
-						pages,
-						alt: altTextFor({
-							title: headerFields.title,
-							composer: headerFields.composer,
-						}),
-						...splitHeaderFields(headerFields),
+						source: src,
+						alt,
+						sourceName,
+						includePaths,
+						assetTitle,
+						meta,
 					},
 					filePath,
 				});

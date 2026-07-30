@@ -5,29 +5,6 @@ import { pathToFileURL } from "node:url";
 import type { DataStore } from "astro/loaders";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("./render.js", () => ({
-	render: vi.fn().mockResolvedValue([Buffer.from("<svg></svg>")]),
-	FORMATS: ["png", "svg"],
-	resolveCrop: (cropSetting: unknown, context: "markdown" | "component") =>
-		context === "markdown" ? cropSetting !== false : cropSetting === true,
-	defaultOptions: {
-		format: "svg",
-		crop: true,
-		binaryPath: "lilypond",
-		timeout: 60_000,
-		defaults: {
-			version: "2.26.0",
-			resolution: 144,
-			crop: "markdown-only",
-			cropScale: 1.5,
-		},
-	},
-}));
-
-vi.mock("./utils/emitLilypondAsset.js", () => ({
-	emitLilypondAsset: vi.fn(),
-}));
-
 vi.mock("./binary/index.js", async (importOriginal) => {
 	const actual = await importOriginal<typeof import("./binary/index.js")>();
 	return {
@@ -38,12 +15,8 @@ vi.mock("./binary/index.js", async (importOriginal) => {
 
 import { resolveLilypondBinary } from "./binary/index.js";
 import { lilypondEntrySchema, lilypondLoader } from "./loader.js";
-import { render } from "./render.js";
-import { fakeEmitLilypondAsset } from "./utils/emitLilypondAsset.fake.js";
-import { emitLilypondAsset } from "./utils/emitLilypondAsset.js";
+import { getRenderState, resetRenderStateForTests } from "./renderState.js";
 
-const mockRender = vi.mocked(render);
-const mockEmitLilypondAsset = vi.mocked(emitLilypondAsset);
 const mockResolveLilypondBinary = vi.mocked(resolveLilypondBinary);
 
 /** Minimal in-memory stand-in for Astro's content-layer DataStore. */
@@ -132,10 +105,7 @@ beforeEach(async () => {
 	publicDir = join(root, "public");
 	await mkdir(scoresDir, { recursive: true });
 	await mkdir(publicDir, { recursive: true });
-	mockRender.mockClear();
-	mockRender.mockResolvedValue([Buffer.from("<svg></svg>")]);
-	mockEmitLilypondAsset.mockReset();
-	fakeEmitLilypondAsset(mockEmitLilypondAsset);
+	resetRenderStateForTests();
 	mockResolveLilypondBinary.mockReset().mockResolvedValue("lilypond");
 });
 
@@ -144,7 +114,7 @@ afterEach(async () => {
 });
 
 describe("lilypondLoader", () => {
-	it("populates the store with pages/alt/header for each matched file", async () => {
+	it("populates the store with source/alt/header for each matched file, without rendering anything", async () => {
 		await writeFile(
 			join(scoresDir, "sonata.ly"),
 			'\\header { title = "Sonata" composer = "Beethoven" mutopiacomposer = "BeethovenLV" }',
@@ -156,11 +126,13 @@ describe("lilypondLoader", () => {
 
 		const entry = store.get("sonata");
 		expect(entry?.data).toMatchObject({
-			pages: [{ src: "/_astro/sonata.svg" }],
+			source: expect.stringContaining("\\header"),
 			alt: "Sonata, by Beethoven",
-			title: "Sonata",
-			composer: "Beethoven",
-			extra: { mutopiacomposer: "BeethovenLV" },
+			meta: {
+				title: "Sonata",
+				composer: "Beethoven",
+				mutopiacomposer: "BeethovenLV",
+			},
 		});
 	});
 
@@ -191,23 +163,19 @@ describe("lilypondLoader", () => {
 		expect(store.keys()).toEqual(["custom-sonata.ly"]);
 	});
 
-	it("calls emitLilypondAsset with the updated source when a file changes between load()s", async () => {
+	it("reflects the updated source when a file changes between load()s", async () => {
 		const filePath = join(scoresDir, "sonata.ly");
 		await writeFile(filePath, "\\score { { c4 } }");
 
 		const loader = lilypondLoader({ base: "./src/scores" });
-		const { context } = createFakeContext({ root, publicDir });
+		const { context, store } = createFakeContext({ root, publicDir });
 
 		await loader.load(context);
-		expect(mockEmitLilypondAsset).toHaveBeenLastCalledWith(
-			expect.objectContaining({ source: expect.stringContaining("c4") }),
-		);
+		expect(store.get("sonata")?.data.source).toContain("c4");
 
 		await writeFile(filePath, "\\score { { d4 } }");
 		await loader.load(context);
-		expect(mockEmitLilypondAsset).toHaveBeenLastCalledWith(
-			expect.objectContaining({ source: expect.stringContaining("d4") }),
-		);
+		expect(store.get("sonata")?.data.source).toContain("d4");
 	});
 
 	it("removes an entry for a file deleted between load()s", async () => {
@@ -264,11 +232,11 @@ describe("lilypondLoader", () => {
 
 		const loader = lilypondLoader({ base: "./src/scores" });
 		const watcher = createFakeWatcher();
-		const { context } = createFakeContext({ root, publicDir, watcher });
+		const { context, store } = createFakeContext({ root, publicDir, watcher });
 
 		await loader.load(context);
-		expect(mockRender).toHaveBeenCalledTimes(1);
 		expect(watcher.add).toHaveBeenCalledWith(`${scoresDir}/`);
+		expect(store.get("sonata")?.data.source).toContain("c4");
 
 		await writeFile(filePath, "\\score { { e4 } }");
 		watcher.emit("change", filePath);
@@ -276,7 +244,7 @@ describe("lilypondLoader", () => {
 		// give its microtask/IO chain a turn to complete before asserting.
 		await new Promise((resolve) => setTimeout(resolve, 50));
 
-		expect(mockRender).toHaveBeenCalledTimes(2);
+		expect(store.get("sonata")?.data.source).toContain("e4");
 	});
 
 	it("does not register watcher handlers when no watcher is provided (e.g. `astro build`)", async () => {
@@ -286,7 +254,7 @@ describe("lilypondLoader", () => {
 		await expect(loader.load(context)).resolves.toBeUndefined();
 	});
 
-	it("resolves its own binary and threads it through to render()", async () => {
+	it("resolves its own binary and populates the shared render() state with it, so entries render without the lilypond() integration", async () => {
 		mockResolveLilypondBinary.mockResolvedValue(
 			"/cache/lilypond-2.26.0/bin/lilypond",
 		);
@@ -302,11 +270,8 @@ describe("lilypondLoader", () => {
 		expect(mockResolveLilypondBinary).toHaveBeenCalledWith(
 			expect.objectContaining({ version: "2.26.0", autoInstall: true }),
 		);
-		expect(mockRender).toHaveBeenCalledWith(
-			expect.anything(),
-			expect.objectContaining({
-				binaryPath: "/cache/lilypond-2.26.0/bin/lilypond",
-			}),
+		expect(getRenderState().binaryPath).toBe(
+			"/cache/lilypond-2.26.0/bin/lilypond",
 		);
 	});
 });
@@ -314,21 +279,30 @@ describe("lilypondLoader", () => {
 describe("lilypondEntrySchema", () => {
 	it("round-trips a full entry, including extra header fields", () => {
 		const parsed = lilypondEntrySchema.parse({
-			pages: [{ src: "/_astro/sonata.abc123.svg", width: 100, height: 50 }],
+			source: "\\score { }",
 			alt: "Sonata, by Beethoven",
-			title: "Sonata",
-			composer: "Beethoven",
-			extra: { mutopiacomposer: "BeethovenLV" },
+			sourceName: "sonata.ly",
+			includePaths: [],
+			assetTitle: "sonata",
+			meta: {
+				title: "Sonata",
+				composer: "Beethoven",
+				mutopiacomposer: "BeethovenLV",
+			},
 		});
-		expect(parsed.title).toBe("Sonata");
-		expect(parsed.extra).toEqual({ mutopiacomposer: "BeethovenLV" });
+		expect(parsed.meta.title).toBe("Sonata");
+		expect(parsed.meta.mutopiacomposer).toBe("BeethovenLV");
+		expect(parsed.source).toBe("\\score { }");
 	});
 
 	it("accepts an entry with no header fields at all", () => {
 		expect(() =>
 			lilypondEntrySchema.parse({
-				pages: [{ src: "/_astro/abc123.score.svg" }],
-				extra: {},
+				source: "\\score { }",
+				alt: "",
+				includePaths: [],
+				assetTitle: "score",
+				meta: {},
 			}),
 		).not.toThrow();
 	});

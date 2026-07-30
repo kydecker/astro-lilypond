@@ -64,11 +64,11 @@ Default settings applied when rendering each score. An individual `.ly` file can
 
 When cropped, margins are removed and the page is cropped to fit the rendered staves, producing a single image. When not cropped, the full page (or pages, for a multi-page score) is preserved.
 
-- `"markdown-only"` (default) crops [Markdown](/guides/markdown/) fences, but leaves [`<LilyPond>`](/guides/component/) components full-page.
+- `"markdown-only"` (default) crops [Markdown](/guides/markdown/) fences, but leaves [`render()`](/reference/render/) calls full-page.
 - `true` crops everywhere.
 - `false` never crops by default.
 
-A `<LilyPond>` `.ly` import can always override this per-instance with `?crop` or `?nocrop` — see the [component guide](/guides/component/#disabling-full-page-output).
+A `render()` call can always override this with an explicit `crop: true`/`crop: false` — see the [rendering guide](/guides/rendering/#cropping).
 
 #### `defaults.cropScale`
 
@@ -124,9 +124,9 @@ Information about the latest releases can be found on the [LilyPond news](https:
 **Type:** `"svg" | "png"`  
 **Default:** `"svg"`
 
-The output format passed to the LilyPond binary. Controls how the rendered output is embedded in the page.
+The output format used by [Markdown](/guides/markdown/) fences. Does not affect `.ly`/`.ily` imports or [`lilypondLoader()`](/guides/collections/) entries, which are format-agnostic until a [`render()`](/reference/render/) call picks a format.
 
-```js {5}
+```js {3}
 // astro.config.mjs
 lilypond({
   format: "png"

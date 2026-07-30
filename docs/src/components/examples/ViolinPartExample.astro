@@ -1,7 +1,9 @@
 ---
+import { render } from "astro-lilypond";
 import LilyPondExample from "#components/LilyPondExample.astro";
-import content from "./scores/sesto-violin.ly?crop";
-import code from "./scores/sesto-violin.ly?raw";
+import score from "./scores/sesto-violin.ly";
+
+const result = await render(score, { crop: true });
 ---
 
-<LilyPondExample content={content} code={code} title="sesto-violin.ly" />
+<LilyPondExample {...result} title="sesto-violin.ly" />
