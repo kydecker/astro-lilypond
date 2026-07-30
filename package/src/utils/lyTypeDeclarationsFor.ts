@@ -1,9 +1,4 @@
-/**
- * Builds the ambient module declarations injected for `.ly`-family imports,
- * so `import score from "./score.ly"` type-checks as a default-exported
- * `LilypondScore` — a lazy handle, not yet rendered to any format. Call the
- * exported `render()` function to produce actual output.
- */
+/** Build the ambient module declarations injected for `.ly`-family imports. */
 export function lyTypeDeclarationsFor(extensions: readonly string[]): string {
 	return extensions
 		.map(
