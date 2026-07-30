@@ -3,23 +3,20 @@ import { lyTypeDeclarationsFor } from "./lyTypeDeclarationsFor.js";
 
 describe("lyTypeDeclarationsFor", () => {
 	it("declares a bare module for each extension", () => {
-		const content = lyTypeDeclarationsFor([".ly", ".ily"], []);
+		const content = lyTypeDeclarationsFor([".ly", ".ily"]);
 		expect(content).toContain('declare module "*.ly"');
 		expect(content).toContain('declare module "*.ily"');
 	});
 
-	it("declares a module per extension for each query param", () => {
-		const content = lyTypeDeclarationsFor([".ly"], ["crop", "nocrop"]);
-		expect(content).toContain('declare module "*.ly?crop"');
-		expect(content).toContain('declare module "*.ly?nocrop"');
+	it("declares exactly one module per extension, with no query-string variants", () => {
+		const content = lyTypeDeclarationsFor([".ly", ".lilypond", ".ily"]);
+		expect(content.match(/declare module/g)?.length).toBe(3);
+		expect(content).not.toContain("?");
 	});
 
-	it("each declaration exports a default LilypondContent value", () => {
-		const content = lyTypeDeclarationsFor(
-			[".ly", ".lilypond", ".ily"],
-			["crop", "nocrop"],
-		);
-		expect(content.match(/export default content/g)?.length).toBe(9);
-		expect(content.match(/LilypondContent/g)?.length).toBe(9);
+	it("each declaration exports a default LilypondScore value", () => {
+		const content = lyTypeDeclarationsFor([".ly", ".lilypond", ".ily"]);
+		expect(content.match(/export default score/g)?.length).toBe(3);
+		expect(content.match(/LilypondScore/g)?.length).toBe(3);
 	});
 });

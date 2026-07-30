@@ -6,7 +6,7 @@ import { readOutputFile, safeInputFileName } from "./readOutputFile.js";
 import type { LilypondVersion } from "./types/lilypondVersion.js";
 import { resolveDefaults } from "./utils/resolveDefaults.js";
 
-export const FORMATS = ["png", "svg"] as const;
+export const FORMATS = ["png", "svg", "pdf"] as const;
 
 export type Format = (typeof FORMATS)[number];
 
@@ -14,11 +14,12 @@ export type Format = (typeof FORMATS)[number];
  * Controls whether rendered output is cropped tightly to the content
  * bounding box, or left as full, potentially multi-page, output.
  *
- * - `true` — crop everywhere: Markdown fences and `<LilyPond>` `.ly` imports.
- * - `false` — never crop by default (a `.ly` import can still opt in with
- *   `?crop`).
- * - `"markdown-only"` — crop Markdown fences, but leave `<LilyPond>` `.ly`
- *   imports uncropped unless the import opts in with `?crop`.
+ * - `true` — crop everywhere: Markdown fences, and any `render()` request
+ *   that doesn't explicitly pass its own `crop`.
+ * - `false` — never crop by default (a `render()` request can still opt in
+ *   with `crop: true`).
+ * - `"markdown-only"` — crop Markdown fences, but leave `render()` requests
+ *   uncropped by default unless the request passes `crop: true`.
  */
 export type CropSetting = boolean | "markdown-only";
 

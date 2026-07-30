@@ -81,7 +81,7 @@ export default defineConfig({
 					label: "Reference",
 					items: [
 						"reference/configuration",
-						"reference/component",
+						"reference/render",
 						"reference/collections",
 						"reference/styling",
 					],
@@ -114,6 +114,7 @@ export default defineConfig({
 		"/lilypond-syntax": "/resources/syntax",
 		"/resources": "/resources/syntax",
 		"/configuration": "/reference/configuration",
+		"/reference/component": "/reference/render",
 	},
 	devToolbar: {
 		enabled: false,

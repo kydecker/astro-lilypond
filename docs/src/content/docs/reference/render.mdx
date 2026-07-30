@@ -1,0 +1,205 @@
+---
+title: Render Reference
+description: Signature and types for the exported render() function, and the props Score accepts.
+---
+
+`render()`, imported from `astro-lilypond`, turns a `LilypondScore` handle into a renderable `<Score />` component, optionally alongside a downloadable PDF (`pdf`).
+
+```ts
+import { render } from "astro-lilypond";
+
+function render(
+  score: LilypondScore,
+  options?: RenderOptions,
+): Promise<RenderResult>;
+```
+
+## `render()` Parameters
+
+### `score`
+
+**Type:** `LilypondScore`
+
+A lazy handle carrying a score's source text and derived metadata, but nothing rendered yet. You get one from:
+
+- Importing a `.ly`/`.ily`/`.lilypond` file directly — the default export is a `LilypondScore`.
+- A [`lilypondLoader()`](/reference/collections/) content-collection entry — `entry.data` **is** a `LilypondScore`, so `render(entry.data)` works exactly like a plain `.ly` import.
+
+### `options`
+
+#### `options.format`
+
+**Type:** `"svg" | "png"`  
+**Default:** `"svg"`
+
+Output format for `Score`.
+
+#### `options.crop`
+
+**Type:** `boolean`  
+**Default:** resolved from [`defaults.crop`](/reference/configuration/#defaultscrop)
+
+Crops `Score` to a single tightly-fit image instead of full pages. Defaults to `defaults.crop` resolved for component usage when omitted — see the [component guide](/guides/component/#cropping).
+
+#### `options.pdf`
+
+**Type:** `boolean`  
+**Default:** `false`
+
+When `true`, also renders a downloadable PDF of the same score, returned as `pdf`. Always rendered as full, uncropped pages — a cropped/merged image isn't a sensible printable document — so `crop` has no effect on it.
+
+## Return value
+
+**Type:** `RenderResult`
+
+```ts
+interface RenderResult {
+  Score: AstroComponentFactory;
+  pageCount: number;
+  pdf?: LilypondPdfResult; // present only when options.pdf is true
+  meta: LilypondMetadata;
+}
+
+interface LilypondPdfResult {
+  src: string;
+}
+```
+
+
+```astro title="ScoreWithDownload.astro"
+---
+import { render } from "astro-lilypond";
+import bachInvention from "./bach-invention.ly";
+
+const { Score, pdf, meta } = await render(
+  bachInvention,
+  { crop: true, pdf: true }
+);
+---
+
+<h3>{meta.title}</h3>
+<Score />
+<a href={pdf.src} download>Download PDF</a>
+```
+
+## `LilypondMetadata`
+
+**Type:** `LilypondMetadata`
+
+Fields parsed from the score's `\header` block(s).
+
+```ts
+interface LilypondMetadata {
+  arranger?: string;
+  composer?: string;
+  copyright?: string;
+  dedication?: string;
+  instrument?: string;
+  meter?: string;
+  opus?: string;
+  piece?: string;
+  poet?: string;
+  subsubtitle?: string;
+  subtitle?: string;
+  tagline?: string;
+  title?: string;
+
+  // Any other unknown or uncommon fields
+  [field: string]: string | undefined;
+}
+```
+
+You can rename `Score` however you like when destructuring:
+
+```astro
+---
+import { render } from "astro-lilypond";
+import bachInvention from "./bach-invention.ly";
+
+const { Score: BachInvention } = await render(bachInvention);
+---
+
+<BachInvention />
+```
+
+See the [component guide](/guides/component/) for more usage patterns (cropping, PDF downloads, page counts, alt text) and the [collections guide](/guides/collections/#rendering-a-pdf-download) for using `render()` with content-collection entries — the same call works on either input.
+
+:::caution
+Only call `render()` from statically-prerendered pages/components. On an on-demand/SSR route that isn't marked `export const prerender = true`, it would shell out to the `lilypond` binary on every request.
+:::
+
+## `renderAll()`
+
+Renders many scores at once — every score gets the same `options`, run concurrently, with results returned in the same order as the input:
+
+```ts
+import { renderAll } from "astro-lilypond";
+
+function renderAll(
+  scores: LilypondScore[],
+  options?: RenderOptions,
+): Promise<RenderResult[]>;
+```
+
+It only takes plain `LilypondScore` values, not content-collection entries, so pull `.data` out yourself first — the same step you'd need before a single `render()` call:
+
+```astro title="MyScores.astro"
+---
+import { getCollection } from "astro:content";
+import { renderAll } from "astro-lilypond";
+
+const scores = await getCollection("scores");
+const rendered = await renderAll(scores.map((score) => score.data));
+---
+
+<ul>
+  {rendered.map(({ Score, meta }) => (
+    <li>
+      <h3>{meta.title}</h3>
+      <Score />
+    </li>
+  ))}
+</ul>
+```
+
+## `<Score />` props
+
+`Score` forwards any props you pass to the underlying `<LilyPond>` component it wraps.
+
+### `pageLimit`
+
+**Type:** `number`
+
+Render only the first `n` pages. If omitted, all pages render. See [limiting rendered pages](/guides/component/#limiting-rendered-pages).
+
+### `class`
+
+**Type:** `string`
+
+Class name(s) applied to the rendered `<img>` (or `<ol>`, for multi-page scores). See the [styling guide](/guides/styling/).
+
+### `style`
+
+**Type:** `string`
+
+Inline styles applied directly to the rendered element.
+
+### `alt`
+
+**Type:** `string`
+
+Overrides the automatically-derived alt text. Takes precedence over any `title`/`composer` found in the `.ly` file's `\header` block. See also: [alt text](/guides/component/#alt-text).
+
+## The underlying `<LilyPond>` component
+
+`Score` is a thin wrapper around `<LilyPond>` (importable from `astro-lilypond/component`), which does the actual `<img>`/`<ol>` rendering from a plain `{pages, alt?}` object. You won't normally need it directly — `render()` already gives you a ready-to-use `Score` — but it's available if you ever have pre-rendered page data from somewhere other than `render()`:
+
+```astro
+---
+import LilyPond from "astro-lilypond/component";
+
+const content = { pages: [{ src: "/some/pre-rendered.svg" }] };
+---
+
+<LilyPond content={content} />
+```

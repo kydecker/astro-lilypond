@@ -7,7 +7,7 @@ import { Code } from "@astrojs/starlight/components";
 import BachInventionExample from "#components/examples/BachInventionExample.astro";
 import BachInventionExampleRaw from "#components/examples/BachInventionExample.astro?raw";
 
-Import the `<LilyPond>` component and pass it an imported `.ly` or `.ily` file.
+Import a `.ly` or `.ily` file, call [`render()`](/reference/render/) to get a `Score`, then render it as `<Score />`.
 
 <Code code={BachInventionExampleRaw} lang="astro" title="MyComponent.astro" />
 
@@ -15,76 +15,105 @@ Import the `<LilyPond>` component and pass it an imported `.ly` or `.ily` file.
 
 When a score renders to more than one page, as above, the pages are wrapped in an ordered list element. You can style pages and containers however you want. See the [styling guide](/guides/styling/) for more examples.
 
-## Disabling full-page output
+:::caution
+Only call `render()` from prerendered pages and components. `astro-lilypond` doesn't currently support on-demand rendering.
+:::
 
-By default, the `<LilyPond>` component renders output as a full page (or multiple pages), preserving page sizes and margins set via the imported LilyPond file.
+## Cropping
 
-If you would prefer _not_ to use full pages, and instead crop all content to a single, potentially large image, you can do either of the following:
+By default, `render()` renders a score as a full page (or multiple pages), preserving page sizes and margins set via the imported LilyPond file.
 
-1. Update your configuration to set [`defaults.crop`](/reference/configuration/#defaultscrop) to `true`. This will crop all `<LilyPond>` component output by default.
-2. Append `?crop` to selected import paths:
+If you'd prefer _not_ to use full pages, and instead crop all content to a single, potentially large image, pass `crop: true`:
 
-```astro "?crop" title="CroppedScore.astro" {3-4}
+```astro title="CroppedScore.astro" {7}
 ---
-import LilyPond from "astro-lilypond/component";
-// Force the score to be cropped and merged into a single image
-import bachInvention from "./bach-invention.ly?crop";
+import { render } from "astro-lilypond";
+import bachInvention from "./bach-invention.ly";
+
+const { Score } = await render(
+  bachInvention,
+  { crop: true }
+);
 ---
 
-<LilyPond content={bachInvention} />
+<Score />
 ```
 
-## Re-enabling full-page output
+Update your configuration to set [`defaults.crop`](/reference/configuration/#defaultscrop) to `true` if you'd like every `render()` call that omits `crop` to be cropped by default. An explicit `crop: false` always overrides that default:
 
-If your configuration sets [`defaults.crop`](/reference/configuration/#defaultscrop) to `true`, but you want to display uncropped pages somewhere, append `?nocrop` to your import path:
-
-```astro "?nocrop" title="UncroppedScore.astro" {3-4}
+```astro title="UncroppedScore.astro" {9}
 ---
-import LilyPond from "astro-lilypond/component";
-// Allow the score to render as multiple full pages with margins
-import bachInvention from "./bach-invention.ly?nocrop";
+import { render } from "astro-lilypond";
+import bachInvention from "./bach-invention.ly";
+
+// Render as multiple full pages with margins,
+// even if defaults.crop is true
+const { Score } = await render(
+  bachInvention,
+  { crop: false }
+);
 ---
 
-<LilyPond content={bachInvention} />
+<Score />
 ```
+
+## PDF download
+
+Pass `pdf: true` to also get a downloadable PDF rendering of the same score, returned as `pdf` — LilyPond always renders it as full, uncropped pages, since a cropped/merged image isn't a sensible printable document:
+
+```astro title="ScoreWithDownload.astro" {5-8,12}
+---
+import { render } from "astro-lilypond";
+import bachInvention from "./bach-invention.ly";
+
+const { Score, pdf } = await render(
+  bachInvention,
+  { crop: true, pdf: true }
+);
+---
+
+<Score />
+<a href={pdf.src} download>Download PDF</a>
+```
+
+`Score` and `pdf` are independent `lilypond` invocations, run concurrently — LilyPond's SVG backend can't be combined with other formats in a single run.
 
 ## Limiting rendered pages
 
-By default, `<LilyPond>` renders every page of a score. To show only an excerpt — the first page as a preview, for example — pass a `pageLimit`:
+By default, `<Score />` renders every page. To show only an excerpt — the first page as a preview, for example — pass a `pageLimit`:
 
 ```astro title="PreviewScore.astro" {8}
 ---
-import LilyPond from "astro-lilypond/component";
+import { render } from "astro-lilypond";
 import bachInvention from "./bach-invention.ly";
+
+const { Score } = await render(bachInvention);
 ---
 
-<LilyPond
-  content={bachInvention}
-  pageLimit={1}
-/>
+<Score pageLimit={1} />
 ```
 
 `pageLimit={1}` renders only the first page. `pageLimit={2}` renders the first two pages, etc. Passing a `pageLimit` larger than the number of available pages has no effect.
 
 ## Page count
 
-Display an imported score's page count with `content.pages.length`:
+Display a rendered score's page count with `pageCount`, alongside `Score`:
 
 ```astro title="ScoreWithPageCount.astro" {5,9}
 ---
-import LilyPond from "astro-lilypond/component";
+import { render } from "astro-lilypond";
 import bachInvention from "./bach-invention.ly";
 
-const pageCount = bachInvention.pages.length;
+const { Score, pageCount } = await render(bachInvention);
 ---
 
-<LilyPond content={bachInvention} />
+<Score />
 <p>{pageCount} {pageCount === 1 ? "page" : "pages"}</p>
 ```
 
 ## Alt text
 
-`<LilyPond>` imports derive alt text automatically from the imported `.ly` file's `\header` block, displaying `alt="{title} by {composer}"`.
+`<Score />` derives alt text automatically from the imported `.ly` file's `\header` block, displaying `alt="{title} by {composer}"`.
 
 ### Customizing
 
@@ -92,14 +121,13 @@ Pass an `alt` prop to override the generated alt text with your own description:
 
 ```astro title="MyComponent.astro" {8}
 ---
-import LilyPond from "astro-lilypond/component";
+import { render } from "astro-lilypond";
 import bachInvention from "./bach-invention.ly";
+
+const { Score } = await render(bachInvention);
 ---
 
-<LilyPond
-  content={bachInvention}
-  alt="A piano score showing a two-part invention by Bach"
-/>
+<Score alt="A piano score showing a two-part invention by Bach" />
 ```
 
-See the [Component reference](/reference/component/) for the full list of props.
+See the [`render()` reference](/reference/render/) for the full list of props `<Score />` forwards, and its full set of options.

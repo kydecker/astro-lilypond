@@ -1,8 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("./render.js", () => ({
-	render: vi.fn().mockRejectedValue(new Error("mock render failure")),
-	FORMATS: ["png", "svg"],
+	render: vi.fn().mockResolvedValue([Buffer.from("fake-svg")]),
 	resolveCrop: (cropSetting: unknown, context: "markdown" | "component") =>
 		context === "markdown" ? cropSetting !== false : cropSetting === true,
 	defaultOptions: {
@@ -13,12 +12,17 @@ vi.mock("./render.js", () => ({
 		defaults: {
 			resolution: 144,
 			crop: "markdown-only",
+			cropScale: 1.5,
 		},
 	},
 }));
 
 vi.mock("./utils/emitLilypondAsset.js", () => ({
 	emitLilypondAsset: vi.fn(),
+}));
+
+vi.mock("./utils/emitLilypondPdfAsset.js", () => ({
+	emitLilypondPdfAsset: vi.fn(),
 }));
 
 vi.mock("./binary/index.js", async (importOriginal) => {
@@ -29,14 +33,27 @@ vi.mock("./binary/index.js", async (importOriginal) => {
 	};
 });
 
+import { experimental_AstroContainer as AstroContainer } from "astro/container";
 import { resolveLilypondBinary } from "./binary/index.js";
-import lilypond from "./index.js";
-import { render } from "./render.js";
+import lilypond, {
+	type LilypondScore,
+	render as publicRender,
+	renderAll as publicRenderAll,
+} from "./index.js";
+import { render as lowLevelRender } from "./render.js";
+import {
+	getRenderState,
+	resetRenderStateForTests,
+	setRenderState,
+} from "./renderState.js";
 import { fakeEmitLilypondAsset } from "./utils/emitLilypondAsset.fake.js";
 import { emitLilypondAsset } from "./utils/emitLilypondAsset.js";
+import { fakeEmitLilypondPdfAsset } from "./utils/emitLilypondPdfAsset.fake.js";
+import { emitLilypondPdfAsset } from "./utils/emitLilypondPdfAsset.js";
 
-const mockRender = vi.mocked(render);
+const mockLowLevelRender = vi.mocked(lowLevelRender);
 const mockEmitLilypondAsset = vi.mocked(emitLilypondAsset);
+const mockEmitLilypondPdfAsset = vi.mocked(emitLilypondPdfAsset);
 const mockResolveLilypondBinary = vi.mocked(resolveLilypondBinary);
 
 const FAKE_PUBLIC_DIR = new URL("file:///project/public/");
@@ -65,7 +82,12 @@ function baseConfig(
 }
 
 beforeEach(() => {
+	resetRenderStateForTests();
+	mockLowLevelRender.mockClear();
+	mockEmitLilypondAsset.mockClear();
+	mockEmitLilypondPdfAsset.mockClear();
 	fakeEmitLilypondAsset(mockEmitLilypondAsset);
+	fakeEmitLilypondPdfAsset(mockEmitLilypondPdfAsset);
 	mockResolveLilypondBinary.mockReset().mockResolvedValue("lilypond");
 });
 
@@ -150,7 +172,7 @@ describe("lilypond integration", () => {
 		);
 	});
 
-	it("threads the resolved binary path through to render()", async () => {
+	it("populates renderState with the resolved binary path, so the public render() can reach it", async () => {
 		mockResolveLilypondBinary.mockResolvedValue(
 			"/cache/lilypond-2.26.0/bin/lilypond",
 		);
@@ -159,29 +181,20 @@ describe("lilypond integration", () => {
 			isSatteriProcessor: vi.fn(() => true),
 		}));
 
-		const updateConfig = vi.fn();
 		const integration = lilypond();
 		await integration.hooks["astro:config:setup"]?.({
 			command: "build",
 			config: baseConfig({
 				markdown: { processor: { name: "satteri", options: {} } },
 			}),
-			updateConfig,
+			updateConfig: vi.fn(),
 			logger: { info: vi.fn(), warn: vi.fn() },
 		} as never);
 		vi.doUnmock("@astrojs/markdown-satteri");
 
-		const { plugins } = (
-			updateConfig.mock.calls[0][0] as { vite: { plugins: unknown[] } }
-		).vite;
-		const plugin = plugins[0] as {
-			transform: (src: string, id: string) => Promise<unknown>;
-		};
-		await plugin.transform("", "score.ly").catch(() => {});
-
-		expect(mockRender.mock.calls.at(-1)?.[1]).toMatchObject({
-			binaryPath: "/cache/lilypond-2.26.0/bin/lilypond",
-		});
+		expect(getRenderState().binaryPath).toBe(
+			"/cache/lilypond-2.26.0/bin/lilypond",
+		);
 	});
 
 	it("registers the astro-emit-asset integration and the .ly vite plugin", async () => {
@@ -238,124 +251,95 @@ describe("lilypond integration", () => {
 			};
 		}
 
-		it("transforms .ily files", async () => {
+		function scoreFrom(result: { code: string } | undefined): LilypondScore {
+			const match = /export default (.*)$/.exec(result?.code ?? "");
+			return JSON.parse(match?.[1] ?? "{}") as LilypondScore;
+		}
+
+		it("skips unrecognized extensions", async () => {
 			const plugin = await getVitePlugin();
-			// transform returns undefined for unrecognized extensions
 			const skipped = await plugin.transform("", "score.txt");
 			expect(skipped).toBeUndefined();
 		});
 
+		it("skips any id carrying a query string — nothing is recognized anymore, so ?raw/?url/etc. fall through to Vite's built-in handling", async () => {
+			const plugin = await getVitePlugin();
+			for (const suffix of ["?raw", "?url", "?crop", "?anything"]) {
+				mockLowLevelRender.mockClear();
+				mockEmitLilypondAsset.mockClear();
+				const skipped = await plugin.transform("", `score.ly${suffix}`);
+				expect(skipped).toBeUndefined();
+				expect(mockLowLevelRender).not.toHaveBeenCalled();
+				expect(mockEmitLilypondAsset).not.toHaveBeenCalled();
+			}
+		});
+
 		it.each([".ly", ".lilypond", ".ily"])(
-			"handles %s extension",
+			"transforms %s files into a LilypondScore handle, without invoking render() or emitLilypondAsset()",
 			async (ext) => {
+				mockLowLevelRender.mockClear();
+				mockEmitLilypondAsset.mockClear();
 				const plugin = await getVitePlugin();
-				// render() is mocked to always reject — we're only verifying the
-				// plugin doesn't skip the file (i.e. it calls render() at all)
-				await expect(plugin.transform("", `score${ext}`)).rejects.toThrow(
-					"mock render failure",
-				);
+				const result = await plugin.transform("\\score { }", `score${ext}`);
+				const score = scoreFrom(result);
+				expect(score.source).toEqual(expect.any(String));
+				expect(mockLowLevelRender).not.toHaveBeenCalled();
+				expect(mockEmitLilypondAsset).not.toHaveBeenCalled();
 			},
 		);
 
-		describe("crop", () => {
-			it("renders uncropped by default (defaults.crop defaults to markdown-only)", async () => {
-				const plugin = await getVitePlugin();
-				await plugin.transform("", "score.ly").catch(() => {});
-				expect(mockRender.mock.calls.at(-1)?.[1]).toMatchObject({
-					crop: false,
-				});
-			});
-
-			it("renders uncropped when defaults.crop is explicitly false", async () => {
-				const plugin = await getVitePlugin({ defaults: { crop: false } });
-				await plugin.transform("", "score.ly").catch(() => {});
-				expect(mockRender.mock.calls.at(-1)?.[1]).toMatchObject({
-					crop: false,
-				});
-			});
-
-			it("renders cropped by default when defaults.crop is explicitly true", async () => {
-				const plugin = await getVitePlugin({ defaults: { crop: true } });
-				await plugin.transform("", "score.ly").catch(() => {});
-				expect(mockRender.mock.calls.at(-1)?.[1]).toMatchObject({
-					crop: true,
-				});
-			});
-
-			it("forces cropped output when the import has a ?crop query param, overriding defaults.crop", async () => {
-				const plugin = await getVitePlugin();
-				await plugin.transform("", "score.ly?crop").catch(() => {});
-				expect(mockRender.mock.calls.at(-1)?.[1]).toMatchObject({ crop: true });
-			});
-
-			it("forces uncropped output when the import has a ?nocrop query param, overriding a defaults.crop of true", async () => {
-				const plugin = await getVitePlugin({ defaults: { crop: true } });
-				await plugin.transform("", "score.ly?nocrop").catch(() => {});
-				expect(mockRender.mock.calls.at(-1)?.[1]).toMatchObject({
-					crop: false,
-				});
-			});
-
-			it("still recognizes the extension when a query string is present", async () => {
-				const plugin = await getVitePlugin();
-				const skipped = await plugin
-					.transform("", "score.ly?crop")
-					.catch((err: Error) => err);
-				expect(skipped).toBeInstanceOf(Error);
-			});
-
-			it("still recognizes the extension when a ?nocrop query string is present", async () => {
-				const plugin = await getVitePlugin();
-				const skipped = await plugin
-					.transform("", "score.ly?nocrop")
-					.catch((err: Error) => err);
-				expect(skipped).toBeInstanceOf(Error);
-			});
-
-			it("leaves ?raw (and other query params it doesn't own) to Vite's built-in handling", async () => {
-				const plugin = await getVitePlugin();
-				mockRender.mockClear();
-
-				const result = await plugin.transform("", "score.ly?raw");
-
-				expect(result).toBeUndefined();
-				expect(mockRender).not.toHaveBeenCalled();
-			});
-
-			it("strips the query string before deriving sourceName/includePaths", async () => {
-				const plugin = await getVitePlugin();
-				await plugin.transform("", "/docs/src/score.ly?crop").catch(() => {});
-				const [, options] = mockRender.mock.calls.at(-1) as [
-					string,
-					{ sourceName?: string; includePaths?: string[] },
-				];
-				expect(options.sourceName).toBe("score.ly");
-				expect(options.includePaths).toEqual(["/docs/src"]);
-			});
+		it("derives sourceName/includePaths from the id", async () => {
+			const plugin = await getVitePlugin();
+			const result = await plugin.transform(
+				"\\score { }",
+				"/docs/src/score.ly",
+			);
+			const score = scoreFrom(result);
+			expect(score.sourceName).toBe("score.ly");
+			expect(score.includePaths).toEqual(["/docs/src"]);
 		});
 
 		describe("alt text", () => {
 			async function transformContent(source: string) {
 				const plugin = await getVitePlugin();
-				mockRender.mockResolvedValueOnce([Buffer.from("fake-svg")]);
 				const result = await plugin.transform(source, "score.ly");
-				const match = /export default (.*)$/.exec(result?.code ?? "");
-				return JSON.parse(match?.[1] ?? "{}") as {
-					pages: { src: string; width?: number; height?: number }[];
-					alt?: string;
-				};
+				return scoreFrom(result);
 			}
 
 			it("derives alt text from the .ly file's \\header title/composer", async () => {
-				const content = await transformContent(
+				const score = await transformContent(
 					'\\header { title = "Sonata" composer = "Beethoven" }',
 				);
-				expect(content.alt).toBe("Sonata, by Beethoven");
+				expect(score.alt).toBe("Sonata, by Beethoven");
 			});
 
 			it("is an empty string when the .ly file has no \\header", async () => {
-				const content = await transformContent("\\score { }");
-				expect(content.alt).toBe("");
+				const score = await transformContent("\\score { }");
+				expect(score.alt).toBe("");
+			});
+		});
+
+		describe("meta", () => {
+			async function transformContent(source: string) {
+				const plugin = await getVitePlugin();
+				const result = await plugin.transform(source, "score.ly");
+				return scoreFrom(result);
+			}
+
+			it("parses standard and non-standard \\header fields into meta, same as a collection entry", async () => {
+				const score = await transformContent(
+					'\\header { title = "Sonata" composer = "Beethoven" mutopiacomposer = "BeethovenLV" }',
+				);
+				expect(score.meta).toMatchObject({
+					title: "Sonata",
+					composer: "Beethoven",
+					mutopiacomposer: "BeethovenLV",
+				});
+			});
+
+			it("is an empty object when the .ly file has no \\header", async () => {
+				const score = await transformContent("\\score { }");
+				expect(score.meta).toEqual({});
 			});
 		});
 	});
@@ -460,25 +444,24 @@ describe("lilypond integration", () => {
 		expect(injectTypes.mock.calls[0][0].filename).toBe("ly-types.d.ts");
 	});
 
-	it("injected types declare modules for .ly, .lilypond, and .ily, including their ?crop/?nocrop query variants", () => {
+	it("injected types declare a bare module for .ly, .lilypond, and .ily, with no query-string variants", () => {
 		const injectTypes = vi.fn();
 		const integration = lilypond();
 		integration.hooks["astro:config:done"]?.({ injectTypes } as never);
 		const { content } = injectTypes.mock.calls[0][0] as { content: string };
 		for (const ext of [".ly", ".lilypond", ".ily"]) {
 			expect(content).toContain(`declare module "*${ext}"`);
-			expect(content).toContain(`declare module "*${ext}?crop"`);
-			expect(content).toContain(`declare module "*${ext}?nocrop"`);
 		}
+		expect(content).not.toContain("?");
 	});
 
-	it("injected type declarations export a default LilypondContent value", () => {
+	it("injected type declarations export a default LilypondScore value", () => {
 		const injectTypes = vi.fn();
 		const integration = lilypond();
 		integration.hooks["astro:config:done"]?.({ injectTypes } as never);
 		const { content } = injectTypes.mock.calls[0][0] as { content: string };
-		expect(content.match(/export default content/g)?.length).toBe(9);
-		expect(content.match(/LilypondContent/g)?.length).toBe(9);
+		expect(content.match(/export default score/g)?.length).toBe(3);
+		expect(content.match(/LilypondScore/g)?.length).toBe(3);
 	});
 
 	it("includes the detected processor name in the error", async () => {
@@ -496,5 +479,167 @@ describe("lilypond integration", () => {
 				logger,
 			} as never),
 		).rejects.toThrow("custom-proc");
+	});
+});
+
+describe("render()", () => {
+	const SCORE: LilypondScore = {
+		source: "\\score { }",
+		alt: "Sonata, by Beethoven",
+		sourceName: "score.ly",
+		includePaths: ["/docs/src"],
+		assetTitle: "score",
+		meta: { title: "Sonata", composer: "Beethoven" },
+	};
+
+	beforeEach(() => {
+		setRenderState({
+			binaryPath: "lilypond",
+			defaults: undefined,
+			timeout: undefined,
+		});
+	});
+
+	it("always returns a Score component, defaulting to svg", async () => {
+		const { Score } = await publicRender(SCORE);
+		expect(Score.isAstroComponentFactory).toBe(true);
+		expect(mockEmitLilypondAsset.mock.calls[0][0]).toMatchObject({
+			format: "svg",
+		});
+	});
+
+	it("passes the score's meta straight through, alongside Score", async () => {
+		const { meta } = await publicRender(SCORE);
+		expect(meta).toEqual(SCORE.meta);
+	});
+
+	it("returns pageCount alongside Score", async () => {
+		mockEmitLilypondAsset.mockResolvedValueOnce([
+			{ src: "/_astro/a.svg" },
+			{ src: "/_astro/b.svg" },
+		]);
+		const { pageCount } = await publicRender(SCORE);
+		expect(pageCount).toBe(2);
+	});
+
+	it("renders Score to the same markup <LilyPond> would produce for the same content", async () => {
+		mockEmitLilypondAsset.mockResolvedValueOnce([{ src: "/_astro/a.svg" }]);
+		const { Score } = await publicRender(SCORE);
+		const container = await AstroContainer.create();
+		const html = await container.renderToString(Score, { props: {} });
+		expect(html).toContain('src="/_astro/a.svg"');
+		expect(html).toContain("data-lilypond-image");
+		expect(html).toContain(`alt="${SCORE.alt}"`);
+	});
+
+	it("forwards props like class through Score to the underlying <LilyPond>", async () => {
+		mockEmitLilypondAsset.mockResolvedValueOnce([{ src: "/_astro/a.svg" }]);
+		const { Score } = await publicRender(SCORE);
+		const container = await AstroContainer.create();
+		const html = await container.renderToString(Score, {
+			props: { class: "extra" },
+		});
+		expect(html).toContain('class="extra"');
+	});
+
+	it("uses the requested format", async () => {
+		await publicRender(SCORE, { format: "png" });
+		expect(mockEmitLilypondAsset.mock.calls[0][0]).toMatchObject({
+			format: "png",
+		});
+	});
+
+	it("omits pdf from the result when not requested", async () => {
+		const result = await publicRender(SCORE);
+		expect(result.pdf).toBeUndefined();
+		expect(mockEmitLilypondPdfAsset).not.toHaveBeenCalled();
+	});
+
+	it("includes a pdf result when requested, alongside Score, rendered concurrently", async () => {
+		const { Score, pdf } = await publicRender(SCORE, { pdf: true });
+		expect(Score.isAstroComponentFactory).toBe(true);
+		expect(pdf?.src).toEqual(expect.any(String));
+		expect(mockEmitLilypondAsset).toHaveBeenCalledTimes(1);
+		expect(mockEmitLilypondPdfAsset).toHaveBeenCalledTimes(1);
+	});
+
+	it("always renders the pdf uncropped, regardless of defaults.crop", async () => {
+		await publicRender(SCORE, { pdf: true });
+		const { render: renderThunk } = mockEmitLilypondPdfAsset.mock.calls[0][0];
+		mockLowLevelRender.mockClear();
+		await renderThunk();
+		expect(mockLowLevelRender.mock.calls.at(-1)?.[1]).toMatchObject({
+			format: "pdf",
+			crop: false,
+		});
+	});
+
+	it("resolves crop via resolveCrop when omitted (defaults.crop is markdown-only -> false for component context)", async () => {
+		await publicRender(SCORE);
+		expect(mockEmitLilypondAsset.mock.calls[0][0]).toMatchObject({
+			crop: false,
+		});
+	});
+
+	it("honors an explicit crop:true override", async () => {
+		await publicRender(SCORE, { crop: true });
+		expect(mockEmitLilypondAsset.mock.calls[0][0]).toMatchObject({
+			crop: true,
+		});
+	});
+
+	it("throws a clear, actionable error when the lilypond() integration hasn't run", async () => {
+		resetRenderStateForTests();
+		await expect(publicRender(SCORE)).rejects.toThrow(
+			/lilypond\(\).*Astro config/s,
+		);
+	});
+});
+
+describe("renderAll()", () => {
+	const SONATA: LilypondScore = {
+		source: "\\score { }",
+		alt: "Sonata, by Beethoven",
+		sourceName: "sonata.ly",
+		includePaths: ["/docs/src"],
+		assetTitle: "sonata",
+		meta: { title: "Sonata", composer: "Beethoven" },
+	};
+	const PRELUDE: LilypondScore = {
+		source: "\\score { }",
+		alt: "Prelude",
+		sourceName: "prelude.ly",
+		includePaths: ["/docs/src"],
+		assetTitle: "prelude",
+		meta: { title: "Prelude" },
+	};
+
+	beforeEach(() => {
+		setRenderState({
+			binaryPath: "lilypond",
+			defaults: undefined,
+			timeout: undefined,
+		});
+	});
+
+	it("renders every score and returns results in the same order", async () => {
+		const results = await publicRenderAll([SONATA, PRELUDE]);
+		expect(results).toHaveLength(2);
+		expect(results[0].meta).toEqual(SONATA.meta);
+		expect(results[1].meta).toEqual(PRELUDE.meta);
+		expect(results[0].Score.isAstroComponentFactory).toBe(true);
+		expect(results[1].Score.isAstroComponentFactory).toBe(true);
+	});
+
+	it("applies the same options to every score", async () => {
+		await publicRenderAll([SONATA, PRELUDE], { format: "png" });
+		expect(mockEmitLilypondAsset).toHaveBeenCalledTimes(2);
+		for (const call of mockEmitLilypondAsset.mock.calls) {
+			expect(call[0]).toMatchObject({ format: "png" });
+		}
+	});
+
+	it("returns an empty array for an empty input", async () => {
+		await expect(publicRenderAll([])).resolves.toEqual([]);
 	});
 });

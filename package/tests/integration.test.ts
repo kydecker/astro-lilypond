@@ -11,7 +11,9 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { promisify } from "node:util";
+import { experimental_AstroContainer as AstroContainer } from "astro/container";
 import type { DataStore, LoaderContext } from "astro/loaders";
+import type { AstroComponentFactory } from "astro/runtime/server/index.js";
 import {
 	afterEach,
 	beforeAll,
@@ -22,6 +24,10 @@ import {
 	vi,
 } from "vitest";
 
+// Mirrors the real `astro-emit-asset`'s own overload behavior: an array
+// `generateAsset()` result emits one asset per element; a bare (non-array)
+// result — as `emitLilypondPdfAsset` returns — emits a single asset object,
+// not a one-element array.
 vi.mock("astro-emit-asset/emit", () => ({
 	emitAsset: async (
 		_path: string,
@@ -29,16 +35,25 @@ vi.mock("astro-emit-asset/emit", () => ({
 		generateAsset: () => Promise<unknown>,
 	) => {
 		const generated = await generateAsset();
-		const pages = Array.isArray(generated) ? generated : [generated];
-		return pages.map((page, i) => ({
-			src: `/_astro/fake-${i}.svg`,
-			meta: (page as { meta: unknown }).meta,
-		}));
+		if (Array.isArray(generated)) {
+			return generated.map((page, i) => ({
+				src: `/_astro/fake-${i}.svg`,
+				meta: (page as { meta: unknown }).meta,
+			}));
+		}
+		return {
+			src: "/_astro/fake.pdf",
+			meta: (generated as { meta: unknown }).meta,
+		};
 	},
 }));
 
 import { resolveLilypondBinary } from "../src/binary/index.js";
-import lilypond, { type LilypondOptions } from "../src/index.js";
+import lilypond, {
+	type LilypondOptions,
+	type LilypondScore,
+	render as renderScore,
+} from "../src/index.js";
 import { lilypondLoader } from "../src/loader.js";
 import { render } from "../src/render.js";
 
@@ -56,6 +71,19 @@ function svgDimensions(svg: string): { width: number; height: number } {
 function pngDimensions(buf: Buffer): { width: number; height: number } {
 	expect(buf.subarray(0, 8).toString("hex")).toBe("89504e470d0a1a0a");
 	return { width: buf.readUInt32BE(16), height: buf.readUInt32BE(20) };
+}
+
+/** Renders a `Score` component (from `render()`) via a real Astro container. */
+async function renderScoreHtml(
+	Score: AstroComponentFactory,
+	props: Record<string, unknown> = {},
+): Promise<string> {
+	const container = await AstroContainer.create();
+	return container.renderToString(Score, { props });
+}
+
+function pageCount(html: string): number {
+	return html.match(/data-lilypond-image/g)?.length ?? 0;
 }
 
 describe.concurrent("render() against the real lilypond binary", () => {
@@ -112,6 +140,27 @@ describe.concurrent("render() against the real lilypond binary", () => {
 				expect(files.sort()).toEqual(
 					expect.arrayContaining(["output-page1.png", "output-page2.png"]),
 				);
+			} finally {
+				await rm(dir, { recursive: true, force: true });
+			}
+		});
+
+		it("names a multi-page PDF as a single <base>.pdf, unlike SVG/PNG which split into numbered files", async () => {
+			const dir = await mkdtemp(join(tmpdir(), "lilypond-naming-"));
+			try {
+				const inputPath = join(dir, "input.ly");
+				const outputBase = join(dir, "output");
+				await writeFile(inputPath, multiPageSvg, "utf8");
+				await execFileAsync(binaryPath, [
+					"--format=pdf",
+					"--define-default=no-point-and-click",
+					"--define-default=backend=cairo",
+					"--output",
+					outputBase,
+					inputPath,
+				]);
+				const files = (await readdir(dir)).filter((f) => f.endsWith(".pdf"));
+				expect(files).toEqual(["output.pdf"]);
 			} finally {
 				await rm(dir, { recursive: true, force: true });
 			}
@@ -179,6 +228,18 @@ describe.concurrent("render() against the real lilypond binary", () => {
 		});
 	});
 
+	describe("pdf format", () => {
+		it("renders a multi-page score to a single valid PDF file", async () => {
+			const result = await render(multiPageSvg, {
+				format: "pdf",
+				crop: false,
+				binaryPath,
+			});
+			expect(result).toHaveLength(1);
+			expect(result[0].subarray(0, 5).toString("utf-8")).toBe("%PDF-");
+		});
+	});
+
 	describe("resolution", () => {
 		it("increases PNG pixel dimensions roughly proportionally to resolution", async () => {
 			const [low, high] = await Promise.all([
@@ -223,9 +284,7 @@ interface VitePluginLike {
 	transform: (src: string, id: string) => Promise<{ code: string } | undefined>;
 }
 
-function contentOf(code: string | undefined): {
-	pages: { src: string; width?: number; height?: number }[];
-} {
+function scoreFrom(code: string | undefined): LilypondScore {
 	return JSON.parse(code?.replace(/^export default /, "") ?? "null");
 }
 
@@ -251,7 +310,7 @@ async function getLyPlugin(
 	return plugins[0];
 }
 
-describe(".ly import ?crop/?nocrop query params against the real lilypond binary", () => {
+describe(".ly import + render() against the real lilypond binary", () => {
 	let projectDir: string;
 	let publicDir: string;
 	let source: string;
@@ -266,42 +325,56 @@ describe(".ly import ?crop/?nocrop query params against the real lilypond binary
 		await rm(projectDir, { recursive: true, force: true });
 	});
 
+	// getLyPlugin() runs astro:config:setup, which resolves the real
+	// binary and populates the renderState singleton that the public
+	// render() reads from — so render() can be called directly afterward.
+	async function transformToScore(options: LilypondOptions = {}) {
+		const plugin = await getLyPlugin(new URL(`file://${publicDir}/`), options);
+		const result = await plugin.transform(source, join(projectDir, "score.ly"));
+		return scoreFrom(result?.code);
+	}
+
+	it("transforms a .ly file into a LilypondScore handle, without rendering anything", async () => {
+		const score = await transformToScore();
+		expect(score.source).toContain("\\version");
+		expect(score.source).not.toContain("<svg");
+	});
+
 	it("renders uncropped (every page) by default (defaults.crop defaults to markdown-only)", async () => {
-		const plugin = await getLyPlugin(new URL(`file://${publicDir}/`));
-		const result = await plugin.transform(source, join(projectDir, "score.ly"));
-
-		expect(contentOf(result?.code).pages).toHaveLength(2);
+		const score = await transformToScore();
+		const { Score, pageCount: count } = await renderScore(score);
+		const html = await renderScoreHtml(Score);
+		expect(pageCount(html)).toBe(2);
+		expect(count).toBe(2);
 	});
 
-	it("renders a single cropped image when the import has a ?crop query param", async () => {
-		const plugin = await getLyPlugin(new URL(`file://${publicDir}/`));
-		const result = await plugin.transform(
-			source,
-			`${join(projectDir, "score.ly")}?crop`,
-		);
-
-		expect(contentOf(result?.code).pages).toHaveLength(1);
+	it("renders a single cropped image when the call passes crop: true", async () => {
+		const score = await transformToScore();
+		const { Score } = await renderScore(score, { crop: true });
+		const html = await renderScoreHtml(Score);
+		expect(pageCount(html)).toBe(1);
 	});
 
-	it("follows a configured defaults.crop of true, rendering a single cropped image", async () => {
-		const plugin = await getLyPlugin(new URL(`file://${publicDir}/`), {
-			defaults: { crop: true },
-		});
-		const result = await plugin.transform(source, join(projectDir, "score.ly"));
-
-		expect(contentOf(result?.code).pages).toHaveLength(1);
+	it("follows a configured defaults.crop of true when the call omits crop", async () => {
+		const score = await transformToScore({ defaults: { crop: true } });
+		const { Score } = await renderScore(score);
+		const html = await renderScoreHtml(Score);
+		expect(pageCount(html)).toBe(1);
 	});
 
-	it("overrides a configured defaults.crop of true with a ?nocrop query param", async () => {
-		const plugin = await getLyPlugin(new URL(`file://${publicDir}/`), {
-			defaults: { crop: true },
-		});
-		const result = await plugin.transform(
-			source,
-			`${join(projectDir, "score.ly")}?nocrop`,
-		);
+	it("overrides a configured defaults.crop of true with an explicit crop: false", async () => {
+		const score = await transformToScore({ defaults: { crop: true } });
+		const { Score } = await renderScore(score, { crop: false });
+		const html = await renderScoreHtml(Score);
+		expect(pageCount(html)).toBe(2);
+	});
 
-		expect(contentOf(result?.code).pages).toHaveLength(2);
+	it("renders Score and pdf concurrently from the same score when pdf: true", async () => {
+		const score = await transformToScore();
+		const { Score, pdf } = await renderScore(score, { pdf: true });
+		const html = await renderScoreHtml(Score);
+		expect(pageCount(html)).toBe(2);
+		expect(pdf?.src).toEqual(expect.any(String));
 	});
 });
 
@@ -359,7 +432,7 @@ describe("lilypondLoader() against the real lilypond binary", () => {
 		await rm(root, { recursive: true, force: true });
 	});
 
-	it("parses header metadata and real page dimensions for every fixture", async () => {
+	it("parses header metadata for every fixture, without rendering anything at sync time", async () => {
 		const loader = lilypondLoader({
 			base: pathToFileURL(`${COLLECTION_SCORES_DIR}/`),
 		});
@@ -368,19 +441,35 @@ describe("lilypondLoader() against the real lilypond binary", () => {
 
 		const sonata = context.store.get("sonata");
 		expect(sonata).toBeDefined();
-		const sonataData = sonata?.data as { pages: { width?: number }[] };
+		const sonataData = sonata?.data as unknown as LilypondScore;
 		expect(sonataData).toMatchObject({
-			pages: [{ src: expect.stringMatching(/^\/_astro\//) }],
+			source: expect.stringContaining("\\version"),
 			alt: "Sonata, by Beethoven",
 			title: "Sonata",
 			composer: "Beethoven",
 			extra: { mutopiacomposer: "BeethovenLV" },
 		});
-		expect(sonataData.pages[0].width).toBeGreaterThan(0);
 
 		const prelude = context.store.get("prelude");
 		expect(prelude?.data).toMatchObject({
 			piece: "Prelude",
 		});
+	});
+
+	it("exposes each entry as a LilypondScore that render() can use directly, for both the display image and a PDF download", async () => {
+		const loader = lilypondLoader({
+			base: pathToFileURL(`${COLLECTION_SCORES_DIR}/`),
+		});
+		const context = createFakeLoaderContext(root, publicDir);
+		await loader.load(context);
+
+		const sonata = context.store.get("sonata");
+		const sonataData = sonata?.data as unknown as LilypondScore;
+
+		const { Score, pdf } = await renderScore(sonataData, { pdf: true });
+		const html = await renderScoreHtml(Score);
+		expect(html).toContain("data-lilypond-image");
+		expect(html).toMatch(/width="\d+/);
+		expect(pdf?.src).toEqual(expect.any(String));
 	});
 });
