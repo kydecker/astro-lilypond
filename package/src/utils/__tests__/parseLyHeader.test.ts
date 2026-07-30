@@ -161,6 +161,32 @@ describe("parseLyHeaderFields", () => {
 	it("excludes a scheme boolean value", () => {
 		expect(parseLyHeaderFields("\\header { tagline = ##f }")).toEqual({});
 	});
+
+	it("drops a value whose quoted string is left unterminated by a spurious identifier match inside another string", () => {
+		// The `identifier =` scan isn't quote-aware, so when the real leading
+		// quote is never treated as a field start, it can land on "somekey="
+		// buried inside quoted text — whose "value" is the string's own
+		// closing quote, with nothing after it to terminate.
+		expect(parseLyHeaderFields('\\header { "blah somekey=" }')).toEqual({});
+	});
+
+	it("keeps the first occurrence when the same field is repeated within one block", () => {
+		expect(
+			parseLyHeaderFields('\\header { title = "First" title = "Second" }'),
+		).toEqual({ title: "First" });
+	});
+
+	it("excludes a \\markup value ending exactly at the field's end (no character follows \\markup)", () => {
+		expect(parseLyHeaderFields("\\header { title = \\markup}")).toEqual({});
+	});
+
+	it("excludes a \\markup value that resolves to empty text, keeping a sibling field", () => {
+		expect(
+			parseLyHeaderFields(
+				'\\header { title = \\markup { \\bold #4 } composer = "Beethoven" }',
+			),
+		).toEqual({ composer: "Beethoven" });
+	});
 });
 
 describe("extractMarkupText", () => {
