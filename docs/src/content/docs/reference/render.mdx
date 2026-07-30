@@ -5,7 +5,7 @@ description: Signature and types for the exported render() function, and the pro
 
 `render()`, imported from `astro-lilypond`, turns LilyPond code into a renderable `<Score />` component.
 
-## `render()`
+## `render()` parameters
 
 ```ts
 import { render } from "astro-lilypond";
@@ -14,15 +14,25 @@ function render(
   score: LilypondScore,
   options?: RenderOptions,
 ): Promise<RenderResult>;
+
+interface RenderResult {
+  Score: AstroComponentFactory;
+  pageCount: number;
+  pdf?: LilypondPdfResult; // when options.pdf is true
+  meta: LilypondMetadata;
+  raw: string;
+}
+
+interface LilypondPdfResult {
+  src: string;
+}
 ```
 
 :::caution
 Only call `render()` from statically-prerendered pages/components. On an on-demand/SSR route that isn't marked `export const prerender = true`, it would shell out to the `lilypond` binary on every request.
 :::
 
-### Parameters
-
-#### `score`
+### `score`
 
 **Type:** `LilypondScore`
 
@@ -31,25 +41,25 @@ The score's source text and derived metadata. You get one from:
 - Importing a `.ly`/`.ily`/`.lilypond` file directly.
 - A [`lilypondLoader()`](/reference/collections/) content-collection entry; `entry.data` is a `LilypondScore`.
 
-#### `options`
+### `options`
 
 **Type:** `RenderOptions`
 
-##### `options.format`
+#### `options.format`
 
 **Type:** `"svg" | "png"`  
 **Default:** `"svg"`
 
 Output format for `Score`.
 
-##### `options.crop`
+#### `options.crop`
 
 **Type:** `boolean`  
 **Default:** resolved from [`defaults.crop`](/reference/configuration/#defaultscrop)
 
 Crops `Score` to a single tightly-fit image instead of full pages. Defaults to `defaults.crop` resolved for component usage when omitted — see the [rendering guide](/guides/rendering/#cropping).
 
-##### `options.pdf`
+#### `options.pdf`
 
 **Type:** `boolean`  
 **Default:** `false`
@@ -70,24 +80,6 @@ const { Score, pdf, meta } = await render(
 <h3>{meta.title}</h3>
 <Score />
 <a href={pdf.src} download>Download PDF</a>
-```
-
-### Returns
-
-**Type:** `RenderResult`
-
-```ts
-interface RenderResult {
-  Score: AstroComponentFactory;
-  pageCount: number;
-  pdf?: LilypondPdfResult; // present only when options.pdf is true
-  meta: LilypondMetadata;
-  raw: string;
-}
-
-interface LilypondPdfResult {
-  src: string;
-}
 ```
 
 See [`<Score /> props`](#score--props) below for what `Score` accepts, and [`LilypondMetadata`](#lilypondmetadata) for the shape of `meta`.

@@ -7,7 +7,11 @@ import { Code } from "@astrojs/starlight/components";
 import BachInventionExample from "#components/examples/BachInventionExample.astro";
 import BachInventionExampleRaw from "#components/examples/BachInventionExample.astro?raw";
 
-Import a `.ly` or `.ily` file, call [`render()`](/reference/render/) to get a `Score`, then render it as `<Score />`.
+When you have larger scores that are too large to write directly in [Markdown](/guides/markdown), you can use the `render()` function to have greater control over output.
+
+## Displaying scores
+
+To display a score, import and pass your `.ly` score to the `render()` function from `astro-lilypond`. `render()` will return a `<Score>` component to use in your HTML.
 
 <Code code={BachInventionExampleRaw} lang="astro" title="MyComponent.astro" />
 
@@ -18,25 +22,6 @@ When a score renders to more than one page, as above, the pages are wrapped in a
 :::caution
 Only call `render()` from prerendered pages and components. `astro-lilypond` doesn't currently support on-demand rendering.
 :::
-
-## Displaying metadata
-
-`render()`'s `meta` carries the fields parsed from the score's `\header` block, such as `title`, `composer`, and `opus`.
-
-```astro title="ScoreWithTitle.astro" {5,8-9}
----
-import { render } from "astro-lilypond";
-import bachInvention from "./bach-invention.ly";
-
-const { Score, meta } = await render(bachInvention);
----
-
-<h3>{meta.title}</h3>
-<p>by {meta.composer}</p>
-<Score />
-```
-
-For a full list of metadata fields, see the [render reference](/reference/render/#lilypondmetadata-type).
 
 ## Cropping
 
@@ -58,7 +43,7 @@ const { Score } = await render(
 <Score />
 ```
 
-### Changing the default
+### Changing the default crop
 
 If you'd like every `render()` call to be cropped by default, update your configuration to set [`defaults.crop`](/reference/configuration/#defaultscrop) to `true`.
 
@@ -80,9 +65,28 @@ const { Score } = await render(
 <Score />
 ```
 
-## PDFs
+## Displaying score metadata
 
-Pass `pdf: true` to also get a downloadable PDF rendering of the same score, returned as `pdf`:
+`render()`'s `meta` carries the fields parsed from the score's `\header` block, such as `title`, `composer`, and `opus`.
+
+```astro title="ScoreWithTitle.astro" {5,8-9}
+---
+import { render } from "astro-lilypond";
+import bachInvention from "./bach-invention.ly";
+
+const { Score, meta } = await render(bachInvention);
+---
+
+<h3>{meta.title}</h3>
+<p>by {meta.composer}</p>
+<Score />
+```
+
+For a full list of metadata fields, see the [render reference](/reference/render/#lilypondmetadata-type).
+
+## PDF links
+
+Pass `pdf: true` to generate a PDF file, returned as `pdf`:
 
 ```astro title="ScoreWithDownload.astro" {5-8,12}
 ---
@@ -94,29 +98,16 @@ const { Score, pdf } = await render(
   { crop: true, pdf: true }
 );
 ---
+```
 
+The returned `pdf` can be used for download links by referencing `src`:
+
+```astro title="ScoreWithDownload.astro" {2}
 <Score />
 <a href={pdf.src} download>Download PDF</a>
 ```
 
-## Limiting rendered pages
-
-By default, `<Score />` renders every page. To show only an excerpt — the first page as a preview, for example — pass a `pageLimit`:
-
-```astro title="PreviewScore.astro" {8}
----
-import { render } from "astro-lilypond";
-import bachInvention from "./bach-invention.ly";
-
-const { Score } = await render(bachInvention);
----
-
-<Score pageLimit={1} />
-```
-
-`pageLimit={1}` renders only the first page. `pageLimit={2}` renders the first two pages, etc. Passing a `pageLimit` larger than the number of available pages has no effect.
-
-## Page count
+## Showing page counts
 
 Display a rendered score's page count with `pageCount`, alongside `Score`:
 
@@ -132,7 +123,7 @@ const { Score, pageCount } = await render(bachInvention);
 <p>{pageCount} {pageCount === 1 ? "page" : "pages"}</p>
 ```
 
-## Displaying the source
+## Outputting raw text
 
 `render()`'s `raw` returns your LilyPond source code as a string. Use it wherever you need to show the text itself, rather than the rendered image.
 
@@ -149,13 +140,26 @@ const { Score, raw } = await render(bachInvention);
 <Code code={raw} lang="lilypond" title="bach-invention.ly" />
 ```
 
-See the [`render reference`](/reference/render/#lilypondmetadata) for the full list of standard fields.
+## Limiting rendered pages
+
+By default, `<Score />` renders every page. To show only an excerpt, pass a `pageLimit`:
+
+```astro title="PreviewScore.astro" {8}
+---
+import { render } from "astro-lilypond";
+import bachInvention from "./bach-invention.ly";
+
+const { Score } = await render(bachInvention);
+---
+
+<Score pageLimit={1} />
+```
+
+`pageLimit={1}` renders only the first page. `pageLimit={2}` renders the first two pages, etc. Passing a `pageLimit` larger than the number of available pages has no effect.
 
 ## Alt text
 
 `<Score />` derives alt text automatically from the imported `.ly` file's `\header` block, displaying `alt="{title} by {composer}"`.
-
-### Customizing
 
 Pass an `alt` prop to override the generated alt text with your own description:
 
@@ -169,5 +173,3 @@ const { Score } = await render(bachInvention);
 
 <Score alt="A piano score showing a two-part invention by Bach" />
 ```
-
-See the [`render()` reference](/reference/render/) for the full list of props `<Score />` forwards, and its full set of options.
