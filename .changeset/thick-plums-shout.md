@@ -17,7 +17,7 @@ import bachInvention from "./bach-invention.ly";
 + <Score />
 ```
 
-The `render()` function takes your `.ly` file and returns a `Score` component which you can render on the page.
+The `render()` function takes your `.ly` file and returns a `Score` component which you can render on the page. The `<LilyPond>` component and its `astro-lilypond/component` export are gone entirely — there's no lower-level primitive left to import directly.
 
 If you were using the `?crop` or `?nocrop` query params in imports, those are now exposed as config options inside `render()`:
 
@@ -34,6 +34,15 @@ import { render } from "astro-lilypond";
 + <Score />
 ```
 
+**BREAKING:** `lilypondLoader()` collection entries no longer spread `\header` fields (`title`, `composer`, `opus`, etc.) directly onto `entry.data`. They now live under `entry.data.meta`:
+
+```diff
+- <h3>{entry.data.title}</h3>
++ <h3>{entry.data.meta.title}</h3>
+```
+
+Plain `.ly`/`.ily` imports get the same `meta` object, so a score's metadata reads identically whether it came from a collection or a direct import.
+
 Additionally, there is now support for generating `pdf` files from scores which can be exposed as download links. Set `{ pdf: true }` in the `render()` config, then use and display `pdf` from the result:
 
 ```astro
@@ -48,4 +57,8 @@ const { Score, pdf } = await render(bachInvention, { pdf: true });
 <a href={pdf.src} download>Download PDF</a>
 ```
 
-Metadata is also exposed for each score via the `meta`
+`render()` also returns `pageCount` and `raw` (the exact LilyPond source text).
+
+A new `renderAll()` function renders many scores at once; every entry in a `getCollection()` result.
+
+`<Score>` accepts the same props as `<LilyPond>` did: `pageLimit`, `class`, `style`, and `alt` props. Once you've set up your `render` function, you should be able to swap out `<LilyPond content={...} />` for `<Score />`.
