@@ -1,0 +1,52 @@
+name: Coverage
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - ".changeset/**"
+      - ".vscode/**"
+      - "docs/**"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # Refreshes the cached baseline coverage that PRs compare against, so PRs
+  # don't each have to re-run main's test suite.
+  cache-coverage-main:
+    name: Cache Coverage
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6.0.9
+        with:
+          run_install: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v7.0.0
+        with:
+          node-version: "24.x"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Cache coverage
+        run: pnpm --filter astro-lilypond test:coverage
+
+      - name: Save coverage cache
+        uses: actions/cache/save@v6.1.0
+        with:
+          path: package/coverage
+          key: coverage-main-${{ github.sha }}

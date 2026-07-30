@@ -8,6 +8,7 @@
 		"deploy:docs": "pnpm --filter docs run deploy",
 		"build": "pnpm --filter astro-lilypond build",
 		"test": "pnpm --filter astro-lilypond test",
+		"test:coverage": "pnpm --filter astro-lilypond test:coverage",
 		"release": "changeset publish",
 		"check": "biome check",
 		"check:fix": "biome check --write"
