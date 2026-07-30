@@ -19,7 +19,7 @@
   + <Score />
   ```
 
-  The `render()` function takes your `.ly` file and returns a `Score` component which you can render on the page. The `<LilyPond>` component and its `astro-lilypond/component` export are gone entirely — there's no lower-level primitive left to import directly.
+  The `render()` function takes your `.ly` file and returns a `Score` component which you can render on the page.
 
   If you were using the `?crop` or `?nocrop` query params in imports, those are now exposed as config options inside `render()`:
 
