@@ -33,8 +33,6 @@ Generates each entry's collection id. `header` is the file's parsed `\header` fi
 **Type:** `object`  
 **Default:** same as the [integration's `defaults`](/reference/configuration/#defaults)
 
-Used when [`render()`](/reference/render/) is later called on one of this collection's entries.
-
 ### `timeout`
 
 **Type:** `number`  
@@ -62,7 +60,7 @@ interface LilypondCollectionEntry {
 }
 ```
 
-Each collection entry's `data` is a `LilypondScore`, and can be passed directly to [`render()`](/reference/render/):
+Each collection entry's `data` is a `LilypondScore`, and can be passed directly to [`render()`](/reference/component/):
 
 ```astro {6} title="MyScore.astro"
 ---

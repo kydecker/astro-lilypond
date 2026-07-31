@@ -1,5 +1,5 @@
 ---
-title: Render Reference
+title: Component Reference
 description: Signature and types for the exported render() function, and the props Score accepts.
 ---
 
@@ -57,7 +57,7 @@ Output format for `Score`.
 **Type:** `boolean`  
 **Default:** resolved from [`defaults.crop`](/reference/configuration/#defaultscrop)
 
-Crops `Score` to a single tightly-fit image instead of full pages. Defaults to `defaults.crop` resolved for component usage when omitted — see the [rendering guide](/guides/rendering/#cropping).
+Crops `Score` to a single tightly-fit image instead of full pages. Defaults to `defaults.crop` resolved for component usage when omitted — see the [component guide](/guides/component/#cropping).
 
 #### `options.pdf`
 
@@ -131,7 +131,7 @@ const rendered = await renderAll(scores.map((score) => score.data));
 </ul>
 ```
 
-See the [rendering guide](/guides/rendering/) for more usage patterns. See the [collections guide](/guides/collections/#rendering-a-pdf-download) for using `render()` with content collections.
+See the [component guide](/guides/component/) for more usage patterns. See the [collections guide](/guides/collections/#rendering-a-pdf-download) for using `render()` with content collections.
 
 ## `LilypondMetadata` type
 
@@ -166,7 +166,7 @@ interface LilypondMetadata {
 
 **Type:** `number`
 
-Render only the first `n` pages. If omitted, all pages render. See [limiting rendered pages](/guides/rendering/#limiting-rendered-pages).
+Render only the first `n` pages. If omitted, all pages render. See [limiting rendered pages](/guides/component/#limiting-rendered-pages).
 
 ### `class`
 
@@ -184,4 +184,4 @@ Inline styles applied directly to the rendered element.
 
 **Type:** `string`
 
-Overrides the automatically-derived alt text. Takes precedence over any `title`/`composer` found in the `.ly` file's `\header` block. See also: [alt text](/guides/rendering/#alt-text).
+Overrides the automatically-derived alt text. Takes precedence over any `title`/`composer` found in the `.ly` file's `\header` block. See also: [alt text](/guides/component/#alt-text).

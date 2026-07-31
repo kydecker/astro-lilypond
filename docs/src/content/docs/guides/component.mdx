@@ -1,13 +1,13 @@
 ---
-title: Rendering Scores
-description: How to render LilyPond notation using the render() function.
+title: Component Usage
+description: How to render LilyPond notation with an Astro component.
 ---
 
 import { Code } from "@astrojs/starlight/components";
 import BachInventionExample from "#components/examples/BachInventionExample.astro";
 import BachInventionExampleRaw from "#components/examples/BachInventionExample.astro?raw";
 
-When you have larger scores that are too large to write directly in [Markdown](/guides/markdown), you can use the `render()` function to have greater control over output.
+When you have scores that are unwieldy to write directly in [Markdown](/guides/markdown), you can use the `<Score>` component to keep your site organized and have more control over the output.
 
 ## Displaying scores
 
@@ -82,7 +82,7 @@ const { Score, meta } = await render(bachInvention);
 <Score />
 ```
 
-For a full list of metadata fields, see the [render reference](/reference/render/#lilypondmetadata-type).
+For a full list of metadata fields, see the [component reference](/reference/component/#lilypondmetadata-type).
 
 ## PDF links
 
