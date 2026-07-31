@@ -1,8 +1,6 @@
 ---
-import { render } from "astro-lilypond";
+import { Score } from "astro-lilypond";
 import bachInvention from "./scores/bach-invention.ly";
-
-const { Score } = await render(bachInvention);
 ---
 
-<Score />
+<Score content={bachInvention} />
