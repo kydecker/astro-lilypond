@@ -59,7 +59,7 @@ import bachInvention from "./bach-invention.ly";
 
 Pass an `alt` prop to override the generated alt text with your own description:
 
-```astro title="MyComponent.astro" {6}
+```astro title="MyComponent.astro" {8}
 ---
 import { Score } from "astro-lilypond";
 import bachInvention from "./bach-invention.ly";
@@ -109,7 +109,7 @@ import bachInvention from "./bach-invention.ly";
 
 const { Score, pdf } = await render(
   bachInvention,
-  { crop: true, pdf: true }
+  { pdf: true }
 );
 ---
 
