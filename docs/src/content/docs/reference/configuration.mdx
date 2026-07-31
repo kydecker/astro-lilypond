@@ -29,7 +29,7 @@ export default defineConfig({
 **Type:** `boolean | { version?: string }`  
 **Default:** `true`
 
-When no `lilypond` binary is found on `PATH`, download a prebuilt release and use that instead. A `lilypond` already on `PATH` always takes priority over a downloaded one.
+Download a prebuilt release of the `lilypond` binary when none is found on `PATH`.
 
 ```js
 // astro.config.mjs
@@ -49,7 +49,9 @@ lilypond({
 })
 ```
 
-Downloads are cached per OS (e.g. `~/.cache/astro-lilypond` on Linux) — override with the `ASTRO_LILYPOND_CACHE_DIR` environment variable. Prebuilt releases are available for Linux (x86_64), macOS (x86_64/arm64), and Windows (x86_64); on other platforms, install LilyPond manually.
+A `lilypond` installation already on `PATH` always takes priority over a downloaded one.
+
+Downloads are cached per OS (e.g. `~/.cache/astro-lilypond` on Linux). The cache directory can be overridden with the `ASTRO_LILYPOND_CACHE_DIR` environment variable. Prebuilt releases are available for Linux (x86_64), macOS (x86_64/arm64), and Windows (x86_64); on other platforms, install LilyPond manually.
 
 ### `defaults`
 

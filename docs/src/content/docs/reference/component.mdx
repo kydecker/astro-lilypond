@@ -29,7 +29,7 @@ interface LilypondPdfResult {
 ```
 
 :::caution
-Only call `render()` from statically-prerendered pages/components. On an on-demand/SSR route that isn't marked `export const prerender = true`, it would shell out to the `lilypond` binary on every request.
+Only call `render()` from prerendered pages and components. `astro-lilypond` doesn't currently support on-demand rendering.
 :::
 
 ### `score`
