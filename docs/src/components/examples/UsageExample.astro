@@ -1,10 +1,8 @@
 ---
-import { render } from "astro-lilypond";
+import { Score } from "astro-lilypond";
 import FencedLilypond from "#components/FencedLilypond.astro";
 import score from "./scores/example.ly";
 import code from "./scores/example.ly?raw";
-
-const { Score } = await render(score, { crop: true });
 ---
 
 <FencedLilypond code={code} />
@@ -13,4 +11,4 @@ const { Score } = await render(score, { crop: true });
   The above text will be replaced with this image on your webpage:
 </p>
 
-<Score />
+<Score content={score} crop />

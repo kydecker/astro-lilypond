@@ -2,6 +2,7 @@ import type { AstroIntegration } from "astro";
 import {
 	type AstroComponentFactory,
 	createComponent,
+	renderComponent,
 	renderTemplate,
 	unescapeHTML,
 } from "astro/runtime/server/index.js";
@@ -98,7 +99,7 @@ export interface RenderResult {
 	raw: string;
 }
 
-interface ScoreProps {
+interface ScoreImageProps {
 	pageLimit?: number;
 	class?: string;
 	style?: string;
@@ -108,7 +109,7 @@ interface ScoreProps {
 function createScoreComponent(
 	content: LilypondImageResult,
 ): AstroComponentFactory {
-	return createComponent((_result, props: ScoreProps) => {
+	return createComponent((_result, props: ScoreImageProps) => {
 		const alt = props.alt ?? content.alt ?? "";
 		const html = renderedHtml(content.pages, alt, {
 			class: props.class,
@@ -179,6 +180,37 @@ export async function render(
 
 	return { Score, pageCount, pdf, meta: score.meta, raw: score.source };
 }
+
+export interface ScoreProps extends ScoreImageProps {
+	/**
+	 * A `LilypondScore` from a `.ly`/`.ily`/`.lilypond` import
+	 * or a `lilypondLoader()` entry.
+	 */
+	content: LilypondScore;
+
+	/**
+	 * @default "svg"
+	 */
+	format?: "svg" | "png";
+
+	/**
+	 * @default false
+	 */
+	crop?: boolean;
+}
+
+/**
+ * Renders a `LilypondScore` directly, for the common case where none of
+ * `render()`'s `pageCount`, `meta`, `raw`, or `pdf` are needed. Use
+ * `render()` instead when you need those.
+ */
+export const Score: AstroComponentFactory = createComponent(
+	async (result, props: ScoreProps) => {
+		const { content, format, crop, ...imageProps } = props;
+		const { Score: ContentScore } = await render(content, { format, crop });
+		return renderTemplate`${renderComponent(result, "Score", ContentScore, imageProps)}`;
+	},
+);
 
 export async function renderAll(
 	scores: LilypondScore[],

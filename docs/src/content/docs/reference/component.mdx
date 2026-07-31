@@ -1,11 +1,90 @@
 ---
 title: Component Reference
-description: Signature and types for the exported render() function, and the props Score accepts.
+description: Signature and types for the exported Score component and render() function.
 ---
 
-`render()`, imported from `astro-lilypond`, turns LilyPond code into a renderable `<Score />` component.
+`astro-lilypond` exports two ways to turn LilyPond code into rendered markup:
 
-## `render()` parameters
+- **[`<Score />`](#score-)** — a component for the common case: just display a score.
+- **[`render()`](#render)** — a function for when you also need `pageCount`, `meta`, `raw`, or a `pdf` link alongside the image.
+
+## `<Score />`
+
+```ts
+import { Score } from "astro-lilypond";
+
+interface ScoreProps {
+  content: LilypondScore;
+  format?: "svg" | "png"; // default "svg"
+  crop?: boolean; // default false
+  pageLimit?: number;
+  class?: string;
+  style?: string;
+  alt?: string;
+}
+```
+
+```astro title="MyComponent.astro"
+---
+import { Score } from "astro-lilypond";
+import bachInvention from "./bach-invention.ly";
+---
+
+<Score content={bachInvention} />
+```
+
+:::caution
+Only use `<Score />` from prerendered pages and components. `astro-lilypond` doesn't currently support on-demand rendering.
+:::
+
+### `content`
+
+**Type:** `LilypondScore`
+
+The score's source text and derived metadata. You get one from:
+
+- Importing a `.ly`/`.ily`/`.lilypond` file directly.
+- A [`lilypondLoader()`](/reference/collections/) content-collection entry; `entry.data` is a `LilypondScore`.
+
+### `format`
+
+**Type:** `"svg" | "png"`  
+**Default:** `"svg"`
+
+Output format for the rendered image.
+
+### `crop`
+
+**Type:** `boolean`  
+**Default:** `false`
+
+Crops the score to a single tightly-fit image instead of full pages — see [cropping](/guides/component/#cropping).
+
+### `pageLimit`
+
+**Type:** `number`
+
+Render only the first `n` pages. If omitted, all pages render. See [limiting rendered pages](/guides/component/#limiting-rendered-pages).
+
+### `class`
+
+**Type:** `string`
+
+Class name(s) applied to the rendered `<img>` (or `<ol>`, for multi-page scores). See the [styling guide](/guides/styling/).
+
+### `style`
+
+**Type:** `string`
+
+Inline styles applied directly to the rendered element.
+
+### `alt`
+
+**Type:** `string`
+
+Overrides the automatically-derived alt text. Takes precedence over any `title`/`composer` found in the `.ly` file's `\header` block. See also: [alt text](/guides/component/#alt-text).
+
+## `render()`
 
 ```ts
 import { render } from "astro-lilypond";
@@ -36,10 +115,7 @@ Only call `render()` from prerendered pages and components. `astro-lilypond` doe
 
 **Type:** `LilypondScore`
 
-The score's source text and derived metadata. You get one from:
-
-- Importing a `.ly`/`.ily`/`.lilypond` file directly.
-- A [`lilypondLoader()`](/reference/collections/) content-collection entry; `entry.data` is a `LilypondScore`.
+Same as [`<Score />`'s `content`](#content) above.
 
 ### `options`
 
@@ -82,7 +158,7 @@ const { Score, pdf, meta } = await render(
 <a href={pdf.src} download>Download PDF</a>
 ```
 
-See [`<Score /> props`](#score--props) below for what `Score` accepts, and [`LilypondMetadata`](#lilypondmetadata) for the shape of `meta`.
+`render()`'s returned `Score` accepts the same `pageLimit`, `class`, `style`, and `alt` props as [`<Score />`](#score-) above — everything except `content`, `format`, and `crop`, since those are already fixed by the call to `render()`.
 
 You can rename `Score` however you like when destructuring:
 
@@ -157,31 +233,3 @@ interface LilypondMetadata {
   [field: string]: string | undefined;
 }
 ```
-
-## `<Score />` props
-
-`Score` accepts the following props:
-
-### `pageLimit`
-
-**Type:** `number`
-
-Render only the first `n` pages. If omitted, all pages render. See [limiting rendered pages](/guides/component/#limiting-rendered-pages).
-
-### `class`
-
-**Type:** `string`
-
-Class name(s) applied to the rendered `<img>` (or `<ol>`, for multi-page scores). See the [styling guide](/guides/styling/).
-
-### `style`
-
-**Type:** `string`
-
-Inline styles applied directly to the rendered element.
-
-### `alt`
-
-**Type:** `string`
-
-Overrides the automatically-derived alt text. Takes precedence over any `title`/`composer` found in the `.ly` file's `\header` block. See also: [alt text](/guides/component/#alt-text).

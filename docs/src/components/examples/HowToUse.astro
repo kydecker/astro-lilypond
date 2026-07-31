@@ -1,10 +1,8 @@
 ---
-import { render } from "astro-lilypond";
+import { Score } from "astro-lilypond";
 import FencedLilyPond from "#components/FencedLilypond.astro";
 import score from "./scores/example.ly";
 import exampleRaw from "./scores/example.ly?raw";
-
-const { Score } = await render(score, { crop: true });
 ---
 
 <section>
@@ -16,7 +14,7 @@ const { Score } = await render(score, { crop: true });
   </div>
   <div>
     <p>&hellip;and it renders as music notation.</p>
-    <Score class="responsive" />
+    <Score content={score} crop class="responsive" />
   </div>
 </section>
 
