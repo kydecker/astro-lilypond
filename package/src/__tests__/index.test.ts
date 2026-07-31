@@ -2,8 +2,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../render.js", () => ({
 	render: vi.fn().mockResolvedValue([Buffer.from("fake-svg")]),
-	resolveCrop: (cropSetting: unknown, context: "markdown" | "component") =>
-		context === "markdown" ? cropSetting !== false : cropSetting === true,
 	defaultOptions: {
 		format: "svg",
 		crop: true,
@@ -11,7 +9,6 @@ vi.mock("../render.js", () => ({
 		timeout: 60_000,
 		defaults: {
 			resolution: 144,
-			crop: "markdown-only",
 			cropScale: 1.5,
 		},
 	},
@@ -750,13 +747,6 @@ describe("render()", () => {
 		await renderThunk();
 		expect(mockLowLevelRender.mock.calls.at(-1)?.[1]).toMatchObject({
 			format: "pdf",
-			crop: false,
-		});
-	});
-
-	it("resolves crop via resolveCrop when omitted (defaults.crop is markdown-only -> false for component context)", async () => {
-		await publicRender(SCORE);
-		expect(mockEmitLilypondAsset.mock.calls[0][0]).toMatchObject({
 			crop: false,
 		});
 	});

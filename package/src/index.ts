@@ -14,11 +14,7 @@ import {
 	remarkPlugin,
 	satteriPlugin,
 } from "./plugins/index.js";
-import {
-	type LilypondDefaults,
-	render as renderScore,
-	resolveCrop,
-} from "./render.js";
+import { type LilypondDefaults, render as renderScore } from "./render.js";
 import { getRenderState, resolveAndSetRenderState } from "./renderState.js";
 import {
 	altTextFor,
@@ -74,7 +70,7 @@ export interface RenderOptions {
 
 	/**
 	 * Crop `Score` to a single tightly-fit image instead of full pages.
-	 * @default resolved from the integration's `defaults.crop`
+	 * @default false
 	 */
 	crop?: boolean;
 
@@ -132,13 +128,9 @@ export async function render(
 	options: RenderOptions = {},
 ): Promise<RenderResult> {
 	const state = getRenderState();
-	const {
-		resolution,
-		crop: cropSetting,
-		cropScale,
-	} = resolveDefaults(state.defaults);
+	const { resolution, cropScale } = resolveDefaults(state.defaults);
 	const format = options.format ?? "svg";
-	const crop = options.crop ?? resolveCrop(cropSetting, "component");
+	const crop = options.crop ?? false;
 
 	const [{ Score, pageCount }, pdf] = await Promise.all([
 		(async (): Promise<{ Score: AstroComponentFactory; pageCount: number }> => {

@@ -59,19 +59,6 @@ Downloads are cached per OS (e.g. `~/.cache/astro-lilypond` on Linux). The cache
 
 Default settings applied when rendering each score. An individual `.ly` file can override `defaults` with its own settings.
 
-#### `defaults.crop`
-
-**Type:** `boolean | "markdown-only"`  
-**Default:** `"markdown-only"`
-
-When cropped, margins are removed and the page is cropped to fit the rendered staves, producing a single image. When not cropped, the full page (or pages, for a multi-page score) is preserved.
-
-- `"markdown-only"` (default) crops [Markdown](/guides/markdown/) fences, but leaves [components](/reference/component/) as full-page.
-- `true` crops everywhere.
-- `false` never crops by default.
-
-A `render()` call can always override this with an explicit `crop: true`/`crop: false` — see the [component guide](/guides/component/#cropping).
-
 #### `defaults.cropScale`
 
 **Type:** `number`  

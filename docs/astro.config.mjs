@@ -71,7 +71,7 @@ export default defineConfig({
 					label: "Guides",
 					items: [
 						"guides/markdown",
-						"guides/rendering",
+						"guides/component",
 						"guides/collections",
 						"guides/styling",
 						"guides/deployment",
@@ -81,7 +81,7 @@ export default defineConfig({
 					label: "Reference",
 					items: [
 						"reference/configuration",
-						"reference/render",
+						"reference/component",
 						"reference/collections",
 						"reference/styling",
 					],

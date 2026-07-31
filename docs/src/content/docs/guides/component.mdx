@@ -43,28 +43,6 @@ const { Score } = await render(
 <Score />
 ```
 
-### Changing the default crop
-
-If you'd like every `render()` call to be cropped by default, update your configuration to set [`defaults.crop`](/reference/configuration/#defaultscrop) to `true`.
-
-An explicit `crop: false` will override that default:
-
-```astro title="UncroppedScore.astro" {9}
----
-import { render } from "astro-lilypond";
-import bachInvention from "./bach-invention.ly";
-
-// Render as multiple full pages with margins,
-// even if defaults.crop is true
-const { Score } = await render(
-  bachInvention,
-  { crop: false }
-);
----
-
-<Score />
-```
-
 ## Displaying score metadata
 
 `render()`'s `meta` carries the fields parsed from the score's `\header` block, such as `title`, `composer`, and `opus`.
