@@ -33,20 +33,19 @@ export function satteriPlugin(options: PluginOptions): MdastPluginDefinition {
 			const includePaths = includePathsFor(ctx.fileURL);
 			const sourceName = sourceNameFor(ctx.fileURL);
 			const title = titleFor(sourceName);
-			const crop = true;
 			const alt = altTextForBlock(node.meta, node.value);
 			const pages = await emitLilypondAsset({
 				title,
 				format,
 				source,
 				resolution,
-				crop,
-				sizeScale: crop ? cropScale : 1,
+				crop: true,
+				sizeScale: cropScale,
 				binaryPath: options.binaryPath,
 				render: () =>
 					render(source, {
 						format,
-						crop,
+						crop: true,
 						defaults: options.defaults,
 						timeout: options.timeout,
 						binaryPath: options.binaryPath,

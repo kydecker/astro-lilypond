@@ -62,7 +62,6 @@ export function rehypePlugin(
 			);
 			const source = version ? prependVersion(raw, version) : raw;
 			const format = options.format ?? defaultOptions.format;
-			const crop = true;
 			const alt = altTextForBlock(codeNode.data?.meta, raw);
 
 			const promise = emitLilypondAsset({
@@ -70,13 +69,13 @@ export function rehypePlugin(
 				format,
 				source,
 				resolution,
-				crop,
-				sizeScale: crop ? cropScale : 1,
+				crop: true,
+				sizeScale: cropScale,
 				binaryPath: options.binaryPath,
 				render: () =>
 					render(source, {
 						format,
-						crop,
+						crop: true,
 						defaults: options.defaults,
 						timeout: options.timeout,
 						binaryPath: options.binaryPath,
