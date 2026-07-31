@@ -29,7 +29,7 @@ export default defineConfig({
 **Type:** `boolean | { version?: string }`  
 **Default:** `true`
 
-When no `lilypond` binary is found on `PATH`, download a prebuilt release and use that instead. A `lilypond` already on `PATH` always takes priority over a downloaded one.
+Download a prebuilt release of the `lilypond` binary when none is found on `PATH`.
 
 ```js
 // astro.config.mjs
@@ -49,26 +49,15 @@ lilypond({
 })
 ```
 
-Downloads are cached per OS (e.g. `~/.cache/astro-lilypond` on Linux) — override with the `ASTRO_LILYPOND_CACHE_DIR` environment variable. Prebuilt releases are available for Linux (x86_64), macOS (x86_64/arm64), and Windows (x86_64); on other platforms, install LilyPond manually.
+A `lilypond` installation already on `PATH` always takes priority over a downloaded one.
+
+Downloads are cached per OS (e.g. `~/.cache/astro-lilypond` on Linux). The cache directory can be overridden with the `ASTRO_LILYPOND_CACHE_DIR` environment variable.
 
 ### `defaults`
 
 **Type:** `object`
 
 Default settings applied when rendering each score. An individual `.ly` file can override `defaults` with its own settings.
-
-#### `defaults.crop`
-
-**Type:** `boolean | "markdown-only"`  
-**Default:** `"markdown-only"`
-
-When cropped, margins are removed and the page is cropped to fit the rendered staves, producing a single image. When not cropped, the full page (or pages, for a multi-page score) is preserved.
-
-- `"markdown-only"` (default) crops [Markdown](/guides/markdown/) fences, but leaves [`render()`](/reference/render/) calls full-page.
-- `true` crops everywhere.
-- `false` never crops by default.
-
-A `render()` call can always override this with an explicit `crop: true`/`crop: false` — see the [rendering guide](/guides/rendering/#cropping).
 
 #### `defaults.cropScale`
 
@@ -124,7 +113,7 @@ Information about the latest releases can be found on the [LilyPond news](https:
 **Type:** `"svg" | "png"`  
 **Default:** `"svg"`
 
-The output format used by [Markdown](/guides/markdown/) fences. Does not affect `.ly`/`.ily` imports or [`lilypondLoader()`](/guides/collections/) entries, which are format-agnostic until a [`render()`](/reference/render/) call picks a format.
+The output format used by [Markdown](/guides/markdown/) fences. Does not affect `.ly`/`.ily` imports or [`lilypondLoader()`](/guides/collections/) entries.
 
 ```js {3}
 // astro.config.mjs

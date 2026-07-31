@@ -3,8 +3,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("../../render", () => ({
 	render: vi.fn(),
 	FORMATS: ["png", "svg"],
-	resolveCrop: (cropSetting: unknown, context: "markdown" | "component") =>
-		context === "markdown" ? cropSetting !== false : cropSetting === true,
 	defaultOptions: {
 		format: "svg",
 		crop: true,
@@ -12,7 +10,6 @@ vi.mock("../../render", () => ({
 		timeout: 60_000,
 		defaults: {
 			resolution: 144,
-			crop: "markdown-only",
 		},
 	},
 }));
@@ -294,7 +291,7 @@ describe("rehypePlugin", () => {
 		);
 	});
 
-	it("renders cropped by default (defaults.crop unset)", async () => {
+	it("always renders markdown fences cropped, with no way to opt out via defaults", async () => {
 		const tree = makeTree([makeLilypondPre("\\score { }")]);
 
 		await runPlugin(tree);
@@ -302,17 +299,6 @@ describe("rehypePlugin", () => {
 		expect(mockRender).toHaveBeenCalledWith(
 			"\\score { }",
 			expect.objectContaining({ crop: true }),
-		);
-	});
-
-	it("follows defaults.crop when configured — markdown fences have no per-block override", async () => {
-		const tree = makeTree([makeLilypondPre("\\score { }")]);
-
-		await runPlugin(tree, { ...BASE_OPTIONS, defaults: { crop: false } });
-
-		expect(mockRender).toHaveBeenCalledWith(
-			"\\score { }",
-			expect.objectContaining({ crop: false }),
 		);
 	});
 

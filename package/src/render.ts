@@ -11,30 +11,6 @@ export const FORMATS = ["png", "svg", "pdf"] as const;
 export type Format = (typeof FORMATS)[number];
 
 /**
- * Controls whether rendered output is cropped tightly to the content
- * bounding box, or left as full, potentially multi-page, output.
- *
- * - `true` — crop everywhere
- * - `false` — never crop by default
- * - `"markdown-only"` — crop Markdown fences, but leave `render()` uncropped by default
- */
-export type CropSetting = boolean | "markdown-only";
-
-/** Which kind of consumer is resolving a `CropSetting` — see `resolveCrop`. */
-export type CropContext = "markdown" | "component";
-
-/**
- * Resolves the three-way `CropSetting` into the plain boolean a given
- * consumer needs, per the semantics documented on `CropSetting`.
- */
-export function resolveCrop(
-	cropSetting: CropSetting,
-	context: CropContext,
-): boolean {
-	return context === "markdown" ? cropSetting !== false : cropSetting === true;
-}
-
-/**
  * Defaults passed to each score for rendering.
  */
 export interface LilypondDefaults {
@@ -52,13 +28,6 @@ export interface LilypondDefaults {
 	resolution?: number;
 
 	/**
-	 * Crop the output tightly to the content bounding box, producing one
-	 * continuous image instead of paginated output.
-	 * @default "markdown-only"
-	 */
-	crop?: CropSetting;
-
-	/**
 	 * Multiplies the `width`/`height` on a cropped score's `<img>` tag.
 	 * Helps compensate for LilyPond's internal size units (points/mm)
 	 * appearing too small when converted to pixels. Only affects the `<img>`
@@ -71,10 +40,10 @@ export interface LilypondDefaults {
 
 /**
  * The subset of `LilypondDefaults` that `render()` itself reads. `version`
- * and `crop` are resolved by the caller before reaching `render()`
- * (`version` by prepending it to source text, `crop` via `resolveCrop`).
+ * is resolved by the caller before reaching `render()`, by prepending it to
+ * source text.
  */
-export type RenderDefaults = Omit<LilypondDefaults, "version" | "crop">;
+export type RenderDefaults = Omit<LilypondDefaults, "version">;
 
 export interface RenderOptions {
 	/**
@@ -134,7 +103,6 @@ export const defaultOptions: Required<
 	defaults: {
 		version: "2.26.0",
 		resolution: 144,
-		crop: "markdown-only",
 		cropScale: 1.5,
 	},
 };

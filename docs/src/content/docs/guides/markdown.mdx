@@ -14,11 +14,11 @@ Once you've installed `astro-lilypond`, you can write LilyPond code inside of an
 
 The markdown-based approach is great for small musical examples and excerpts which you want to write alongside prose. You can write your text, compose some music, and then switch back to text without leaving the file!
 
-For longer musical examples, you may want to use [`render()`](/guides/rendering/) instead.
+For longer musical examples, you may want to use the [`<Score> component`](/guides/component/) instead.
 
 ## Cropping
 
-All markdown blocks have image dimensions cropped by default. If you prefer to display full pages with margins, set [`defaults.crop`](/reference/configuration/#defaultscrop) to `false` in your config.
+Markdown blocks are always cropped to a single tightly-fit image. If you want control over cropping, use the [`<Score> component`](/guides/component/) instead.
 
 ## Alt text
 

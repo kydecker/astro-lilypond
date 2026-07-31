@@ -71,7 +71,7 @@ export default defineConfig({
 					label: "Guides",
 					items: [
 						"guides/markdown",
-						"guides/rendering",
+						"guides/component",
 						"guides/collections",
 						"guides/styling",
 						"guides/deployment",
@@ -81,7 +81,7 @@ export default defineConfig({
 					label: "Reference",
 					items: [
 						"reference/configuration",
-						"reference/render",
+						"reference/component",
 						"reference/collections",
 						"reference/styling",
 					],
@@ -107,15 +107,15 @@ export default defineConfig({
 		}),
 	],
 	redirects: {
-		"/usage": "/guides/rendering",
-		"/component": "/guides/rendering",
-		"/guides/component": "/guides/rendering",
+		"/usage": "/guides/component",
+		"/component": "/guides/component",
+		"/guides/rendering": "/guides/component",
 		"/markdown": "/guides/markdown",
 		"/styling": "/guides/styling",
 		"/lilypond-syntax": "/resources/syntax",
 		"/resources": "/resources/syntax",
 		"/configuration": "/reference/configuration",
-		"/reference/component": "/reference/render",
+		"/reference/render": "/reference/component",
 	},
 	devToolbar: {
 		enabled: false,

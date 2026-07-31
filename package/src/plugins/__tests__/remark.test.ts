@@ -4,8 +4,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("../../render", () => ({
 	render: vi.fn(),
 	FORMATS: ["png", "svg"],
-	resolveCrop: (cropSetting: unknown, context: "markdown" | "component") =>
-		context === "markdown" ? cropSetting !== false : cropSetting === true,
 	defaultOptions: {
 		format: "svg",
 		crop: true,
@@ -13,7 +11,6 @@ vi.mock("../../render", () => ({
 		timeout: 60_000,
 		defaults: {
 			resolution: 144,
-			crop: "markdown-only",
 		},
 	},
 }));
@@ -278,7 +275,7 @@ describe("remarkLilypondPlugin", () => {
 		);
 	});
 
-	it("renders cropped by default (defaults.crop unset)", async () => {
+	it("always renders markdown fences cropped, with no way to opt out via defaults", async () => {
 		const tree = makeTree([
 			{ type: "code", lang: "lilypond", value: "\\score { }" } as Code,
 		]);
@@ -288,23 +285,6 @@ describe("remarkLilypondPlugin", () => {
 		expect(mockRender).toHaveBeenCalledWith(
 			"\\score { }",
 			expect.objectContaining({ crop: true }),
-		);
-	});
-
-	it("follows defaults.crop when configured — markdown fences have no per-block override", async () => {
-		const options = { ...BASE_OPTIONS, defaults: { crop: false } };
-		const plugin = remarkLilypondPlugin(
-			options,
-		) as unknown as SimpleTransformer;
-		const tree = makeTree([
-			{ type: "code", lang: "lilypond", value: "\\score { }" } as Code,
-		]);
-
-		await plugin(tree, { path: "test.md" });
-
-		expect(mockRender).toHaveBeenCalledWith(
-			"\\score { }",
-			expect.objectContaining({ crop: false }),
 		);
 	});
 

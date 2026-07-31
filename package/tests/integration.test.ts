@@ -340,7 +340,7 @@ describe(".ly import + render() against the real lilypond binary", () => {
 		expect(score.source).not.toContain("<svg");
 	});
 
-	it("renders uncropped (every page) by default (defaults.crop defaults to markdown-only)", async () => {
+	it("renders uncropped (every page) by default", async () => {
 		const score = await transformToScore();
 		const { Score, pageCount: count } = await renderScore(score);
 		const html = await renderScoreHtml(Score);
@@ -353,20 +353,6 @@ describe(".ly import + render() against the real lilypond binary", () => {
 		const { Score } = await renderScore(score, { crop: true });
 		const html = await renderScoreHtml(Score);
 		expect(pageCount(html)).toBe(1);
-	});
-
-	it("follows a configured defaults.crop of true when the call omits crop", async () => {
-		const score = await transformToScore({ defaults: { crop: true } });
-		const { Score } = await renderScore(score);
-		const html = await renderScoreHtml(Score);
-		expect(pageCount(html)).toBe(1);
-	});
-
-	it("overrides a configured defaults.crop of true with an explicit crop: false", async () => {
-		const score = await transformToScore({ defaults: { crop: true } });
-		const { Score } = await renderScore(score, { crop: false });
-		const html = await renderScoreHtml(Score);
-		expect(pageCount(html)).toBe(2);
 	});
 
 	it("renders Score and pdf concurrently from the same score when pdf: true", async () => {

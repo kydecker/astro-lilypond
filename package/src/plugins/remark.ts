@@ -1,7 +1,7 @@
 import type { Html, Root } from "mdast";
 import type { Plugin } from "unified";
 import { visit } from "unist-util-visit";
-import { defaultOptions, render, resolveCrop } from "../render.js";
+import { defaultOptions, render } from "../render.js";
 import {
 	altTextForBlock,
 	emitLilypondAsset,
@@ -25,15 +25,11 @@ export const remarkPlugin: Plugin<[PluginOptions], Root> = (options) => {
 		visit(tree, "code", (node, index, parent) => {
 			if (!isLilypondLang(node.lang) || index === undefined || !parent) return;
 
-			const {
-				version,
-				resolution,
-				crop: cropSetting,
-				cropScale,
-			} = resolveDefaults(options.defaults);
+			const { version, resolution, cropScale } = resolveDefaults(
+				options.defaults,
+			);
 			const source = version ? prependVersion(node.value, version) : node.value;
 			const format = options.format ?? defaultOptions.format;
-			const crop = resolveCrop(cropSetting, "markdown");
 			const alt = altTextForBlock(node.meta, node.value);
 
 			const promise = emitLilypondAsset({
@@ -41,13 +37,13 @@ export const remarkPlugin: Plugin<[PluginOptions], Root> = (options) => {
 				format,
 				source,
 				resolution,
-				crop,
-				sizeScale: crop ? cropScale : 1,
+				crop: true,
+				sizeScale: cropScale,
 				binaryPath: options.binaryPath,
 				render: () =>
 					render(source, {
 						format,
-						crop,
+						crop: true,
 						defaults: options.defaults,
 						timeout: options.timeout,
 						binaryPath: options.binaryPath,

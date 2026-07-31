@@ -1,5 +1,5 @@
 import { visit } from "unist-util-visit";
-import { defaultOptions, render, resolveCrop } from "../render.js";
+import { defaultOptions, render } from "../render.js";
 import {
 	altTextForBlock,
 	emitLilypondAsset,
@@ -57,15 +57,11 @@ export function rehypePlugin(
 				.map((c) => c.value)
 				.join("");
 
-			const {
-				version,
-				resolution,
-				crop: cropSetting,
-				cropScale,
-			} = resolveDefaults(options.defaults);
+			const { version, resolution, cropScale } = resolveDefaults(
+				options.defaults,
+			);
 			const source = version ? prependVersion(raw, version) : raw;
 			const format = options.format ?? defaultOptions.format;
-			const crop = resolveCrop(cropSetting, "markdown");
 			const alt = altTextForBlock(codeNode.data?.meta, raw);
 
 			const promise = emitLilypondAsset({
@@ -73,13 +69,13 @@ export function rehypePlugin(
 				format,
 				source,
 				resolution,
-				crop,
-				sizeScale: crop ? cropScale : 1,
+				crop: true,
+				sizeScale: cropScale,
 				binaryPath: options.binaryPath,
 				render: () =>
 					render(source, {
 						format,
-						crop,
+						crop: true,
 						defaults: options.defaults,
 						timeout: options.timeout,
 						binaryPath: options.binaryPath,

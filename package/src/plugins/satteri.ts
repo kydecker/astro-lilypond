@@ -1,6 +1,6 @@
 import type { Code, Html } from "mdast";
 import type { MdastPluginDefinition, MdastVisitorContext } from "satteri";
-import { defaultOptions, render, resolveCrop } from "../render.js";
+import { defaultOptions, render } from "../render.js";
 import {
 	altTextForBlock,
 	emitLilypondAsset,
@@ -25,31 +25,27 @@ export function satteriPlugin(options: PluginOptions): MdastPluginDefinition {
 			ctx: MdastVisitorContext,
 		): Promise<Html | undefined> {
 			if (!isLilypondLang(node.lang)) return undefined;
-			const {
-				version,
-				resolution,
-				crop: cropSetting,
-				cropScale,
-			} = resolveDefaults(options.defaults);
+			const { version, resolution, cropScale } = resolveDefaults(
+				options.defaults,
+			);
 			const source = version ? prependVersion(node.value, version) : node.value;
 			const format = options.format ?? defaultOptions.format;
 			const includePaths = includePathsFor(ctx.fileURL);
 			const sourceName = sourceNameFor(ctx.fileURL);
 			const title = titleFor(sourceName);
-			const crop = resolveCrop(cropSetting, "markdown");
 			const alt = altTextForBlock(node.meta, node.value);
 			const pages = await emitLilypondAsset({
 				title,
 				format,
 				source,
 				resolution,
-				crop,
-				sizeScale: crop ? cropScale : 1,
+				crop: true,
+				sizeScale: cropScale,
 				binaryPath: options.binaryPath,
 				render: () =>
 					render(source, {
 						format,
-						crop,
+						crop: true,
 						defaults: options.defaults,
 						timeout: options.timeout,
 						binaryPath: options.binaryPath,
