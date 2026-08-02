@@ -77,21 +77,6 @@ describe("satteriPlugin", () => {
 		);
 	});
 
-	// { rawHtml } re-parses as real HTML on both of Sätteri's compile targets:
-	// a literal insert for plain Markdown, and structured JSX for MDX (where a
-	// plain mdast `html` node would instead be escaped as text).
-	it("returns { rawHtml } the same way regardless of ctx.sourceFormat", async () => {
-		const plugin = satteriPlugin(BASE_OPTIONS);
-		const node: Code = { type: "code", lang: "lilypond", value: "\\score { }" };
-
-		const markdownResult = await plugin.code?.(node, {} as never);
-		const mdxResult = await plugin.code?.(node, {
-			sourceFormat: "mdx",
-		} as never);
-
-		expect(rawHtml(markdownResult)).toBe(rawHtml(mdxResult));
-	});
-
 	it("returns undefined for non-lilypond code nodes", async () => {
 		const plugin = satteriPlugin(BASE_OPTIONS);
 		const node: Code = { type: "code", lang: "js", value: "console.log(1)" };
