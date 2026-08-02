@@ -6,9 +6,6 @@ export default defineConfig({
 		lilypond({
 			defaults: {
 				version: "2.26.0",
-				// A round, distinctive value (library default is 1.5) so tests can
-				// verify cropped `<img>` width/height scale by exactly this factor
-				// relative to the underlying SVG asset's own dimensions.
 				cropScale: 2,
 			},
 		}),
