@@ -13,14 +13,8 @@ export type { ImageDimensions } from "./imageDimensions.js";
 export { imageDimensionsFor } from "./imageDimensions.js";
 export { includePathsFor } from "./includePathsFor.js";
 export { isLilypondLang } from "./isLilypondLang.js";
-export type {
-	KnownLyHeaderFields,
-	LilypondMetadata,
-} from "./lilypondMetadata.js";
-export {
-	STANDARD_HEADER_FIELDS,
-	toLilypondMetadata,
-} from "./lilypondMetadata.js";
+export type { LilypondMetadata } from "./lilypondMetadata.js";
+export { toLilypondMetadata } from "./lilypondMetadata.js";
 export { lyTypeDeclarationsFor } from "./lyTypeDeclarationsFor.js";
 export { parseFenceMeta } from "./parseFenceMeta.js";
 export type { LyHeaderFields } from "./parseLyHeader.js";
