@@ -3,17 +3,14 @@ import { join, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { Loader, LoaderContext } from "astro/loaders";
 import { z } from "astro/zod";
-import type { AutoInstallOptions } from "./binary/index.js";
 import { type LilypondScore, LY_EXTENSIONS } from "./index.js";
 import type { LilypondDefaults } from "./render.js";
-import { resolveAndSetRenderState } from "./renderState.js";
 import {
 	altTextFor,
 	includePathsFor,
 	parseLyHeaderFields,
 	prependVersion,
 	resolveDefaults,
-	STANDARD_HEADER_FIELDS,
 	sourceNameFor,
 	titleFor,
 	toLilypondMetadata,
@@ -54,55 +51,34 @@ export interface LilypondLoaderOptions {
 	 * collection's entries.
 	 */
 	defaults?: LilypondDefaults;
-
-	/**
-	 * Milliseconds to wait for a single `lilypond` invocation before
-	 * aborting it, when `render()` is later called on one of this
-	 * collection's entries.
-	 * @default 60000
-	 */
-	timeout?: number;
-
-	/**
-	 * When no `lilypond` binary is found on `PATH`, download a matching
-	 * prebuilt release into a local cache and use that instead. Set to
-	 * `false` to only ever use a `PATH` install, or pass an object to pick
-	 * which version gets downloaded.
-	 * @default true
-	 */
-	autoInstall?: boolean | AutoInstallOptions;
 }
 
-/**
- * A collection entry is itself a `LilypondScore` (its `meta` carries the
- * file's `\header` fields) — pass `entry.data` directly to the exported
- * `render()`, exactly as you would a plain `.ly` import.
- */
 export type LilypondCollectionEntry = LilypondScore;
 
-type StandardHeaderFieldSchemaShape = {
-	[K in (typeof STANDARD_HEADER_FIELDS)[number]]: z.ZodOptional<z.ZodString>;
-};
-
-// Built from the same `STANDARD_HEADER_FIELDS` list `KnownLyHeaderFields` is
-// derived from, so the two can't drift. `.catchall()` lets any other header
-// field (e.g. `mutopiacomposer`) sit alongside the standard ones, typed as
-// `string` — matching `LilypondMetadata`'s index signature.
-const lilypondMetadataSchema = z
-	.object(
-		Object.fromEntries(
-			STANDARD_HEADER_FIELDS.map((field) => [field, z.string().optional()]),
-		) as StandardHeaderFieldSchemaShape,
-	)
-	.catchall(z.string());
-
+// Field names must match `LilypondMetadata` in `utils/lilypondMetadata.ts`.
 export const lilypondEntrySchema = z.object({
 	source: z.string(),
 	alt: z.string(),
 	sourceName: z.string().optional(),
 	includePaths: z.array(z.string()),
 	assetTitle: z.string(),
-	meta: lilypondMetadataSchema,
+	meta: z
+		.object({
+			arranger: z.string().optional(),
+			composer: z.string().optional(),
+			copyright: z.string().optional(),
+			dedication: z.string().optional(),
+			instrument: z.string().optional(),
+			meter: z.string().optional(),
+			opus: z.string().optional(),
+			piece: z.string().optional(),
+			poet: z.string().optional(),
+			subsubtitle: z.string().optional(),
+			subtitle: z.string().optional(),
+			tagline: z.string().optional(),
+			title: z.string().optional(),
+		})
+		.catchall(z.string()),
 });
 
 function stripLyExtension(entryPath: string): string {
@@ -133,16 +109,12 @@ function posixRelative(from: string, to: string): string {
 /**
  * Content Loader to turn a directory of `.ly` files into a content collection.
  */
-export function lilypondLoader(options: LilypondLoaderOptions): Loader {
-	const {
-		pattern = DEFAULT_PATTERN,
-		base,
-		generateId = defaultGenerateId,
-		defaults,
-		timeout,
-		autoInstall,
-	} = options;
-
+export function lilypondLoader({
+	pattern = DEFAULT_PATTERN,
+	base,
+	generateId = defaultGenerateId,
+	defaults,
+}: LilypondLoaderOptions) {
 	const resolved = resolveDefaults(defaults);
 
 	return {
@@ -155,15 +127,6 @@ export function lilypondLoader(options: LilypondLoaderOptions): Loader {
 			const rootDir = fileURLToPath(config.root);
 			const baseUrl = resolveBaseUrl(base, config.root);
 			const baseDir = fileURLToPath(baseUrl);
-			// Populates the shared render() state, so this collection's entries
-			// can be rendered even when the `lilypond()` integration itself
-			// isn't registered.
-			await resolveAndSetRenderState({
-				autoInstall,
-				defaults,
-				timeout,
-				logger,
-			});
 
 			async function syncEntry(entry: string): Promise<string | undefined> {
 				const filePath = join(baseDir, entry);
@@ -266,5 +229,5 @@ export function lilypondLoader(options: LilypondLoaderOptions): Loader {
 			watcher.on("change", onFsEvent);
 			watcher.on("unlink", onFsEvent);
 		},
-	};
+	} satisfies Loader;
 }

@@ -4,20 +4,7 @@ import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import type { DataStore } from "astro/loaders";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-
-vi.mock("../binary/index.js", async (importOriginal) => {
-	const actual = await importOriginal<typeof import("../binary/index.js")>();
-	return {
-		...actual,
-		resolveLilypondBinary: vi.fn().mockResolvedValue("lilypond"),
-	};
-});
-
-import { resolveLilypondBinary } from "../binary/index.js";
 import { lilypondEntrySchema, lilypondLoader } from "../loader.js";
-import { getRenderState, resetRenderStateForTests } from "../renderState.js";
-
-const mockResolveLilypondBinary = vi.mocked(resolveLilypondBinary);
 
 /** Minimal in-memory stand-in for Astro's content-layer DataStore. */
 function createFakeStore() {
@@ -110,8 +97,6 @@ beforeEach(async () => {
 	publicDir = join(root, "public");
 	await mkdir(scoresDir, { recursive: true });
 	await mkdir(publicDir, { recursive: true });
-	resetRenderStateForTests();
-	mockResolveLilypondBinary.mockReset().mockResolvedValue("lilypond");
 });
 
 afterEach(async () => {
@@ -366,27 +351,6 @@ describe("lilypondLoader", () => {
 		const loader = lilypondLoader({ base: "./src/scores" });
 		const { context } = createFakeContext({ root, publicDir });
 		await expect(loader.load(context)).resolves.toBeUndefined();
-	});
-
-	it("resolves its own binary and populates the shared render() state with it, so entries render without the lilypond() integration", async () => {
-		mockResolveLilypondBinary.mockResolvedValue(
-			"/cache/lilypond-2.26.0/bin/lilypond",
-		);
-		await writeFile(join(scoresDir, "sonata.ly"), "\\score { { c4 } }");
-
-		const loader = lilypondLoader({
-			base: "./src/scores",
-			autoInstall: { version: "2.26.0" },
-		});
-		const { context } = createFakeContext({ root, publicDir });
-		await loader.load(context);
-
-		expect(mockResolveLilypondBinary).toHaveBeenCalledWith(
-			expect.objectContaining({ version: "2.26.0", autoInstall: true }),
-		);
-		expect(getRenderState().binaryPath).toBe(
-			"/cache/lilypond-2.26.0/bin/lilypond",
-		);
 	});
 });
 
