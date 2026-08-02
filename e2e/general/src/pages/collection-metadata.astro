@@ -1,0 +1,24 @@
+---
+import { getEntry } from "astro:content";
+import BaseLayout from "../../../shared/BaseLayout.astro";
+
+const entry = await getEntry("scores", "metadata");
+const { meta } = entry.data;
+---
+
+<BaseLayout title="Collection: metadata">
+	<dl>
+		<dt>title</dt>
+		<dd data-testid="meta-title">{meta.title}</dd>
+		<dt>composer</dt>
+		<dd data-testid="meta-composer">{meta.composer}</dd>
+		<dt>poet</dt>
+		<dd data-testid="meta-poet">{meta.poet}</dd>
+		<dt>instrument</dt>
+		<dd data-testid="meta-instrument">{meta.instrument}</dd>
+		<dt>opus</dt>
+		<dd data-testid="meta-opus">{meta.opus}</dd>
+		<dt>customtag</dt>
+		<dd data-testid="meta-customtag">{meta.customtag}</dd>
+	</dl>
+</BaseLayout>

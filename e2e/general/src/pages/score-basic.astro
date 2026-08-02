@@ -1,0 +1,9 @@
+---
+import { Score } from "astro-lilypond";
+import BaseLayout from "../../../shared/BaseLayout.astro";
+import simple from "../scores/simple.ly";
+---
+
+<BaseLayout title="Score: basic">
+	<Score content={simple} />
+</BaseLayout>

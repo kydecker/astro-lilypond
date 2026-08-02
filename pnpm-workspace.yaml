@@ -1,6 +1,7 @@
 packages:
   - "package"
   - "docs"
+  - "e2e"
 
 allowBuilds:
   core-js: false

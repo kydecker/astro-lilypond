@@ -1,0 +1,19 @@
+---
+interface Props {
+	title?: string;
+	frontmatter?: { title?: string };
+}
+
+const { title, frontmatter } = Astro.props;
+const pageTitle = title ?? frontmatter?.title ?? "";
+---
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<title>{pageTitle}</title>
+	</head>
+	<body>
+		<slot />
+	</body>
+</html>

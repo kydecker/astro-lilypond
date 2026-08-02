@@ -1,0 +1,19 @@
+---
+import { Score } from "astro-lilypond";
+import BaseLayout from "../../../shared/BaseLayout.astro";
+import multiPage from "../scores/multi-page.ly";
+import simple from "../scores/simple.ly";
+---
+
+<BaseLayout title="Score: class/style">
+	<Score
+		content={simple}
+		class="single-page-score"
+		style="border: 1px solid red"
+	/>
+	<Score
+		content={multiPage}
+		class="multi-page-score"
+		style="border: 2px solid blue"
+	/>
+</BaseLayout>
