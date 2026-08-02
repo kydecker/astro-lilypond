@@ -1,5 +1,11 @@
 # astro-lilypond
 
+## 0.16.1
+
+### Patch Changes
+
+- f477f5b: Content collections from `lilypondLoader()` will now return correct TypeScript types for `entry.data` instead of returning data as `any`.
+
 ## 0.16.0
 
 ### Minor Changes
