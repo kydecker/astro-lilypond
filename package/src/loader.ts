@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import type { Loader, LoaderContext } from "astro/loaders";
 import { z } from "astro/zod";
 import { type LilypondScore, LY_EXTENSIONS } from "./index.js";
-import type { LilypondDefaults } from "./render.js";
+import { getRenderState } from "./renderState.js";
 import {
 	altTextFor,
 	includePathsFor,
@@ -45,12 +45,6 @@ export interface LilypondLoaderOptions {
 	 * @default the file's path relative to `base`, POSIX-separated, with its extension stripped.
 	 */
 	generateId?: (options: GenerateIdOptions) => string;
-
-	/**
-	 * Defaults used when `render()` is later called on one of this
-	 * collection's entries.
-	 */
-	defaults?: LilypondDefaults;
 }
 
 export type LilypondCollectionEntry = LilypondScore;
@@ -113,10 +107,7 @@ export function lilypondLoader({
 	pattern = DEFAULT_PATTERN,
 	base,
 	generateId = defaultGenerateId,
-	defaults,
 }: LilypondLoaderOptions) {
-	const resolved = resolveDefaults(defaults);
-
 	return {
 		name: "astro-lilypond-loader",
 		schema: lilypondEntrySchema,
@@ -124,6 +115,7 @@ export function lilypondLoader({
 			const { config, store, logger, watcher, generateDigest, parseData } =
 				context;
 
+			const { version } = resolveDefaults(getRenderState().defaults);
 			const rootDir = fileURLToPath(config.root);
 			const baseUrl = resolveBaseUrl(base, config.root);
 			const baseDir = fileURLToPath(baseUrl);
@@ -142,7 +134,7 @@ export function lilypondLoader({
 				const id = generateId({ entry, base: baseUrl, header: headerFields });
 				const digest = generateDigest(source);
 
-				const src = prependVersion(source, resolved.version);
+				const src = prependVersion(source, version);
 				const includePaths = includePathsFor(filePath);
 				const sourceName = sourceNameFor(filePath);
 				const assetTitle = titleFor(sourceName);
