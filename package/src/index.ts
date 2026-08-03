@@ -13,13 +13,13 @@ import {
 	resolveAutoInstallOption,
 	resolveLilypondBinary,
 } from "./binary/index.js";
-import { getLogger, setLogger } from "./logger.js";
 import {
 	type PluginOptions,
 	remarkPlugin,
 	satteriPlugin,
 } from "./plugins/index.js";
 import { type LilypondDefaults, render as renderScore } from "./render.js";
+import { getLilypondState, setLilypondState } from "./state.js";
 import {
 	altTextFor,
 	emitLilypondAsset,
@@ -36,7 +36,6 @@ import {
 	titleFor,
 	toLilypondMetadata,
 } from "./utils/index.js";
-import { getLilypondState, lilypondStatePlugin } from "./virtualState.js";
 
 export const LY_EXTENSIONS = [".ly", ".lilypond", ".ily"] as const;
 
@@ -146,8 +145,8 @@ export async function render(
 	score: LilypondScore,
 	options: RenderOptions = {},
 ): Promise<RenderResult> {
-	const state = await getLilypondState();
-	const logger = getLogger();
+	const state = getLilypondState();
+	const { logger } = state;
 	const { resolution, cropScale } = resolveDefaults(state.defaults);
 	const format = options.format ?? "svg";
 	const crop = options.crop ?? false;
@@ -325,7 +324,6 @@ export default function lilypond(
 				const isDev = command === "dev";
 				options.isDev = isDev;
 				options.logger = logger;
-				setLogger(logger);
 
 				const binaryPath = await resolveLilypondBinary({
 					...resolveAutoInstallOption(options.autoInstall),
@@ -333,20 +331,17 @@ export default function lilypond(
 					warn: (message) => logger.warn(message),
 				});
 				options.binaryPath = binaryPath;
+				setLilypondState({
+					binaryPath,
+					defaults: options.defaults,
+					timeout: options.timeout,
+					isDev,
+					logger,
+				});
 
 				updateConfig({
 					integrations: [emitAssetIntegration()],
-					vite: {
-						plugins: [
-							lyFilePlugin(options),
-							lilypondStatePlugin({
-								binaryPath,
-								defaults: options.defaults,
-								timeout: options.timeout,
-								isDev,
-							}),
-						],
-					},
+					vite: { plugins: [lyFilePlugin(options)] },
 				});
 
 				const existingProcessor = config.markdown?.processor;
