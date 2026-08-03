@@ -11,7 +11,7 @@ export interface RenderState {
 	defaults: LilypondDefaults | undefined;
 	timeout: number | undefined;
 	isDev: boolean;
-	logger?: Pick<AstroIntegrationLogger, "warn" | "error">;
+	logger: Pick<AstroIntegrationLogger, "warn" | "error">;
 }
 
 /**

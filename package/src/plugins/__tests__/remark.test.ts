@@ -33,7 +33,9 @@ const mockEmitLilypondAsset = vi.mocked(emitLilypondAsset);
 
 const FAKE_SVG = "<svg xmlns='http://www.w3.org/2000/svg'><g>fake</g></svg>";
 
-const BASE_OPTIONS: PluginOptions = {};
+const FAKE_LOGGER = { warn: vi.fn(), error: vi.fn() };
+
+const BASE_OPTIONS: PluginOptions = { logger: FAKE_LOGGER };
 
 type SimpleTransformer = (tree: Root, file: { path: string }) => Promise<void>;
 type SimplePlugin = (opts: PluginOptions) => SimpleTransformer;
@@ -77,6 +79,7 @@ describe("remarkLilypondPlugin", () => {
 			defaults: undefined,
 			includePaths: ["."],
 			sourceName: "test.md",
+			logger: FAKE_LOGGER,
 		});
 		expect(mockEmitLilypondAsset).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -117,6 +120,7 @@ describe("remarkLilypondPlugin", () => {
 			defaults: undefined,
 			includePaths: ["."],
 			sourceName: "test.md",
+			logger: FAKE_LOGGER,
 		});
 	});
 
@@ -133,6 +137,7 @@ describe("remarkLilypondPlugin", () => {
 			defaults: undefined,
 			includePaths: ["."],
 			sourceName: "test.md",
+			logger: FAKE_LOGGER,
 		});
 	});
 
@@ -210,6 +215,7 @@ describe("remarkLilypondPlugin", () => {
 			defaults: { version: "2.24.0" },
 			includePaths: ["."],
 			sourceName: "test.md",
+			logger: FAKE_LOGGER,
 		});
 	});
 
@@ -232,6 +238,7 @@ describe("remarkLilypondPlugin", () => {
 			defaults: { version: "2.24.0" },
 			includePaths: ["."],
 			sourceName: "test.md",
+			logger: FAKE_LOGGER,
 		});
 	});
 
@@ -266,6 +273,7 @@ describe("remarkLilypondPlugin", () => {
 			defaults: undefined,
 			includePaths: ["."],
 			sourceName: "test.md",
+			logger: FAKE_LOGGER,
 		});
 		expect((tree.children[0] as Html).value).toBe(
 			'<img data-lilypond-image src="/_lilypond/test.png" alt>',
@@ -295,6 +303,7 @@ describe("remarkLilypondPlugin", () => {
 			defaults: { resolution: 300 },
 			includePaths: ["."],
 			sourceName: "test.md",
+			logger: FAKE_LOGGER,
 		});
 		expect(mockEmitLilypondAsset).toHaveBeenCalledWith(
 			expect.objectContaining({ resolution: 300 }),

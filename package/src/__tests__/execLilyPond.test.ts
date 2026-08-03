@@ -38,6 +38,7 @@ const baseOptions = {
 	timeout: 60_000,
 	inputPath: "/tmp/dir/input.ly",
 	outputBase: "/tmp/dir/output",
+	logger: { warn: () => {}, error: () => {} },
 };
 
 let logger: {
@@ -176,13 +177,6 @@ describe("execLilyPond", () => {
 		await execLilyPond({ ...baseOptions, logger });
 		expect(logger.warn).not.toHaveBeenCalled();
 		expect(logger.error).not.toHaveBeenCalled();
-	});
-
-	it("does not throw when no logger is provided", async () => {
-		mockExecFileResult((cb) =>
-			cb(null, { stdout: "", stderr: "warning: bar check failed" }),
-		);
-		await expect(execLilyPond(baseOptions)).resolves.toBeUndefined();
 	});
 
 	it("throws using the child's stderr when lilypond exits with a non-zero status", async () => {

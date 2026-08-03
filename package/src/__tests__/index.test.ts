@@ -55,6 +55,7 @@ const mockEmitLilypondPdfAsset = vi.mocked(emitLilypondPdfAsset);
 const mockResolveLilypondBinary = vi.mocked(resolveLilypondBinary);
 
 const FAKE_PUBLIC_DIR = new URL("file:///project/public/");
+const FAKE_LOGGER = { warn: vi.fn(), error: vi.fn() };
 
 interface SetupHookArgs {
 	command?: "dev" | "build" | "preview" | "sync";
@@ -640,6 +641,7 @@ describe("render()", () => {
 			defaults: undefined,
 			timeout: undefined,
 			isDev: false,
+			logger: FAKE_LOGGER,
 		});
 	});
 
@@ -798,6 +800,7 @@ describe("render()", () => {
 			defaults: undefined,
 			timeout: undefined,
 			isDev: true,
+			logger: FAKE_LOGGER,
 		});
 		mockEmitLilypondAsset.mockRejectedValueOnce(
 			new Error("fatal error: bad input"),
@@ -829,6 +832,7 @@ describe("Score component", () => {
 			defaults: undefined,
 			timeout: undefined,
 			isDev: false,
+			logger: FAKE_LOGGER,
 		});
 	});
 
@@ -944,6 +948,7 @@ describe("Score component", () => {
 			defaults: undefined,
 			timeout: undefined,
 			isDev: true,
+			logger: FAKE_LOGGER,
 		});
 		mockEmitLilypondAsset.mockRejectedValueOnce(
 			new Error("fatal error: bad input"),
@@ -982,6 +987,7 @@ describe("renderAll()", () => {
 			defaults: undefined,
 			timeout: undefined,
 			isDev: false,
+			logger: FAKE_LOGGER,
 		});
 	});
 

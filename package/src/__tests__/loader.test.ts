@@ -259,7 +259,7 @@ describe("lilypondLoader", () => {
 
 		expect(store.keys()).toEqual([]);
 		expect(logger.error).toHaveBeenCalledWith(
-			expect.stringContaining("error reading broken.ly"),
+			expect.stringContaining("Error reading broken.ly"),
 		);
 	});
 
@@ -342,7 +342,7 @@ describe("lilypondLoader", () => {
 		await new Promise((resolve) => setTimeout(resolve, 50));
 
 		expect(logger.error).toHaveBeenCalledWith(
-			expect.stringContaining("astro-lilypond: reload failed: boom"),
+			expect.stringContaining("Reload failed: boom"),
 		);
 	});
 

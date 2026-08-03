@@ -134,9 +134,7 @@ export function lilypondLoader({
 				try {
 					source = await readFile(filePath, "utf8");
 				} catch (err) {
-					logger.error(
-						`astro-lilypond: error reading ${entry}: ${(err as Error).message}`,
-					);
+					logger.error(`Error reading ${entry}: ${(err as Error).message}`);
 					return undefined;
 				}
 
@@ -184,9 +182,7 @@ export function lilypondLoader({
 					entries.push(entry);
 				}
 				if (entries.length === 0) {
-					logger.warn(
-						`astro-lilypond: no files matched "${pattern}" in "${baseDir}"`,
-					);
+					logger.warn(`No files matched "${pattern}" in "${baseDir}"`);
 				}
 				const results = await Promise.all(
 					entries.map(async (entry) => ({ entry, id: await syncEntry(entry) })),
@@ -219,9 +215,7 @@ export function lilypondLoader({
 				if (!changedPath.startsWith(baseDir)) return;
 				queue = queue.then(() =>
 					runSync().catch((err) => {
-						logger.error(
-							`astro-lilypond: reload failed: ${(err as Error).message}`,
-						);
+						logger.error(`Reload failed: ${(err as Error).message}`);
 					}),
 				);
 			};

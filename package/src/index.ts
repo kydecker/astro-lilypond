@@ -318,6 +318,7 @@ export default function lilypond(
 			}) => {
 				const isDev = command === "dev";
 				options.isDev = isDev;
+				options.logger = logger;
 				options.binaryPath = await resolveAndSetRenderState({
 					autoInstall: options.autoInstall,
 					defaults: options.defaults,

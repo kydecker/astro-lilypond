@@ -16,7 +16,7 @@ export interface ExecLilypondOptions {
 	timeout: number;
 	inputPath: string;
 	outputBase: string;
-	logger?: Pick<AstroIntegrationLogger, "warn" | "error">;
+	logger: Pick<AstroIntegrationLogger, "warn" | "error">;
 }
 
 /**
@@ -91,10 +91,10 @@ export async function execLilyPond(
 			err && typeof err === "object" && "stderr" in err
 				? String((err as { stderr: unknown }).stderr)
 				: undefined;
-		if (errStderr) logger?.error(errStderr);
+		if (errStderr) logger.error(errStderr);
 		throw new Error(
 			errStderr || (err instanceof Error ? err.message : String(err)),
 		);
 	}
-	if (stderr) logger?.warn(stderr);
+	if (stderr) logger.warn(stderr);
 }

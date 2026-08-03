@@ -94,11 +94,9 @@ export interface RenderOptions {
 	timeout?: number;
 
 	/**
-	 * Receives LilyPond's stderr output (warnings on success, the failure
-	 * reason on a non-zero exit) instead of the default silence. Astro's
-	 * integration logger satisfies this.
+	 * Warning and failure logging from LilyPond.
 	 */
-	logger?: Pick<AstroIntegrationLogger, "warn" | "error">;
+	logger: Pick<AstroIntegrationLogger, "warn" | "error">;
 }
 
 export const defaultOptions: Required<
@@ -117,7 +115,7 @@ export const defaultOptions: Required<
 
 export async function render(
 	source: string,
-	options: RenderOptions = {},
+	options: RenderOptions,
 ): Promise<Buffer[]> {
 	const {
 		format = defaultOptions.format,

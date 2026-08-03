@@ -16,6 +16,12 @@ import {
 import type { PluginOptions } from "./types.js";
 
 export function satteriPlugin(options: PluginOptions): MdastPluginDefinition {
+	const { logger } = options;
+	if (!logger) {
+		throw new Error(
+			"astro-lilypond: please add the `lilypond()` integration to your Astro config.",
+		);
+	}
 	return {
 		name: "astro-lilypond",
 		async code(
@@ -50,6 +56,7 @@ export function satteriPlugin(options: PluginOptions): MdastPluginDefinition {
 							binaryPath: options.binaryPath,
 							includePaths,
 							sourceName,
+							logger,
 						}),
 				});
 				return { rawHtml: renderedHtml(pages, alt) };

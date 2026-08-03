@@ -50,6 +50,8 @@ import { execFile } from "node:child_process";
 import { readdir, readFile } from "node:fs/promises";
 import { defaultOptions, render } from "../render.js";
 
+const FAKE_LOGGER = { warn: vi.fn(), error: vi.fn() };
+
 const mockExecFile = vi.mocked(execFile);
 const mockReaddir = vi.mocked(readdir) as unknown as MockedFunction<
 	(dir: string) => Promise<string[]>
@@ -88,13 +90,13 @@ beforeEach(() => {
 
 describe("render", () => {
 	it("resolves to an array of Buffers", async () => {
-		const result = await render("\\score { }");
+		const result = await render("\\score { }", { logger: FAKE_LOGGER });
 		expect(Array.isArray(result)).toBe(true);
 		expect(result.every((buf) => Buffer.isBuffer(buf))).toBe(true);
 	});
 
 	it("passes --format=svg flag for svg format", async () => {
-		await render("\\score { }", { format: "svg" });
+		await render("\\score { }", { format: "svg", logger: FAKE_LOGGER });
 		const [, args] = mockExecFile.mock.calls[0] as unknown as [
 			string,
 			string[],
@@ -103,7 +105,7 @@ describe("render", () => {
 	});
 
 	it("passes the cairo backend", async () => {
-		await render("\\score { }");
+		await render("\\score { }", { logger: FAKE_LOGGER });
 		const [, args] = mockExecFile.mock.calls[0] as unknown as [
 			string,
 			string[],
@@ -112,7 +114,7 @@ describe("render", () => {
 	});
 
 	it("passes --define-default=crop=#t when crop is true", async () => {
-		await render("\\score { }", { crop: true });
+		await render("\\score { }", { crop: true, logger: FAKE_LOGGER });
 		const [, args] = mockExecFile.mock.calls[0] as unknown as [
 			string,
 			string[],
@@ -121,7 +123,7 @@ describe("render", () => {
 	});
 
 	it("passes --define-default=crop=#f when crop is false", async () => {
-		await render("\\score { }", { crop: false });
+		await render("\\score { }", { crop: false, logger: FAKE_LOGGER });
 		const [, args] = mockExecFile.mock.calls[0] as unknown as [
 			string,
 			string[],
@@ -140,7 +142,7 @@ describe("render", () => {
 	it("throws when format is unsupported", async () => {
 		await expect(
 			// biome-ignore lint/suspicious/noExplicitAny: testing invalid input
-			render("\\score { }", { format: "docx" as any }),
+			render("\\score { }", { format: "docx" as any, logger: FAKE_LOGGER }),
 		).rejects.toThrow("docx is not a supported format");
 	});
 
@@ -152,7 +154,9 @@ describe("render", () => {
 				}),
 			),
 		);
-		await expect(render("bad")).rejects.toThrow("fatal error: bad input");
+		await expect(render("bad", { logger: FAKE_LOGGER })).rejects.toThrow(
+			"fatal error: bad input",
+		);
 	});
 
 	it("does not throw when lilypond writes warnings to stderr but exits zero", async () => {
@@ -162,7 +166,7 @@ describe("render", () => {
 				stderr: "warning: some other unexpected warning",
 			}),
 		);
-		const result = await render("\\score { }");
+		const result = await render("\\score { }", { logger: FAKE_LOGGER });
 		expect(result[0]).toBeInstanceOf(Buffer);
 	});
 
@@ -179,7 +183,7 @@ describe("render", () => {
 	});
 
 	it("passes --loglevel=WARN to suppress lilypond's progress trace", async () => {
-		await render("\\score { }");
+		await render("\\score { }", { logger: FAKE_LOGGER });
 		const [, args] = mockExecFile.mock.calls[0] as unknown as [
 			string,
 			string[],
@@ -188,7 +192,7 @@ describe("render", () => {
 	});
 
 	it("passes signal and maxBuffer options to execFile", async () => {
-		await render("\\score { }");
+		await render("\\score { }", { logger: FAKE_LOGGER });
 		const [, , options] = mockExecFile.mock.calls[0] as unknown as [
 			string,
 			string[],
@@ -211,14 +215,15 @@ describe("render", () => {
 				}),
 			);
 		}) as typeof execFile);
-		await expect(render("\\score { }", { timeout: 5000 })).rejects.toThrow(
-			"lilypond timed out after 5000ms",
-		);
+		await expect(
+			render("\\score { }", { timeout: 5000, logger: FAKE_LOGGER }),
+		).rejects.toThrow("lilypond timed out after 5000ms");
 	});
 
 	it("passes --include for each includePaths entry so \\include can find sibling files", async () => {
 		await render("\\score { }", {
 			includePaths: ["/docs/src/examples", "/other/dir"],
+			logger: FAKE_LOGGER,
 		});
 		const [, args] = mockExecFile.mock.calls[0] as unknown as [
 			string,
@@ -229,7 +234,10 @@ describe("render", () => {
 	});
 
 	it("uses a custom binaryPath when provided", async () => {
-		await render("\\score { }", { binaryPath: "/usr/local/bin/lilypond" });
+		await render("\\score { }", {
+			binaryPath: "/usr/local/bin/lilypond",
+			logger: FAKE_LOGGER,
+		});
 		const [bin] = mockExecFile.mock.calls[0] as unknown as [string, string[]];
 		expect(bin).toBe("/usr/local/bin/lilypond");
 	});
@@ -237,7 +245,10 @@ describe("render", () => {
 	it("reads the .cropped.svg file when crop is true", async () => {
 		mockReadFile.mockResolvedValueOnce(Buffer.from("<svg>cropped</svg>"));
 
-		const result = await render("\\score { }", { crop: true });
+		const result = await render("\\score { }", {
+			crop: true,
+			logger: FAKE_LOGGER,
+		});
 		expect(result).toHaveLength(1);
 		expect(result[0].toString()).toBe("<svg>cropped</svg>");
 		const [path] = mockReadFile.mock.calls[0];
@@ -247,9 +258,9 @@ describe("render", () => {
 	it("throws if the cropped file is missing when crop is true", async () => {
 		mockReadFile.mockRejectedValueOnce(new Error("ENOENT"));
 
-		await expect(render("\\score { }", { crop: true })).rejects.toThrow(
-			"expected cropped output",
-		);
+		await expect(
+			render("\\score { }", { crop: true, logger: FAKE_LOGGER }),
+		).rejects.toThrow("expected cropped output");
 	});
 
 	it("reads every numbered page when crop is off and the output spans multiple pages", async () => {
@@ -258,7 +269,10 @@ describe("render", () => {
 			Buffer.from(`content:${String(path)}`),
 		);
 
-		const result = await render("\\score { }", { crop: false });
+		const result = await render("\\score { }", {
+			crop: false,
+			logger: FAKE_LOGGER,
+		});
 		expect(result.map((buf) => buf.toString())).toEqual([
 			"content:/tmp/astro-lilypond-test/output-1.svg",
 			"content:/tmp/astro-lilypond-test/output-2.svg",
@@ -272,6 +286,7 @@ describe("render", () => {
 		const result = await render("\\score { }", {
 			format: "png",
 			crop: false,
+			logger: FAKE_LOGGER,
 		});
 		expect(result).toHaveLength(1);
 		expect(result[0].toString()).toBe("fake-png-page1");
