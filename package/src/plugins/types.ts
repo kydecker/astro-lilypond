@@ -5,4 +5,5 @@ export interface PluginOptions {
 	defaults?: LilypondDefaults;
 	timeout?: number;
 	binaryPath?: string;
+	isDev?: boolean;
 }

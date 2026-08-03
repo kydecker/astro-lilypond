@@ -7,6 +7,7 @@
 		"build:lib": "pnpm --filter astro-lilypond build",
 		"dev:satteri": "pnpm run build:lib && astro dev --config astro.config.satteri.mjs",
 		"dev:unified": "pnpm run build:lib && astro dev --config astro.config.unified.mjs",
+		"dev:dev-errors": "pnpm run build:lib && astro dev --config astro.config.dev.mjs",
 		"pretest": "pnpm run build:lib && astro build --config astro.config.satteri.mjs && astro build --config astro.config.unified.mjs",
 		"test": "playwright test"
 	},

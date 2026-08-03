@@ -8,6 +8,7 @@ export {
 	type EmitLilypondPdfAssetOptions,
 	emitLilypondPdfAsset,
 } from "./emitLilypondPdfAsset.js";
+export { escapeHtml } from "./escapeHtml.js";
 export { escapeHtmlAttribute } from "./escapeHtmlAttribute.js";
 export type { ImageDimensions } from "./imageDimensions.js";
 export { imageDimensionsFor } from "./imageDimensions.js";
@@ -24,6 +25,7 @@ export {
 	parseLyHeaderFields,
 } from "./parseLyHeader.js";
 export { prependVersion } from "./prependVersion.js";
+export { renderedErrorHtml } from "./renderedErrorHtml.js";
 export { renderedHtml } from "./renderedHtml.js";
 export { resolveDefaults } from "./resolveDefaults.js";
 export { sourceNameFor } from "./sourceNameFor.js";

@@ -164,6 +164,32 @@ describe("remarkLilypondPlugin", () => {
 		await expect(runPlugin(tree)).rejects.toThrow("lilypond crashed");
 	});
 
+	it("still throws when a block fails to render and dev is explicitly false", async () => {
+		fakeEmitLilypondAssetPropagatingRenderErrors(mockEmitLilypondAsset);
+		mockRender.mockRejectedValue(new Error("lilypond crashed"));
+		const tree = makeTree([
+			{ type: "code", lang: "lilypond", value: "bad" } as Code,
+		]);
+
+		await expect(
+			runPlugin(tree, { ...BASE_OPTIONS, isDev: false }),
+		).rejects.toThrow("lilypond crashed");
+	});
+
+	it("renders an inline error block instead of throwing when dev is true", async () => {
+		fakeEmitLilypondAssetPropagatingRenderErrors(mockEmitLilypondAsset);
+		mockRender.mockRejectedValue(new Error("fatal error: bad input"));
+		const tree = makeTree([
+			{ type: "code", lang: "lilypond", value: "bad" } as Code,
+		]);
+
+		await runPlugin(tree, { ...BASE_OPTIONS, isDev: true });
+
+		const html = tree.children[0] as Html;
+		expect(html.type).toBe("html");
+		expect(html.value).toContain("fatal error: bad input");
+	});
+
 	it("prepends \\version when the version option is set", async () => {
 		const options = {
 			...BASE_OPTIONS,
