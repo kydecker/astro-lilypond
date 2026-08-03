@@ -1,6 +1,6 @@
 ---
 import { getEntry } from "astro:content";
-import BaseLayout from "../../../shared/BaseLayout.astro";
+import BaseLayout from "../layouts/BaseLayout.astro";
 
 const entry = await getEntry("scores", "metadata");
 const { meta } = entry.data;

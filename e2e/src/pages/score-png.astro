@@ -1,6 +1,6 @@
 ---
 import { render } from "astro-lilypond";
-import BaseLayout from "../../../shared/BaseLayout.astro";
+import BaseLayout from "../layouts/BaseLayout.astro";
 import simple from "../scores/simple.ly";
 
 const { Score } = await render(simple, { format: "png" });

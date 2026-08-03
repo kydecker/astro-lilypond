@@ -1,6 +1,6 @@
 ---
 title: Fence language tags
-layout: ../../../shared/BaseLayout.astro
+layout: ../layouts/BaseLayout.astro
 ---
 
 ```lilypond
