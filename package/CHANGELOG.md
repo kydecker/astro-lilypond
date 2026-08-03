@@ -1,5 +1,20 @@
 # astro-lilypond
 
+## 0.17.0
+
+### Minor Changes
+
+- af38453: Syntax errors in LilyPond code now render an inline error message during `astro dev` instead of crashing the entire page. The message includes logging from LilyPond indicating where the syntax error was detected.
+
+  `astro build` is unaffected, and will still fail loudly if LilyPond syntax errors are present.
+
+- 4aebd23: Remove the `defaults` option from `lilypondLoader()`. The content loader now always uses the integration's own `defaults`, matching `.ly` file imports and Markdown fences.
+- b5b10e5: Improve logging from astro-lilypond. Logs are now emitted using Astro's logger, and LilyPond logs are less verbose, only emitting warnings and above.
+
+### Patch Changes
+
+- 4aebd23: Declare `engines.node: ">=22.12.0"`, matching the Astro 7's requirement.
+
 ## 0.16.2
 
 ### Patch Changes
