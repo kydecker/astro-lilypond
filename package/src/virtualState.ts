@@ -11,10 +11,6 @@ export interface LilypondState {
 	isDev: boolean;
 }
 
-/**
- * Publishes `state` (resolved once in `astro:config:setup`) as
- * `virtual:astro-lilypond/state`
- */
 export function lilypondStatePlugin(state: LilypondState): Plugin {
 	return {
 		name: "astro-lilypond-state",
@@ -30,10 +26,6 @@ export function lilypondStatePlugin(state: LilypondState): Plugin {
 	};
 }
 
-/**
- * Read by the public `render()` and `lilypondLoader()`,
- * called from user code rather than the integration's own closures.
- */
 export async function getLilypondState(): Promise<LilypondState> {
 	try {
 		const mod = await import(VIRTUAL_STATE_MODULE_ID);
