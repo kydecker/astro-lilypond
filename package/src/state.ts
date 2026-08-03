@@ -9,12 +9,6 @@ export interface LilypondState {
 	logger: Pick<AstroIntegrationLogger, "warn" | "error">;
 }
 
-/**
- * Keyed on `globalThis` rather than module-scope state — some Astro adapters
- * bundle the render step as a separate chunk with its own copy of this
- * module, so a plain module `let` wouldn't survive from
- * `astro:config:setup` into an actual render.
- */
 const KEY = "astro-lilypond:state";
 const store = globalThis as unknown as Record<
 	string,
