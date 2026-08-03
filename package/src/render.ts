@@ -46,7 +46,7 @@ export interface LilypondDefaults {
  */
 export type RenderDefaults = Omit<LilypondDefaults, "version">;
 
-export interface RenderOptions {
+export interface InternalRenderOptions {
 	/**
 	 * Output format.
 	 * @default "svg"
@@ -100,7 +100,10 @@ export interface RenderOptions {
 }
 
 export const defaultOptions: Required<
-	Omit<RenderOptions, "includePaths" | "sourceName" | "defaults" | "logger">
+	Omit<
+		InternalRenderOptions,
+		"includePaths" | "sourceName" | "defaults" | "logger"
+	>
 > & { defaults: Required<LilypondDefaults> } = {
 	format: "svg",
 	crop: true,
@@ -115,7 +118,7 @@ export const defaultOptions: Required<
 
 export async function render(
 	source: string,
-	options: RenderOptions,
+	options: InternalRenderOptions,
 ): Promise<Buffer[]> {
 	const {
 		format = defaultOptions.format,
