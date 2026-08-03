@@ -32,6 +32,8 @@ afterEach(() => {
 });
 
 describe("renderState", () => {
+	const logger = { warn: vi.fn(), error: vi.fn() };
+
 	it("throws a clear, actionable error when read before being set", () => {
 		expect(() => getRenderState()).toThrow(/lilypond\(\).*Astro config/s);
 	});
@@ -42,12 +44,14 @@ describe("renderState", () => {
 			defaults: { version: "2.26.0" },
 			timeout: 60_000,
 			isDev: false,
+			logger,
 		});
 		expect(getRenderState()).toEqual({
 			binaryPath: "lilypond",
 			defaults: { version: "2.26.0" },
 			timeout: 60_000,
 			isDev: false,
+			logger,
 		});
 	});
 
@@ -57,18 +61,21 @@ describe("renderState", () => {
 			defaults: undefined,
 			timeout: undefined,
 			isDev: false,
+			logger,
 		});
 		setRenderState({
 			binaryPath: "b",
 			defaults: undefined,
 			timeout: 5000,
 			isDev: true,
+			logger,
 		});
 		expect(getRenderState()).toEqual({
 			binaryPath: "b",
 			defaults: undefined,
 			timeout: 5000,
 			isDev: true,
+			logger,
 		});
 	});
 
@@ -78,6 +85,7 @@ describe("renderState", () => {
 			defaults: undefined,
 			timeout: undefined,
 			isDev: false,
+			logger,
 		});
 		resetRenderStateForTests();
 		expect(() => getRenderState()).toThrow(/lilypond\(\).*Astro config/s);
@@ -86,7 +94,7 @@ describe("renderState", () => {
 
 describe("resolveAndSetRenderState", () => {
 	it("forwards resolveLilypondBinary's log/warn callbacks to the provided logger", async () => {
-		const logger = { info: vi.fn(), warn: vi.fn() };
+		const logger = { info: vi.fn(), warn: vi.fn(), error: vi.fn() };
 
 		const binaryPath = await resolveAndSetRenderState({
 			defaults: { version: "2.26.0" },
@@ -103,6 +111,7 @@ describe("resolveAndSetRenderState", () => {
 			defaults: { version: "2.26.0" },
 			timeout: 60_000,
 			isDev: true,
+			logger,
 		});
 	});
 });

@@ -1,3 +1,4 @@
+import type { AstroIntegrationLogger } from "astro";
 import type { LilypondDefaults } from "../render.js";
 
 export interface PluginOptions {
@@ -6,4 +7,5 @@ export interface PluginOptions {
 	timeout?: number;
 	binaryPath?: string;
 	isDev?: boolean;
+	logger?: Pick<AstroIntegrationLogger, "warn" | "error">;
 }

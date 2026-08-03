@@ -169,6 +169,7 @@ export async function render(
 							binaryPath: state.binaryPath,
 							includePaths: score.includePaths,
 							sourceName: score.sourceName,
+							logger: state.logger,
 						}),
 				});
 				return {
@@ -190,6 +191,7 @@ export async function render(
 								binaryPath: state.binaryPath,
 								includePaths: score.includePaths,
 								sourceName: score.sourceName,
+								logger: state.logger,
 							}),
 					})
 				: Promise.resolve(undefined),
@@ -316,6 +318,7 @@ export default function lilypond(
 			}) => {
 				const isDev = command === "dev";
 				options.isDev = isDev;
+				options.logger = logger;
 				options.binaryPath = await resolveAndSetRenderState({
 					autoInstall: options.autoInstall,
 					defaults: options.defaults,
@@ -355,7 +358,7 @@ export default function lilypond(
 							}),
 						},
 					});
-					logger?.info("astro-lilypond: registered Sätteri mdast plugin");
+					logger?.info("Registered Sätteri mdast plugin");
 					return;
 				}
 
@@ -383,7 +386,7 @@ export default function lilypond(
 							}),
 						},
 					});
-					logger?.info("astro-lilypond: registered unified remark plugin");
+					logger?.info("Registered unified remark plugin");
 					return;
 				}
 

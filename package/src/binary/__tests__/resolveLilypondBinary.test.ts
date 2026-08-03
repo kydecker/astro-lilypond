@@ -115,7 +115,7 @@ describe("resolveLilypondBinary", () => {
 		expect(result).toBe("lilypond");
 		expect(mockDownloadLilypond).not.toHaveBeenCalled();
 		expect(warn).toHaveBeenCalledWith(
-			expect.stringContaining("not found on PATH"),
+			expect.stringContaining("No `lilypond` binary found on PATH"),
 		);
 	});
 

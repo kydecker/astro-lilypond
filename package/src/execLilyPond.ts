@@ -1,5 +1,6 @@
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
+import type { AstroIntegrationLogger } from "astro";
 import type { Format } from "./render.js";
 
 const execFileAsync = promisify(execFile);
@@ -15,6 +16,7 @@ export interface ExecLilypondOptions {
 	timeout: number;
 	inputPath: string;
 	outputBase: string;
+	logger: Pick<AstroIntegrationLogger, "warn" | "error">;
 }
 
 /**
@@ -34,11 +36,17 @@ export async function execLilyPond(
 		timeout,
 		inputPath,
 		outputBase,
+		logger,
 	} = options;
 
 	const args = [
 		// Render the correct format
 		`--format=${format}`,
+
+		// Suppress LilyPond's own progress trace (Processing/Parsing/Interpreting
+		// music/.../Success), which is noise once Astro is reporting the build
+		// itself. Warnings and errors still print at this level.
+		"--loglevel=WARN",
 
 		// Define defaults — these can be overridden with the appropriate flags
 		// inside of individual .ly files
@@ -61,9 +69,10 @@ export async function execLilyPond(
 		inputPath,
 	];
 
-	// LilyPond writes its progress log, (and any warnings/errors) to stderr,
-	// even on success. surface it in the build output so it's visible,
-	// but let the exit code (not stderr content) decide pass/fail.
+	// LilyPond writes any warnings to stderr even on success (errors on
+	// failure). Surface it through Astro's logger so it's visible and styled
+	// consistently with the rest of the build output, but let the exit code
+	// (not stderr content) decide pass/fail.
 	let stderr: string;
 	try {
 		({ stderr } = await execFileAsync(binaryPath, args, {
@@ -82,10 +91,10 @@ export async function execLilyPond(
 			err && typeof err === "object" && "stderr" in err
 				? String((err as { stderr: unknown }).stderr)
 				: undefined;
-		if (errStderr) process.stderr.write(errStderr);
+		if (errStderr) logger.error(errStderr);
 		throw new Error(
 			errStderr || (err instanceof Error ? err.message : String(err)),
 		);
 	}
-	if (stderr) process.stderr.write(stderr);
+	if (stderr) logger.warn(stderr);
 }

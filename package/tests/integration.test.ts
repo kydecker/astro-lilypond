@@ -61,6 +61,7 @@ const execFileAsync = promisify(execFile);
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const SCORES_DIR = join(__dirname, "scores");
 const COLLECTION_SCORES_DIR = join(SCORES_DIR, "collection");
+const FAKE_LOGGER = { warn: vi.fn(), error: vi.fn() };
 
 function svgDimensions(svg: string): { width: number; height: number } {
 	const match = svg.match(/viewBox="[-\d.]+\s+[-\d.]+\s+([\d.]+)\s+([\d.]+)"/);
@@ -173,6 +174,7 @@ describe.concurrent("render() against the real lilypond binary", () => {
 				format: "svg",
 				crop: false,
 				binaryPath,
+				logger: FAKE_LOGGER,
 			});
 			expect(result).toHaveLength(2);
 			for (const buf of result) {
@@ -190,6 +192,7 @@ describe.concurrent("render() against the real lilypond binary", () => {
 				format: "svg",
 				crop: true,
 				binaryPath,
+				logger: FAKE_LOGGER,
 			});
 			expect(result).toHaveLength(1);
 			const svg = result[0].toString("utf-8");
@@ -206,6 +209,7 @@ describe.concurrent("render() against the real lilypond binary", () => {
 				format: "png",
 				crop: true,
 				binaryPath,
+				logger: FAKE_LOGGER,
 			});
 			expect(result).toHaveLength(1);
 			const { width, height } = pngDimensions(result[0]);
@@ -218,6 +222,7 @@ describe.concurrent("render() against the real lilypond binary", () => {
 				format: "png",
 				crop: false,
 				binaryPath,
+				logger: FAKE_LOGGER,
 			});
 			expect(result).toHaveLength(2);
 			for (const buf of result) {
@@ -234,6 +239,7 @@ describe.concurrent("render() against the real lilypond binary", () => {
 				format: "pdf",
 				crop: false,
 				binaryPath,
+				logger: FAKE_LOGGER,
 			});
 			expect(result).toHaveLength(1);
 			expect(result[0].subarray(0, 5).toString("utf-8")).toBe("%PDF-");
@@ -248,12 +254,14 @@ describe.concurrent("render() against the real lilypond binary", () => {
 					crop: true,
 					defaults: { resolution: 72 },
 					binaryPath,
+					logger: FAKE_LOGGER,
 				}),
 				render(multiPagePng, {
 					format: "png",
 					crop: true,
 					defaults: { resolution: 288 },
 					binaryPath,
+					logger: FAKE_LOGGER,
 				}),
 			]);
 			const lowDim = pngDimensions(low[0]);
@@ -274,6 +282,7 @@ describe.concurrent("render() against the real lilypond binary", () => {
 					: binaryPath;
 			const result = await render("{ c'4 d'4 e'4 f'4 }", {
 				binaryPath: absolutePath,
+				logger: FAKE_LOGGER,
 			});
 			expect(result[0].toString("utf-8")).toContain("<svg");
 		});
@@ -302,7 +311,7 @@ async function getLyPlugin(
 			markdown: { processor: { name: "satteri", options: {} } },
 		},
 		updateConfig,
-		logger: { info: vi.fn(), warn: vi.fn() },
+		logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 	} as never);
 	const { plugins } = (
 		updateConfig.mock.calls[0][0] as { vite: { plugins: VitePluginLike[] } }

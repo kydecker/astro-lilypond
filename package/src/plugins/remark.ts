@@ -17,6 +17,12 @@ import {
 import type { PluginOptions } from "./types.js";
 
 export const remarkPlugin: Plugin<[PluginOptions], Root> = (options) => {
+	const { logger } = options;
+	if (!logger) {
+		throw new Error(
+			"astro-lilypond: please add the `lilypond()` integration to your Astro config.",
+		);
+	}
 	return async (tree, file) => {
 		const promises: Promise<void>[] = [];
 		const includePaths = includePathsFor(file?.path);
@@ -53,6 +59,7 @@ export const remarkPlugin: Plugin<[PluginOptions], Root> = (options) => {
 								binaryPath: options.binaryPath,
 								includePaths,
 								sourceName,
+								logger,
 							}),
 					});
 					value = renderedHtml(pages, alt);

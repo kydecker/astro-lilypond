@@ -33,7 +33,9 @@ const mockEmitLilypondAsset = vi.mocked(emitLilypondAsset);
 
 const FAKE_SVG = "<svg xmlns='http://www.w3.org/2000/svg'><g>fake</g></svg>";
 
-const BASE_OPTIONS: PluginOptions = {};
+const FAKE_LOGGER = { warn: vi.fn(), error: vi.fn() };
+
+const BASE_OPTIONS: PluginOptions = { logger: FAKE_LOGGER };
 
 function rawHtml(result: unknown): string {
 	return (result as { rawHtml: string }).rawHtml;
@@ -52,6 +54,12 @@ describe("satteriPlugin", () => {
 		expect(typeof plugin.code).toBe("function");
 	});
 
+	it("throws an error when the lilypond() integration hasn't run", () => {
+		expect(() => satteriPlugin({ ...BASE_OPTIONS, logger: undefined })).toThrow(
+			/lilypond\(\).*Astro config/s,
+		);
+	});
+
 	it("transforms a lilypond code node to { rawHtml } with an img tag pointing at the emitted asset", async () => {
 		const plugin = satteriPlugin(BASE_OPTIONS);
 		const node: Code = { type: "code", lang: "lilypond", value: "\\score { }" };
@@ -63,6 +71,7 @@ describe("satteriPlugin", () => {
 			crop: true,
 			defaults: undefined,
 			includePaths: [],
+			logger: FAKE_LOGGER,
 		});
 		expect(mockEmitLilypondAsset).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -99,6 +108,7 @@ describe("satteriPlugin", () => {
 			crop: true,
 			defaults: undefined,
 			includePaths: [],
+			logger: FAKE_LOGGER,
 		});
 	});
 
@@ -113,6 +123,7 @@ describe("satteriPlugin", () => {
 			crop: true,
 			defaults: undefined,
 			includePaths: [],
+			logger: FAKE_LOGGER,
 		});
 	});
 
@@ -163,6 +174,7 @@ describe("satteriPlugin", () => {
 			crop: true,
 			defaults: { version: "2.24.0" },
 			includePaths: [],
+			logger: FAKE_LOGGER,
 		});
 	});
 
@@ -181,6 +193,7 @@ describe("satteriPlugin", () => {
 			crop: true,
 			defaults: { version: "2.24.0" },
 			includePaths: [],
+			logger: FAKE_LOGGER,
 		});
 	});
 
@@ -206,6 +219,7 @@ describe("satteriPlugin", () => {
 			crop: true,
 			defaults: undefined,
 			includePaths: [],
+			logger: FAKE_LOGGER,
 		});
 		expect(rawHtml(result)).toBe(
 			'<img data-lilypond-image src="/_lilypond/score.png" alt>',
@@ -229,6 +243,7 @@ describe("satteriPlugin", () => {
 			crop: true,
 			defaults: { resolution: 300 },
 			includePaths: [],
+			logger: FAKE_LOGGER,
 		});
 		expect(mockEmitLilypondAsset).toHaveBeenCalledWith(
 			expect.objectContaining({ resolution: 300 }),

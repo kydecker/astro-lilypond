@@ -39,7 +39,7 @@ export async function resolveLilypondBinary({
 
 	if (!autoInstall) {
 		warn(
-			"astro-lilypond: `lilypond` binary not found on PATH — LilyPond blocks will render as errors. " +
+			"No `lilypond` binary found on PATH — LilyPond blocks will render as errors. " +
 				"Install LilyPond and ensure it is on PATH, or enable the `autoInstall` option (on by default).",
 		);
 		return "lilypond";
@@ -47,7 +47,7 @@ export async function resolveLilypondBinary({
 
 	if (!resolvePlatformTarget()) {
 		warn(
-			`astro-lilypond: \`lilypond\` binary not found on PATH, and no prebuilt LilyPond ${version} ` +
+			`No \`lilypond\` binary found on PATH, and no prebuilt LilyPond ${version} ` +
 				`is available for ${process.platform}/${process.arch}. Install LilyPond manually and ensure it is on PATH.`,
 		);
 		return "lilypond";

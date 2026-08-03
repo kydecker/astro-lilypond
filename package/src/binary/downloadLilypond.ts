@@ -99,7 +99,7 @@ export async function downloadLilypond({
 	if (await pathExists(markerPath)) return binaryPath;
 
 	const url = downloadUrlFor(version, platform, arch, archiveExt);
-	log(`astro-lilypond: downloading LilyPond ${version} (${platform}-${arch})…`);
+	log(`Downloading LilyPond ${version} (${platform}-${arch})…`);
 
 	const response = await fetchImpl(url);
 	if (!response.ok || !response.body) {
@@ -133,7 +133,7 @@ export async function downloadLilypond({
 			}
 		} else {
 			log(
-				"astro-lilypond: download response had no checksum header — skipping integrity verification",
+				"Download response had no checksum header — skipping integrity verification",
 			);
 		}
 
@@ -159,7 +159,7 @@ export async function downloadLilypond({
 		const reuseConcurrentInstall = async (): Promise<boolean> => {
 			if (!(await pathExists(markerPath))) return false;
 			log(
-				`astro-lilypond: LilyPond ${version} was installed concurrently by another process; reusing it`,
+				`LilyPond ${version} was installed concurrently by another process; reusing it`,
 			);
 			return true;
 		};
@@ -174,7 +174,7 @@ export async function downloadLilypond({
 			throw err;
 		}
 
-		log(`astro-lilypond: installed LilyPond ${version} to ${installDir}`);
+		log(`Installed LilyPond ${version} to ${installDir}`);
 		return binaryPath;
 	} finally {
 		await rm(workDir, { recursive: true, force: true });
