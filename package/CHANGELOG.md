@@ -1,5 +1,11 @@
 # astro-lilypond
 
+## 0.17.1
+
+### Patch Changes
+
+- e162233: Fix overzealous CSS reset on error blocks rendered in dev mode.
+
 ## 0.17.0
 
 ### Minor Changes
