@@ -2,15 +2,7 @@ import { coverageConfigDefaults, defineConfig } from "vitest/config";
 
 export default defineConfig({
 	test: {
-		projects: [
-			{
-				extends: true,
-				test: {
-					name: "unit",
-					include: ["src/**/*.test.ts", "components/**/*.test.ts"],
-				},
-			},
-		],
+		include: ["src/**/*.test.ts", "components/**/*.test.ts"],
 		coverage: {
 			reporter: ["text", "json-summary", "json"],
 			reportOnFailure: true,
