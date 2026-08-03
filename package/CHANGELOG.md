@@ -1,5 +1,12 @@
 # astro-lilypond
 
+## 0.16.2
+
+### Patch Changes
+
+- 29e1ffc: Removes the rehype plugin. The `unified` Markdown processor always registers and uses `remark` first, so there should not be any user-facing impact from this.
+- 29e1ffc: Fixes an issue where fenced LilyPond code blocks inside `.mdx` would render as text instead of images.
+
 ## 0.16.1
 
 ### Patch Changes
