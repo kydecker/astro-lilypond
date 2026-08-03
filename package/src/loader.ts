@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import type { Loader, LoaderContext } from "astro/loaders";
 import { z } from "astro/zod";
 import { type LilypondScore, LY_EXTENSIONS } from "./index.js";
-import { getRenderState } from "./renderState.js";
+import { getLilypondState } from "./state.js";
 import {
 	altTextFor,
 	includePathsFor,
@@ -115,7 +115,7 @@ export function lilypondLoader({
 			const { config, store, logger, watcher, generateDigest, parseData } =
 				context;
 
-			const { version } = resolveDefaults(getRenderState().defaults);
+			const { version } = resolveDefaults(getLilypondState().defaults);
 			const rootDir = fileURLToPath(config.root);
 			const baseUrl = resolveBaseUrl(base, config.root);
 			const baseDir = fileURLToPath(baseUrl);

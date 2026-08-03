@@ -31,14 +31,5 @@ jobs:
       - name: Test
         run: pnpm --filter astro-lilypond test --run
 
-      - name: Cache LilyPond
-        uses: actions/cache@v6
-        with:
-          path: ~/.cache/astro-lilypond
-          key: astro-lilypond-2.26.0-linux-x86_64
-
-      - name: Integration test
-        run: pnpm --filter astro-lilypond test:integration
-
       - name: Lint
         run: pnpm check

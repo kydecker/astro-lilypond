@@ -4,8 +4,9 @@ import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import type { DataStore } from "astro/loaders";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
 import { lilypondEntrySchema, lilypondLoader } from "../loader.js";
-import { resetRenderStateForTests, setRenderState } from "../renderState.js";
+import { resetLilypondStateForTests, setLilypondState } from "../state.js";
 
 /** Minimal in-memory stand-in for Astro's content-layer DataStore. */
 function createFakeStore() {
@@ -98,7 +99,7 @@ beforeEach(async () => {
 	publicDir = join(root, "public");
 	await mkdir(scoresDir, { recursive: true });
 	await mkdir(publicDir, { recursive: true });
-	setRenderState({
+	setLilypondState({
 		binaryPath: "lilypond",
 		defaults: undefined,
 		timeout: undefined,
@@ -109,7 +110,7 @@ beforeEach(async () => {
 
 afterEach(async () => {
 	await rm(root, { recursive: true, force: true });
-	resetRenderStateForTests();
+	resetLilypondStateForTests();
 });
 
 describe("lilypondLoader", () => {
