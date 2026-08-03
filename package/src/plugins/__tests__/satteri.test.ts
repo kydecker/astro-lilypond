@@ -127,6 +127,28 @@ describe("satteriPlugin", () => {
 		);
 	});
 
+	it("still throws when render fails and dev is explicitly false", async () => {
+		fakeEmitLilypondAssetPropagatingRenderErrors(mockEmitLilypondAsset);
+		mockRender.mockRejectedValue(new Error("bad syntax"));
+		const plugin = satteriPlugin({ ...BASE_OPTIONS, isDev: false });
+		const node: Code = { type: "code", lang: "lilypond", value: "invalid" };
+
+		await expect(plugin.code?.(node, {} as never)).rejects.toThrow(
+			"bad syntax",
+		);
+	});
+
+	it("renders an inline error block instead of throwing when dev is true", async () => {
+		fakeEmitLilypondAssetPropagatingRenderErrors(mockEmitLilypondAsset);
+		mockRender.mockRejectedValue(new Error("fatal error: bad input"));
+		const plugin = satteriPlugin({ ...BASE_OPTIONS, isDev: true });
+		const node: Code = { type: "code", lang: "lilypond", value: "invalid" };
+
+		const result = await plugin.code?.(node, {} as never);
+
+		expect(rawHtml(result)).toContain("fatal error: bad input");
+	});
+
 	it("prepends \\version when the version option is set", async () => {
 		const plugin = satteriPlugin({
 			...BASE_OPTIONS,

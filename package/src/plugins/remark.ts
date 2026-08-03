@@ -8,6 +8,7 @@ import {
 	includePathsFor,
 	isLilypondLang,
 	prependVersion,
+	renderedErrorHtml,
 	renderedHtml,
 	resolveDefaults,
 	sourceNameFor,
@@ -32,31 +33,36 @@ export const remarkPlugin: Plugin<[PluginOptions], Root> = (options) => {
 			const format = options.format ?? defaultOptions.format;
 			const alt = altTextForBlock(node.meta, node.value);
 
-			const promise = emitLilypondAsset({
-				title,
-				format,
-				source,
-				resolution,
-				crop: true,
-				sizeScale: cropScale,
-				binaryPath: options.binaryPath,
-				render: () =>
-					render(source, {
+			const promise = (async (): Promise<void> => {
+				let value: string;
+				try {
+					const pages = await emitLilypondAsset({
+						title,
 						format,
+						source,
+						resolution,
 						crop: true,
-						defaults: options.defaults,
-						timeout: options.timeout,
+						sizeScale: cropScale,
 						binaryPath: options.binaryPath,
-						includePaths,
-						sourceName,
-					}),
-			}).then((pages): void => {
-				const htmlNode: Html = {
-					type: "html",
-					value: renderedHtml(pages, alt),
-				};
+						render: () =>
+							render(source, {
+								format,
+								crop: true,
+								defaults: options.defaults,
+								timeout: options.timeout,
+								binaryPath: options.binaryPath,
+								includePaths,
+								sourceName,
+							}),
+					});
+					value = renderedHtml(pages, alt);
+				} catch (err) {
+					if (!options.isDev) throw err;
+					value = renderedErrorHtml(err, title);
+				}
+				const htmlNode: Html = { type: "html", value };
 				parent.children[index] = htmlNode;
-			});
+			})();
 
 			promises.push(promise);
 		});

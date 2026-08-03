@@ -9,6 +9,7 @@ export interface RenderState {
 	binaryPath: string;
 	defaults: LilypondDefaults | undefined;
 	timeout: number | undefined;
+	isDev: boolean;
 }
 
 /**
@@ -52,6 +53,7 @@ export interface ResolveAndSetRenderStateOptions {
 	autoInstall?: boolean | AutoInstallOptions;
 	defaults?: LilypondDefaults;
 	timeout?: number;
+	isDev: boolean;
 	logger: { info: (message: string) => void; warn: (message: string) => void };
 }
 
@@ -73,6 +75,7 @@ export async function resolveAndSetRenderState(
 		binaryPath,
 		defaults: options.defaults,
 		timeout: options.timeout,
+		isDev: options.isDev,
 	});
 	return binaryPath;
 }

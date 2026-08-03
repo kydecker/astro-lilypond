@@ -7,6 +7,7 @@ import {
 	includePathsFor,
 	isLilypondLang,
 	prependVersion,
+	renderedErrorHtml,
 	renderedHtml,
 	resolveDefaults,
 	sourceNameFor,
@@ -31,27 +32,31 @@ export function satteriPlugin(options: PluginOptions): MdastPluginDefinition {
 			const sourceName = sourceNameFor(ctx.fileURL);
 			const title = titleFor(sourceName);
 			const alt = altTextForBlock(node.meta, node.value);
-			const pages = await emitLilypondAsset({
-				title,
-				format,
-				source,
-				resolution,
-				crop: true,
-				sizeScale: cropScale,
-				binaryPath: options.binaryPath,
-				render: () =>
-					render(source, {
-						format,
-						crop: true,
-						defaults: options.defaults,
-						timeout: options.timeout,
-						binaryPath: options.binaryPath,
-						includePaths,
-						sourceName,
-					}),
-			});
-
-			return { rawHtml: renderedHtml(pages, alt) };
+			try {
+				const pages = await emitLilypondAsset({
+					title,
+					format,
+					source,
+					resolution,
+					crop: true,
+					sizeScale: cropScale,
+					binaryPath: options.binaryPath,
+					render: () =>
+						render(source, {
+							format,
+							crop: true,
+							defaults: options.defaults,
+							timeout: options.timeout,
+							binaryPath: options.binaryPath,
+							includePaths,
+							sourceName,
+						}),
+				});
+				return { rawHtml: renderedHtml(pages, alt) };
+			} catch (err) {
+				if (!options.isDev) throw err;
+				return { rawHtml: renderedErrorHtml(err, title) };
+			}
 		},
 	};
 }

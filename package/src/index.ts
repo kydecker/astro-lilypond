@@ -25,6 +25,7 @@ import {
 	lyTypeDeclarationsFor,
 	parseLyHeaderFields,
 	prependVersion,
+	renderedErrorHtml,
 	renderedHtml,
 	resolveDefaults,
 	sourceNameFor,
@@ -120,6 +121,20 @@ function createScoreComponent(
 }
 
 /**
+ * Dev-only fallback for `render()`: renders a fixed inline error block
+ * instead of the score. Ignores all props — this is dev tooling output, not
+ * a themeable component.
+ */
+function createErrorScoreComponent(
+	error: unknown,
+	title: string,
+): AstroComponentFactory {
+	return createComponent(() => {
+		return renderTemplate`${unescapeHTML(renderedErrorHtml(error, title))}`;
+	});
+}
+
+/**
  * Renders a `LilypondScore` (from a `.ly`/`.ily`/`.lilypond` import,
  * or a `lilypondLoader()` entry) to a renderable `<Score />` component.
  */
@@ -132,52 +147,66 @@ export async function render(
 	const format = options.format ?? "svg";
 	const crop = options.crop ?? false;
 
-	const [{ Score, pageCount }, pdf] = await Promise.all([
-		(async (): Promise<{ Score: AstroComponentFactory; pageCount: number }> => {
-			const pages = await emitLilypondAsset({
-				title: score.assetTitle,
-				format,
-				source: score.source,
-				resolution,
-				crop,
-				sizeScale: crop ? cropScale : 1,
-				binaryPath: state.binaryPath,
-				render: () =>
-					renderScore(score.source, {
-						format,
-						crop,
-						defaults: state.defaults,
-						timeout: state.timeout,
-						binaryPath: state.binaryPath,
-						includePaths: score.includePaths,
-						sourceName: score.sourceName,
-					}),
-			});
-			return {
-				Score: createScoreComponent({ pages, alt: score.alt }),
-				pageCount: pages.length,
-			};
-		})(),
-		options.pdf
-			? emitLilypondPdfAsset({
+	try {
+		const [{ Score, pageCount }, pdf] = await Promise.all([
+			(async (): Promise<{
+				Score: AstroComponentFactory;
+				pageCount: number;
+			}> => {
+				const pages = await emitLilypondAsset({
 					title: score.assetTitle,
+					format,
 					source: score.source,
+					resolution,
+					crop,
+					sizeScale: crop ? cropScale : 1,
 					binaryPath: state.binaryPath,
 					render: () =>
 						renderScore(score.source, {
-							format: "pdf",
-							crop: false,
+							format,
+							crop,
 							defaults: state.defaults,
 							timeout: state.timeout,
 							binaryPath: state.binaryPath,
 							includePaths: score.includePaths,
 							sourceName: score.sourceName,
 						}),
-				})
-			: Promise.resolve(undefined),
-	]);
+				});
+				return {
+					Score: createScoreComponent({ pages, alt: score.alt }),
+					pageCount: pages.length,
+				};
+			})(),
+			options.pdf
+				? emitLilypondPdfAsset({
+						title: score.assetTitle,
+						source: score.source,
+						binaryPath: state.binaryPath,
+						render: () =>
+							renderScore(score.source, {
+								format: "pdf",
+								crop: false,
+								defaults: state.defaults,
+								timeout: state.timeout,
+								binaryPath: state.binaryPath,
+								includePaths: score.includePaths,
+								sourceName: score.sourceName,
+							}),
+					})
+				: Promise.resolve(undefined),
+		]);
 
-	return { Score, pageCount, pdf, meta: score.meta, raw: score.source };
+		return { Score, pageCount, pdf, meta: score.meta, raw: score.source };
+	} catch (err) {
+		if (!state.isDev) throw err;
+		return {
+			Score: createErrorScoreComponent(err, score.assetTitle),
+			pageCount: 0,
+			pdf: undefined,
+			meta: score.meta,
+			raw: score.source,
+		};
+	}
 }
 
 export interface ScoreProps extends ScoreImageProps {
@@ -280,11 +309,19 @@ export default function lilypond(
 	return {
 		name: "astro-lilypond",
 		hooks: {
-			"astro:config:setup": async ({ config, updateConfig, logger }) => {
+			"astro:config:setup": async ({
+				command,
+				config,
+				updateConfig,
+				logger,
+			}) => {
+				const isDev = command === "dev";
+				options.isDev = isDev;
 				options.binaryPath = await resolveAndSetRenderState({
 					autoInstall: options.autoInstall,
 					defaults: options.defaults,
 					timeout: options.timeout,
+					isDev,
 					logger,
 				});
 

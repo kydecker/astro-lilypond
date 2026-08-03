@@ -195,6 +195,34 @@ describe("lilypond integration", () => {
 		);
 	});
 
+	it.each([
+		["dev", true],
+		["build", false],
+		["preview", false],
+		["sync", false],
+	] as const)(
+		'command: "%s" sets renderState.isDev to %s',
+		async (command, expectedIsDev) => {
+			vi.doMock("@astrojs/markdown-satteri", () => ({
+				satteri: vi.fn((o: unknown) => ({ name: "satteri", options: o })),
+				isSatteriProcessor: vi.fn(() => true),
+			}));
+
+			const integration = lilypond();
+			await integration.hooks["astro:config:setup"]?.({
+				command,
+				config: baseConfig({
+					markdown: { processor: { name: "satteri", options: {} } },
+				}),
+				updateConfig: vi.fn(),
+				logger: { info: vi.fn(), warn: vi.fn() },
+			} as never);
+			vi.doUnmock("@astrojs/markdown-satteri");
+
+			expect(getRenderState().isDev).toBe(expectedIsDev);
+		},
+	);
+
 	it("registers the astro-emit-asset integration and the .ly vite plugin", async () => {
 		vi.doMock("@astrojs/markdown-satteri", () => ({
 			satteri: vi.fn((o: unknown) => ({ name: "satteri", options: o })),
@@ -611,6 +639,7 @@ describe("render()", () => {
 			binaryPath: "lilypond",
 			defaults: undefined,
 			timeout: undefined,
+			isDev: false,
 		});
 	});
 
@@ -755,6 +784,33 @@ describe("render()", () => {
 			/lilypond\(\).*Astro config/s,
 		);
 	});
+
+	it("still throws a render failure when isDev is false", async () => {
+		mockEmitLilypondAsset.mockRejectedValueOnce(
+			new Error("fatal error: bad input"),
+		);
+		await expect(publicRender(SCORE)).rejects.toThrow("fatal error: bad input");
+	});
+
+	it("renders an inline error Score instead of throwing when isDev is true", async () => {
+		setRenderState({
+			binaryPath: "lilypond",
+			defaults: undefined,
+			timeout: undefined,
+			isDev: true,
+		});
+		mockEmitLilypondAsset.mockRejectedValueOnce(
+			new Error("fatal error: bad input"),
+		);
+
+		const { Score, pageCount, pdf } = await publicRender(SCORE);
+		expect(pageCount).toBe(0);
+		expect(pdf).toBeUndefined();
+
+		const container = await AstroContainer.create();
+		const html = await container.renderToString(Score, { props: {} });
+		expect(html).toContain("fatal error: bad input");
+	});
 });
 
 describe("Score component", () => {
@@ -772,6 +828,7 @@ describe("Score component", () => {
 			binaryPath: "lilypond",
 			defaults: undefined,
 			timeout: undefined,
+			isDev: false,
 		});
 	});
 
@@ -870,6 +927,35 @@ describe("Score component", () => {
 			container.renderToString(PublicScore, { props: { content: SCORE } }),
 		).rejects.toThrow(/lilypond\(\).*Astro config/s);
 	});
+
+	it("still throws a render failure when isDev is false", async () => {
+		mockEmitLilypondAsset.mockRejectedValueOnce(
+			new Error("fatal error: bad input"),
+		);
+		const container = await AstroContainer.create();
+		await expect(
+			container.renderToString(PublicScore, { props: { content: SCORE } }),
+		).rejects.toThrow("fatal error: bad input");
+	});
+
+	it("renders an inline error instead of throwing when isDev is true, ignoring props like class", async () => {
+		setRenderState({
+			binaryPath: "lilypond",
+			defaults: undefined,
+			timeout: undefined,
+			isDev: true,
+		});
+		mockEmitLilypondAsset.mockRejectedValueOnce(
+			new Error("fatal error: bad input"),
+		);
+
+		const container = await AstroContainer.create();
+		const html = await container.renderToString(PublicScore, {
+			props: { content: SCORE, class: "extra" },
+		});
+		expect(html).toContain("fatal error: bad input");
+		expect(html).not.toContain('class="extra"');
+	});
 });
 
 describe("renderAll()", () => {
@@ -895,6 +981,7 @@ describe("renderAll()", () => {
 			binaryPath: "lilypond",
 			defaults: undefined,
 			timeout: undefined,
+			isDev: false,
 		});
 	});
 

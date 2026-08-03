@@ -1,8 +1,6 @@
 /**
- * Escapes a string for safe interpolation inside a double-quoted HTML
- * attribute value. Used for alt text, which — unlike the srcs this
- * integration already emits — is arbitrary user/header-derived content that
- * can contain `"`, `&`, `<`.
+ * Escape a string for safe interpolation inside a double-quoted
+ * HTML attribute value.
  */
 export function escapeHtmlAttribute(value: string): string {
 	return value

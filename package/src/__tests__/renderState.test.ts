@@ -41,11 +41,13 @@ describe("renderState", () => {
 			binaryPath: "lilypond",
 			defaults: { version: "2.26.0" },
 			timeout: 60_000,
+			isDev: false,
 		});
 		expect(getRenderState()).toEqual({
 			binaryPath: "lilypond",
 			defaults: { version: "2.26.0" },
 			timeout: 60_000,
+			isDev: false,
 		});
 	});
 
@@ -54,12 +56,19 @@ describe("renderState", () => {
 			binaryPath: "a",
 			defaults: undefined,
 			timeout: undefined,
+			isDev: false,
 		});
-		setRenderState({ binaryPath: "b", defaults: undefined, timeout: 5000 });
+		setRenderState({
+			binaryPath: "b",
+			defaults: undefined,
+			timeout: 5000,
+			isDev: true,
+		});
 		expect(getRenderState()).toEqual({
 			binaryPath: "b",
 			defaults: undefined,
 			timeout: 5000,
+			isDev: true,
 		});
 	});
 
@@ -68,6 +77,7 @@ describe("renderState", () => {
 			binaryPath: "lilypond",
 			defaults: undefined,
 			timeout: undefined,
+			isDev: false,
 		});
 		resetRenderStateForTests();
 		expect(() => getRenderState()).toThrow(/lilypond\(\).*Astro config/s);
@@ -81,6 +91,7 @@ describe("resolveAndSetRenderState", () => {
 		const binaryPath = await resolveAndSetRenderState({
 			defaults: { version: "2.26.0" },
 			timeout: 60_000,
+			isDev: true,
 			logger,
 		});
 
@@ -91,6 +102,7 @@ describe("resolveAndSetRenderState", () => {
 			binaryPath: "lilypond",
 			defaults: { version: "2.26.0" },
 			timeout: 60_000,
+			isDev: true,
 		});
 	});
 });

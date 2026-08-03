@@ -1,0 +1,11 @@
+---
+import { Score } from "astro-lilypond";
+import brokenScore from "../scores/broken.ly";
+import validScore from "../scores/valid.ly";
+---
+
+<p>Valid score, via the &lt;Score&gt; component:</p>
+<Score content={validScore} />
+
+<p>Broken score, via the &lt;Score&gt; component:</p>
+<Score content={brokenScore} />
