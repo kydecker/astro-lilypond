@@ -1,0 +1,22 @@
+{
+	"name": "e2e",
+	"version": "0.0.1",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"build:lib": "pnpm --filter astro-lilypond build",
+		"dev:satteri": "pnpm run build:lib && astro dev --config astro.config.satteri.mjs",
+		"dev:unified": "pnpm run build:lib && astro dev --config astro.config.unified.mjs",
+		"pretest": "pnpm run build:lib && astro build --config astro.config.satteri.mjs && astro build --config astro.config.unified.mjs",
+		"test": "playwright test"
+	},
+	"dependencies": {
+		"@astrojs/markdown-remark": "^7.2.1",
+		"@astrojs/mdx": "^7.0.5",
+		"astro": "^7.1.6",
+		"astro-lilypond": "workspace:*"
+	},
+	"devDependencies": {
+		"@playwright/test": "^1.62.1"
+	}
+}

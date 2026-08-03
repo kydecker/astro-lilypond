@@ -414,7 +414,7 @@ describe("lilypond integration", () => {
 		vi.doUnmock("@astrojs/markdown-satteri");
 	});
 
-	it("registers remark/rehype plugins when processor is unified", async () => {
+	it("registers remark plugin when processor is unified", async () => {
 		const updateConfig = vi.fn();
 		const logger = { info: vi.fn(), warn: vi.fn() };
 
@@ -437,17 +437,12 @@ describe("lilypond integration", () => {
 
 		expect(updateConfig).toHaveBeenCalledTimes(2);
 		// First call registers Vite plugins; second call sets the markdown processor.
-		const { remarkPlugins, rehypePlugins } = (
+		const { remarkPlugins } = (
 			updateConfig.mock.calls[1][0] as {
-				markdown: {
-					processor: {
-						options: { remarkPlugins: unknown[]; rehypePlugins: unknown[] };
-					};
-				};
+				markdown: { processor: { options: { remarkPlugins: unknown[] } } };
 			}
 		).markdown.processor.options;
 		expect(remarkPlugins.length).toBeGreaterThan(0);
-		expect(rehypePlugins.length).toBeGreaterThan(0);
 
 		vi.doUnmock("@astrojs/markdown-remark");
 	});
@@ -473,17 +468,12 @@ describe("lilypond integration", () => {
 			logger,
 		} as never);
 
-		const { remarkPlugins, rehypePlugins } = (
+		const { remarkPlugins } = (
 			updateConfig.mock.calls[1][0] as {
-				markdown: {
-					processor: {
-						options: { remarkPlugins: unknown[]; rehypePlugins: unknown[] };
-					};
-				};
+				markdown: { processor: { options: { remarkPlugins: unknown[] } } };
 			}
 		).markdown.processor.options;
 		expect(remarkPlugins).toHaveLength(1);
-		expect(rehypePlugins).toHaveLength(1);
 
 		vi.doUnmock("@astrojs/markdown-remark");
 	});

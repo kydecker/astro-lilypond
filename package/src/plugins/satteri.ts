@@ -1,4 +1,4 @@
-import type { Code, Html } from "mdast";
+import type { Code } from "mdast";
 import type { MdastPluginDefinition, MdastVisitorContext } from "satteri";
 import { defaultOptions, render } from "../render.js";
 import {
@@ -17,13 +17,10 @@ import type { PluginOptions } from "./types.js";
 export function satteriPlugin(options: PluginOptions): MdastPluginDefinition {
 	return {
 		name: "astro-lilypond",
-		// Returning an mdast Html node (type: 'html') emits the value verbatim.
-		// Sätteri's { rawHtml } escape hatch applies MDX brace-escaping which
-		// would corrupt SVG content, so we use the plain html node form instead.
 		async code(
 			node: Readonly<Code>,
 			ctx: MdastVisitorContext,
-		): Promise<Html | undefined> {
+		): Promise<{ rawHtml: string } | undefined> {
 			if (!isLilypondLang(node.lang)) return undefined;
 			const { version, resolution, cropScale } = resolveDefaults(
 				options.defaults,
@@ -54,10 +51,7 @@ export function satteriPlugin(options: PluginOptions): MdastPluginDefinition {
 					}),
 			});
 
-			return {
-				type: "html",
-				value: renderedHtml(pages, alt),
-			};
+			return { rawHtml: renderedHtml(pages, alt) };
 		},
 	};
 }

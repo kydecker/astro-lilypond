@@ -1,0 +1,22 @@
+---
+import { render } from "astro-lilypond";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import multiPage from "../scores/multi-page.ly";
+import simple from "../scores/simple.ly";
+
+const single = await render(simple);
+const uncropped = await render(multiPage, { crop: false });
+// crop: true always merges pages into one image, regardless of source page count.
+const cropped = await render(multiPage, { crop: true });
+---
+
+<BaseLayout title="render(): pageCount">
+	<p data-testid="single-page-count">{single.pageCount}</p>
+	<single.Score />
+
+	<p data-testid="uncropped-page-count">{uncropped.pageCount}</p>
+	<uncropped.Score />
+
+	<p data-testid="cropped-page-count">{cropped.pageCount}</p>
+	<cropped.Score />
+</BaseLayout>

@@ -4,6 +4,7 @@ node_modules/
 # Build outputs
 dist/
 .astro/
+.cache/
 .wrangler/
 
 # Environment files
@@ -25,6 +26,11 @@ Thumbs.db
 
 # Test coverage
 coverage/
+
+# Playwright
+test-results/
+playwright-report/
+blob-report/
 
 # Temporary files
 *.tmp

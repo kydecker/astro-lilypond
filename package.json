@@ -9,6 +9,7 @@
 		"build": "pnpm --filter astro-lilypond build",
 		"test": "pnpm --filter astro-lilypond test",
 		"test:coverage": "pnpm --filter astro-lilypond test:coverage",
+		"test:e2e": "pnpm --filter e2e test",
 		"release": "changeset publish",
 		"check": "biome check",
 		"check:fix": "biome check --write"

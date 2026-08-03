@@ -1,0 +1,9 @@
+---
+import { Score } from "astro-lilypond";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import multiPage from "../scores/multi-page.ly";
+---
+
+<BaseLayout title="Score: pageLimit">
+	<Score content={multiPage} pageLimit={1} />
+</BaseLayout>

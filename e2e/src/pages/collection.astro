@@ -1,0 +1,12 @@
+---
+import { getEntry } from "astro:content";
+import { Score } from "astro-lilypond";
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+const entry = await getEntry("scores", "example");
+---
+
+<BaseLayout title="Score: content collection">
+	<h1>{entry.data.meta.title}</h1>
+	<Score content={entry.data} />
+</BaseLayout>

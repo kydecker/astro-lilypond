@@ -11,7 +11,6 @@ import type { Plugin } from "vite";
 import type { AutoInstallOptions } from "./binary/index.js";
 import {
 	type PluginOptions,
-	rehypePlugin,
 	remarkPlugin,
 	satteriPlugin,
 } from "./plugins/index.js";
@@ -345,16 +344,10 @@ export default function lilypond(
 									...(existingOptions.remarkPlugins ?? []),
 									[remarkPlugin, options],
 								],
-								rehypePlugins: [
-									...(existingOptions.rehypePlugins ?? []),
-									[rehypePlugin, options],
-								],
 							}),
 						},
 					});
-					logger?.info(
-						"astro-lilypond: registered unified remark/rehype plugins",
-					);
+					logger?.info("astro-lilypond: registered unified remark plugin");
 					return;
 				}
 

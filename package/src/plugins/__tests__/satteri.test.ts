@@ -1,4 +1,4 @@
-import type { Code, Html } from "mdast";
+import type { Code } from "mdast";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../../render.js", () => ({
@@ -35,6 +35,10 @@ const FAKE_SVG = "<svg xmlns='http://www.w3.org/2000/svg'><g>fake</g></svg>";
 
 const BASE_OPTIONS: PluginOptions = {};
 
+function rawHtml(result: unknown): string {
+	return (result as { rawHtml: string }).rawHtml;
+}
+
 beforeEach(() => {
 	vi.clearAllMocks();
 	mockRender.mockResolvedValue([Buffer.from(FAKE_SVG)]);
@@ -48,7 +52,7 @@ describe("satteriPlugin", () => {
 		expect(typeof plugin.code).toBe("function");
 	});
 
-	it("transforms a lilypond code node to an html node with an img tag pointing at the emitted asset", async () => {
+	it("transforms a lilypond code node to { rawHtml } with an img tag pointing at the emitted asset", async () => {
 		const plugin = satteriPlugin(BASE_OPTIONS);
 		const node: Code = { type: "code", lang: "lilypond", value: "\\score { }" };
 
@@ -68,9 +72,7 @@ describe("satteriPlugin", () => {
 				crop: true,
 			}),
 		);
-		const html = result as Html;
-		expect(html.type).toBe("html");
-		expect(html.value).toBe(
+		expect(rawHtml(result)).toBe(
 			'<img data-lilypond-image src="/_lilypond/score.svg" alt>',
 		);
 	});
@@ -166,7 +168,7 @@ describe("satteriPlugin", () => {
 
 		const result = await plugin.code?.(node, {} as never);
 
-		expect((result as Html).value).toContain('src="/_lilypond/score.svg"');
+		expect(rawHtml(result)).toContain('src="/_lilypond/score.svg"');
 	});
 
 	it("passes format: png through to render and emitLilypondAsset", async () => {
@@ -183,7 +185,7 @@ describe("satteriPlugin", () => {
 			defaults: undefined,
 			includePaths: [],
 		});
-		expect((result as Html).value).toBe(
+		expect(rawHtml(result)).toBe(
 			'<img data-lilypond-image src="/_lilypond/score.png" alt>',
 		);
 	});
@@ -242,10 +244,8 @@ describe("satteriPlugin", () => {
 
 			const result = await plugin.code?.(node, ctx as never);
 
-			const html = result as Html;
-			expect(html.type).toBe("html");
-			expect(html.value).toMatch(/^<ol data-lilypond-group>/);
-			expect(html.value.match(/<li>/g)).toHaveLength(2);
+			expect(rawHtml(result)).toMatch(/^<ol data-lilypond-group>/);
+			expect(rawHtml(result).match(/<li>/g)).toHaveLength(2);
 		});
 	});
 
@@ -260,7 +260,7 @@ describe("satteriPlugin", () => {
 
 			const result = await plugin.code?.(node, {} as never);
 
-			expect((result as Html).value).toContain('alt="Sonata, by Beethoven"');
+			expect(rawHtml(result)).toContain('alt="Sonata, by Beethoven"');
 		});
 
 		it("prefers a meta alt= override over \\header-derived alt text", async () => {
@@ -274,7 +274,7 @@ describe("satteriPlugin", () => {
 
 			const result = await plugin.code?.(node, {} as never);
 
-			expect((result as Html).value).toContain('alt="Custom"');
+			expect(rawHtml(result)).toContain('alt="Custom"');
 		});
 
 		it('an explicit meta alt="" forces decorative alt even when a header is present', async () => {
@@ -288,7 +288,7 @@ describe("satteriPlugin", () => {
 
 			const result = await plugin.code?.(node, {} as never);
 
-			expect((result as Html).value).toContain(" alt>");
+			expect(rawHtml(result)).toContain(" alt>");
 		});
 
 		it("leaves alt empty when there's neither a header nor a meta override", async () => {
@@ -301,7 +301,22 @@ describe("satteriPlugin", () => {
 
 			const result = await plugin.code?.(node, {} as never);
 
-			expect((result as Html).value).toContain(" alt>");
+			expect(rawHtml(result)).toContain(" alt>");
+		});
+
+		it("keeps a literal brace in \\header-derived alt text intact", async () => {
+			const plugin = satteriPlugin(BASE_OPTIONS);
+			const node: Code = {
+				type: "code",
+				lang: "lilypond",
+				value: '\\header { title = "Op. {1}" }',
+			};
+
+			const result = await plugin.code?.(node, {
+				sourceFormat: "mdx",
+			} as never);
+
+			expect(rawHtml(result)).toContain('alt="Op. {1}"');
 		});
 	});
 

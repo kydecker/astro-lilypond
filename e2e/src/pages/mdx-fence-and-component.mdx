@@ -1,0 +1,17 @@
+import { Score } from "astro-lilypond";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import simple from "../scores/simple.ly";
+
+<BaseLayout title="MDX fence and Score component">
+
+```lilypond
+\header {
+  title = "MDX Fence Score"
+}
+
+{ c'4 d' e' f' }
+```
+
+<Score content={simple} />
+
+</BaseLayout>
