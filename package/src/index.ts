@@ -357,7 +357,7 @@ export default function lilypond(
 							}),
 						},
 					});
-					logger?.info("astro-lilypond: registered Sätteri mdast plugin");
+					logger?.info("Registered Sätteri mdast plugin");
 					return;
 				}
 
@@ -385,7 +385,7 @@ export default function lilypond(
 							}),
 						},
 					});
-					logger?.info("astro-lilypond: registered unified remark plugin");
+					logger?.info("Registered unified remark plugin");
 					return;
 				}
 
