@@ -14,11 +14,6 @@ function messageFor(error: unknown): string {
 	return error instanceof Error ? error.message : String(error);
 }
 
-/**
- * Render a LilyPond compile failure as an inline error block, for use in
- * place of the normal `<img>`/`<Score>` output during `astro dev`.
- * Never appears during `astro build`.
- */
 export function renderedErrorHtml(error: unknown, title: string): string {
 	const heading = `LilyPond failed to render "${escapeHtml(title)}"`;
 	return `<pre style="${ERROR_STYLE}">${heading}\n\n${escapeHtml(messageFor(error))}</pre>`;

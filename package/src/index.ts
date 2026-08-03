@@ -121,9 +121,8 @@ function createScoreComponent(
 }
 
 /**
- * Dev-only fallback for `render()`: renders a fixed inline error block
- * instead of the score. Ignores all props — this is dev tooling output, not
- * a themeable component.
+ * Dev-only fallback for `render()`: renders an inline error block
+ * instead of the score.
  */
 function createErrorScoreComponent(
 	error: unknown,

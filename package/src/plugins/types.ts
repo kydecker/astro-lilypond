@@ -5,9 +5,5 @@ export interface PluginOptions {
 	defaults?: LilypondDefaults;
 	timeout?: number;
 	binaryPath?: string;
-	/**
-	 * `command === "dev"` from `astro:config:setup`. When true, a block that
-	 * fails to render is shown as an inline error instead of throwing.
-	 */
 	isDev?: boolean;
 }

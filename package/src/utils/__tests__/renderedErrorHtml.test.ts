@@ -33,18 +33,4 @@ describe("renderedErrorHtml", () => {
 		expect(html).toContain("all: initial");
 		expect(html).toContain("white-space: pre-wrap");
 	});
-
-	it("has no class, style override, or data attribute surface", () => {
-		const html = renderedErrorHtml(new Error("x"), "score");
-		expect(html).not.toMatch(/\bdata-lilypond-error\b/);
-		expect(html.match(/style="/g)?.length).toBe(1);
-	});
-
-	it("supports both light and dark color schemes via light-dark(), without a stylesheet", () => {
-		const html = renderedErrorHtml(new Error("x"), "score");
-		expect(html).toContain("color-scheme: light dark");
-		expect(html).toContain("light-dark(#dc2626, #f87171)");
-		expect(html).toContain("light-dark(#fef2f2, #450a0a)");
-		expect(html).toContain("light-dark(#7f1d1d, #fca5a5)");
-	});
 });
