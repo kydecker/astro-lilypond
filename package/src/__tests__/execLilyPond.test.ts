@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 type ExecFileCb = (
 	err: unknown,
@@ -40,24 +40,18 @@ const baseOptions = {
 	outputBase: "/tmp/dir/output",
 };
 
-// lilypond writes its progress log (and any warnings/errors) to stderr even
-// on success, and execLilyPond.ts deliberately mirrors that to
-// process.stderr for build visibility. Silence it here so
-// intentionally-simulated errors/warnings in the tests below don't pollute
-// CI output — tests that specifically assert on what gets written use this
-// same spy.
-let stderrWriteSpy: ReturnType<typeof vi.spyOn>;
+let logger: {
+	warn: ReturnType<typeof vi.fn<(message: string) => void>>;
+	error: ReturnType<typeof vi.fn<(message: string) => void>>;
+};
 
 beforeEach(() => {
 	vi.clearAllMocks();
 	mockExecFileResult((cb) => cb(null, { stdout: "", stderr: "" }));
-	stderrWriteSpy = vi
-		.spyOn(process.stderr, "write")
-		.mockImplementation(() => true);
-});
-
-afterEach(() => {
-	stderrWriteSpy.mockRestore();
+	logger = {
+		warn: vi.fn<(message: string) => void>(),
+		error: vi.fn<(message: string) => void>(),
+	};
 });
 
 describe("execLilyPond", () => {
@@ -87,6 +81,15 @@ describe("execLilyPond", () => {
 		];
 		expect(args).toContain("--define-default=no-point-and-click");
 		expect(args).toContain("--define-default=backend=cairo");
+	});
+
+	it("suppresses lilypond's progress trace via --loglevel=WARN", async () => {
+		await execLilyPond(baseOptions);
+		const [, args] = mockExecFile.mock.calls[0] as unknown as [
+			string,
+			string[],
+		];
+		expect(args).toContain("--loglevel=WARN");
 	});
 
 	it("passes the resolution as a DPI define", async () => {
@@ -157,22 +160,29 @@ describe("execLilyPond", () => {
 		await expect(execLilyPond(baseOptions)).resolves.toBeUndefined();
 	});
 
-	it("writes stderr to process.stderr for visibility even on success", async () => {
+	it("warns via the logger with stderr content for visibility even on success", async () => {
 		mockExecFileResult((cb) =>
 			cb(null, {
 				stdout: "",
-				stderr: "Success: compilation successfully completed",
+				stderr: "warning: bar check failed",
 			}),
 		);
-		await execLilyPond(baseOptions);
-		expect(stderrWriteSpy).toHaveBeenCalledWith(
-			"Success: compilation successfully completed",
-		);
+		await execLilyPond({ ...baseOptions, logger });
+		expect(logger.warn).toHaveBeenCalledWith("warning: bar check failed");
+		expect(logger.error).not.toHaveBeenCalled();
 	});
 
-	it("does not write to process.stderr when there is no stderr output", async () => {
-		await execLilyPond(baseOptions);
-		expect(stderrWriteSpy).not.toHaveBeenCalled();
+	it("does not call the logger when there is no stderr output", async () => {
+		await execLilyPond({ ...baseOptions, logger });
+		expect(logger.warn).not.toHaveBeenCalled();
+		expect(logger.error).not.toHaveBeenCalled();
+	});
+
+	it("does not throw when no logger is provided", async () => {
+		mockExecFileResult((cb) =>
+			cb(null, { stdout: "", stderr: "warning: bar check failed" }),
+		);
+		await expect(execLilyPond(baseOptions)).resolves.toBeUndefined();
 	});
 
 	it("throws using the child's stderr when lilypond exits with a non-zero status", async () => {
@@ -186,6 +196,21 @@ describe("execLilyPond", () => {
 		await expect(execLilyPond(baseOptions)).rejects.toThrow(
 			"fatal error: bad input",
 		);
+	});
+
+	it("reports the failure's stderr via logger.error before throwing", async () => {
+		mockExecFileResult((cb) =>
+			cb(
+				Object.assign(new Error("Command failed"), {
+					stderr: "fatal error: bad input",
+				}),
+			),
+		);
+		await expect(execLilyPond({ ...baseOptions, logger })).rejects.toThrow(
+			"fatal error: bad input",
+		);
+		expect(logger.error).toHaveBeenCalledWith("fatal error: bad input");
+		expect(logger.warn).not.toHaveBeenCalled();
 	});
 
 	it("throws the error message when the failure has no stderr", async () => {

@@ -169,6 +169,7 @@ export async function render(
 							binaryPath: state.binaryPath,
 							includePaths: score.includePaths,
 							sourceName: score.sourceName,
+							logger: state.logger,
 						}),
 				});
 				return {
@@ -190,6 +191,7 @@ export async function render(
 								binaryPath: state.binaryPath,
 								includePaths: score.includePaths,
 								sourceName: score.sourceName,
+								logger: state.logger,
 							}),
 					})
 				: Promise.resolve(undefined),

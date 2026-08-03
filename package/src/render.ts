@@ -1,6 +1,7 @@
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import type { AstroIntegrationLogger } from "astro";
 import { execLilyPond } from "./execLilyPond.js";
 import { readOutputFile, safeInputFileName } from "./readOutputFile.js";
 import type { LilypondVersion } from "./types/lilypondVersion.js";
@@ -91,10 +92,17 @@ export interface RenderOptions {
 	 * @default 60000
 	 */
 	timeout?: number;
+
+	/**
+	 * Receives LilyPond's stderr output (warnings on success, the failure
+	 * reason on a non-zero exit) instead of the default silence. Astro's
+	 * integration logger satisfies this.
+	 */
+	logger?: Pick<AstroIntegrationLogger, "warn" | "error">;
 }
 
 export const defaultOptions: Required<
-	Omit<RenderOptions, "includePaths" | "sourceName" | "defaults">
+	Omit<RenderOptions, "includePaths" | "sourceName" | "defaults" | "logger">
 > & { defaults: Required<LilypondDefaults> } = {
 	format: "svg",
 	crop: true,
@@ -118,6 +126,7 @@ export async function render(
 		timeout = defaultOptions.timeout,
 		includePaths = [],
 		sourceName,
+		logger,
 	} = options;
 
 	const { resolution } = resolveDefaults(options.defaults);
@@ -142,6 +151,7 @@ export async function render(
 			timeout,
 			inputPath,
 			outputBase,
+			logger,
 		});
 
 		return await readOutputFile(outputBase, format, crop);

@@ -1,3 +1,4 @@
+import type { AstroIntegrationLogger } from "astro";
 import {
 	type AutoInstallOptions,
 	resolveAutoInstallOption,
@@ -10,6 +11,7 @@ export interface RenderState {
 	defaults: LilypondDefaults | undefined;
 	timeout: number | undefined;
 	isDev: boolean;
+	logger?: Pick<AstroIntegrationLogger, "warn" | "error">;
 }
 
 /**
@@ -54,7 +56,7 @@ export interface ResolveAndSetRenderStateOptions {
 	defaults?: LilypondDefaults;
 	timeout?: number;
 	isDev: boolean;
-	logger: { info: (message: string) => void; warn: (message: string) => void };
+	logger: Pick<AstroIntegrationLogger, "info" | "warn" | "error">;
 }
 
 /**
@@ -76,6 +78,7 @@ export async function resolveAndSetRenderState(
 		defaults: options.defaults,
 		timeout: options.timeout,
 		isDev: options.isDev,
+		logger: options.logger,
 	});
 	return binaryPath;
 }

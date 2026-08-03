@@ -1,5 +1,4 @@
 import {
-	afterEach,
 	beforeEach,
 	describe,
 	expect,
@@ -80,25 +79,11 @@ function mockExecFileResult(handler: (cb: ExecFileCb) => void) {
 	}) as typeof execFile);
 }
 
-// lilypond writes its progress log (and any warnings/errors) to stderr even
-// on success, and render.ts deliberately mirrors that to process.stderr for
-// build visibility. Silence it here so intentionally-simulated
-// errors/warnings in the tests below don't pollute CI output — tests that
-// specifically assert on what gets written use this same spy.
-let stderrWriteSpy: ReturnType<typeof vi.spyOn>;
-
 beforeEach(() => {
 	vi.clearAllMocks();
 	mockExecFileResult((cb) => cb(null, { stdout: "", stderr: "" }));
 	mockReaddir.mockResolvedValue(["output.svg"]);
 	mockReadFile.mockResolvedValue(Buffer.from("<svg>fake</svg>"));
-	stderrWriteSpy = vi
-		.spyOn(process.stderr, "write")
-		.mockImplementation(() => true);
-});
-
-afterEach(() => {
-	stderrWriteSpy.mockRestore();
 });
 
 describe("render", () => {
@@ -181,18 +166,25 @@ describe("render", () => {
 		expect(result[0]).toBeInstanceOf(Buffer);
 	});
 
-	it("writes stderr to process.stderr for visibility even on success", async () => {
+	it("passes stderr to the provided logger's warn() for visibility even on success", async () => {
 		mockExecFileResult((cb) =>
-			cb(null, {
-				stdout: "",
-				stderr:
-					"Processing `input.ly'\nSuccess: compilation successfully completed",
-			}),
+			cb(null, { stdout: "", stderr: "warning: bar check failed" }),
 		);
+		const logger = {
+			warn: vi.fn<(message: string) => void>(),
+			error: vi.fn<(message: string) => void>(),
+		};
+		await render("\\score { }", { logger });
+		expect(logger.warn).toHaveBeenCalledWith("warning: bar check failed");
+	});
+
+	it("passes --loglevel=WARN to suppress lilypond's progress trace", async () => {
 		await render("\\score { }");
-		expect(stderrWriteSpy).toHaveBeenCalledWith(
-			"Processing `input.ly'\nSuccess: compilation successfully completed",
-		);
+		const [, args] = mockExecFile.mock.calls[0] as unknown as [
+			string,
+			string[],
+		];
+		expect(args).toContain("--loglevel=WARN");
 	});
 
 	it("passes signal and maxBuffer options to execFile", async () => {

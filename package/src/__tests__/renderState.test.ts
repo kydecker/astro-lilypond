@@ -86,7 +86,7 @@ describe("renderState", () => {
 
 describe("resolveAndSetRenderState", () => {
 	it("forwards resolveLilypondBinary's log/warn callbacks to the provided logger", async () => {
-		const logger = { info: vi.fn(), warn: vi.fn() };
+		const logger = { info: vi.fn(), warn: vi.fn(), error: vi.fn() };
 
 		const binaryPath = await resolveAndSetRenderState({
 			defaults: { version: "2.26.0" },
@@ -103,6 +103,7 @@ describe("resolveAndSetRenderState", () => {
 			defaults: { version: "2.26.0" },
 			timeout: 60_000,
 			isDev: true,
+			logger,
 		});
 	});
 });
