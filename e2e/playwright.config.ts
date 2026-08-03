@@ -5,7 +5,7 @@ const DEV_ERRORS_SPEC = /dev-inline-errors\.spec\.ts/;
 const SITES = [
 	{ name: "satteri", port: 4321 },
 	{ name: "unified", port: 4322 },
-	{ name: "dev-errors", port: 4323, dev: true },
+	{ name: "dev", port: 4323, dev: true },
 ];
 
 export default defineConfig({
