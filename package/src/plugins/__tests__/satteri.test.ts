@@ -54,6 +54,12 @@ describe("satteriPlugin", () => {
 		expect(typeof plugin.code).toBe("function");
 	});
 
+	it("throws an error when the lilypond() integration hasn't run", () => {
+		expect(() => satteriPlugin({ ...BASE_OPTIONS, logger: undefined })).toThrow(
+			/lilypond\(\).*Astro config/s,
+		);
+	});
+
 	it("transforms a lilypond code node to { rawHtml } with an img tag pointing at the emitted asset", async () => {
 		const plugin = satteriPlugin(BASE_OPTIONS);
 		const node: Code = { type: "code", lang: "lilypond", value: "\\score { }" };

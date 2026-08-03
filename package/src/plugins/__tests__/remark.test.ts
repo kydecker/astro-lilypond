@@ -66,6 +66,12 @@ describe("remarkLilypondPlugin", () => {
 		expect(typeof transformer).toBe("function");
 	});
 
+	it("throws an error when the lilypond() integration hasn't run", () => {
+		expect(() =>
+			remarkLilypondPlugin({ ...BASE_OPTIONS, logger: undefined }),
+		).toThrow(/lilypond\(\).*Astro config/s);
+	});
+
 	it("transforms a lilypond code block to an html node with an img tag pointing at the emitted asset", async () => {
 		const tree = makeTree([
 			{ type: "code", lang: "lilypond", value: "\\score { }" } as Code,
