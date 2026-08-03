@@ -1,5 +1,5 @@
 ---
-"astro-lilypond": major
+"astro-lilypond": minor
 ---
 
-Remove the `defaults` option from `lilypondLoader()`. It previously resolved independently of the integration's own `defaults`, so a `version` configured via `lilypond({ defaults })` was silently ignored by collection entries. `lilypondLoader()` now always uses the integration's `defaults`, matching `.ly` file imports and Markdown fences.
+Remove the `defaults` option from `lilypondLoader()`. The content loader now always uses the integration's own `defaults`, matching `.ly` file imports and Markdown fences.
