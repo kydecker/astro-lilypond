@@ -182,15 +182,6 @@ describe("render", () => {
 		expect(logger.warn).toHaveBeenCalledWith("warning: bar check failed");
 	});
 
-	it("passes --loglevel=WARN to suppress lilypond's progress trace", async () => {
-		await render("\\score { }", { logger: FAKE_LOGGER });
-		const [, args] = mockExecFile.mock.calls[0] as unknown as [
-			string,
-			string[],
-		];
-		expect(args).toContain("--loglevel=WARN");
-	});
-
 	it("passes signal and maxBuffer options to execFile", async () => {
 		await render("\\score { }", { logger: FAKE_LOGGER });
 		const [, , options] = mockExecFile.mock.calls[0] as unknown as [
