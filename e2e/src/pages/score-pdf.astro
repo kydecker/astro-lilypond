@@ -3,7 +3,7 @@ import { render } from "astro-lilypond";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import multiPage from "../scores/multi-page.ly";
 
-const { Score, pdf } = await render(multiPage, { pdf: true });
+const { Score, pdf } = await render(multiPage, { pdf: true, crop: true });
 ---
 
 <BaseLayout title="Score: pdf">
