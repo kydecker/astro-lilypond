@@ -185,6 +185,34 @@ describe("lilypond integration", () => {
 		);
 	});
 
+	it("forwards resolveLilypondBinary's log/warn callbacks to the integration logger", async () => {
+		vi.doMock("@astrojs/markdown-satteri", () => ({
+			satteri: vi.fn((o: unknown) => ({ name: "satteri", options: o })),
+			isSatteriProcessor: vi.fn(() => true),
+		}));
+
+		const logger = { info: vi.fn(), warn: vi.fn() };
+		const integration = lilypond();
+		await integration.hooks["astro:config:setup"]?.({
+			command: "build",
+			config: baseConfig({
+				markdown: { processor: { name: "satteri", options: {} } },
+			}),
+			updateConfig: vi.fn(),
+			logger,
+		} as never);
+		vi.doUnmock("@astrojs/markdown-satteri");
+
+		const { log, warn } = mockResolveLilypondBinary.mock.calls[0][0] as {
+			log: (message: string) => void;
+			warn: (message: string) => void;
+		};
+		log("downloading...");
+		warn("not found on PATH");
+		expect(logger.info).toHaveBeenCalledWith("downloading...");
+		expect(logger.warn).toHaveBeenCalledWith("not found on PATH");
+	});
+
 	it("populates state with the resolved binary path, so the public render() can reach it", async () => {
 		mockResolveLilypondBinary.mockResolvedValue(
 			"/cache/lilypond-2.26.0/bin/lilypond",
