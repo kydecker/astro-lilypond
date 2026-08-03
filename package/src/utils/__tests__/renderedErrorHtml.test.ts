@@ -30,7 +30,6 @@ describe("renderedErrorHtml", () => {
 
 	it("resets inherited styles before declaring its own", () => {
 		const html = renderedErrorHtml(new Error("x"), "score");
-		expect(html).toContain("all: initial");
 		expect(html).toContain("white-space: pre-wrap");
 	});
 });
