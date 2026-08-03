@@ -4,8 +4,15 @@ import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import type { DataStore } from "astro/loaders";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("../virtualState.js", () => ({
+	getLilypondState: vi.fn(),
+}));
+
 import { lilypondEntrySchema, lilypondLoader } from "../loader.js";
-import { resetRenderStateForTests, setRenderState } from "../renderState.js";
+import { getLilypondState } from "../virtualState.js";
+
+const mockGetLilypondState = vi.mocked(getLilypondState);
 
 /** Minimal in-memory stand-in for Astro's content-layer DataStore. */
 function createFakeStore() {
@@ -98,18 +105,16 @@ beforeEach(async () => {
 	publicDir = join(root, "public");
 	await mkdir(scoresDir, { recursive: true });
 	await mkdir(publicDir, { recursive: true });
-	setRenderState({
+	mockGetLilypondState.mockResolvedValue({
 		binaryPath: "lilypond",
 		defaults: undefined,
 		timeout: undefined,
 		isDev: false,
-		logger: { warn: vi.fn(), error: vi.fn() },
 	});
 });
 
 afterEach(async () => {
 	await rm(root, { recursive: true, force: true });
-	resetRenderStateForTests();
 });
 
 describe("lilypondLoader", () => {

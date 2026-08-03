@@ -10,16 +10,6 @@ export default defineConfig({
 					include: ["src/**/*.test.ts", "components/**/*.test.ts"],
 				},
 			},
-			{
-				extends: true,
-				test: {
-					name: "integration",
-					include: ["tests/*.test.ts"],
-					testTimeout: 60_000,
-					hookTimeout: 60_000,
-					maxConcurrency: 10,
-				},
-			},
 		],
 		coverage: {
 			reporter: ["text", "json-summary", "json"],

@@ -30,6 +30,14 @@ vi.mock("../binary/index.js", async (importOriginal) => {
 	};
 });
 
+vi.mock("../virtualState.js", async (importOriginal) => {
+	const actual = await importOriginal<typeof import("../virtualState.js")>();
+	return {
+		...actual,
+		getLilypondState: vi.fn(),
+	};
+});
+
 import { experimental_AstroContainer as AstroContainer } from "astro/container";
 import { resolveLilypondBinary } from "../binary/index.js";
 import lilypond, {
@@ -38,21 +46,35 @@ import lilypond, {
 	render as publicRender,
 	renderAll as publicRenderAll,
 } from "../index.js";
+import { resetLoggerForTests, setLogger } from "../logger.js";
 import { render as lowLevelRender } from "../render.js";
-import {
-	getRenderState,
-	resetRenderStateForTests,
-	setRenderState,
-} from "../renderState.js";
 import { fakeEmitLilypondAsset } from "../utils/__tests__/emitLilypondAsset.fake.js";
 import { fakeEmitLilypondPdfAsset } from "../utils/__tests__/emitLilypondPdfAsset.fake.js";
 import { emitLilypondAsset } from "../utils/emitLilypondAsset.js";
 import { emitLilypondPdfAsset } from "../utils/emitLilypondPdfAsset.js";
+import {
+	getLilypondState,
+	type LilypondState,
+	VIRTUAL_STATE_MODULE_ID,
+} from "../virtualState.js";
 
 const mockLowLevelRender = vi.mocked(lowLevelRender);
 const mockEmitLilypondAsset = vi.mocked(emitLilypondAsset);
 const mockEmitLilypondPdfAsset = vi.mocked(emitLilypondPdfAsset);
 const mockResolveLilypondBinary = vi.mocked(resolveLilypondBinary);
+const mockGetLilypondState = vi.mocked(getLilypondState);
+
+function fakeLilypondState(
+	overrides: Partial<LilypondState> = {},
+): LilypondState {
+	return {
+		binaryPath: "lilypond",
+		defaults: undefined,
+		timeout: undefined,
+		isDev: false,
+		...overrides,
+	};
+}
 
 const FAKE_PUBLIC_DIR = new URL("file:///project/public/");
 const FAKE_LOGGER = { warn: vi.fn(), error: vi.fn() };
@@ -80,8 +102,30 @@ function baseConfig(
 	};
 }
 
+/** Recovers the `LilypondState` published by the state vite plugin registered in `astro:config:setup`. */
+function extractLilypondState(
+	updateConfig: ReturnType<typeof vi.fn>,
+): LilypondState {
+	const { plugins } = (
+		updateConfig.mock.calls[0][0] as {
+			vite: {
+				plugins: {
+					resolveId: (id: string) => string | undefined;
+					load: (id: string) => string | undefined;
+				}[];
+			};
+		}
+	).vite;
+	const statePlugin = plugins[1];
+	const resolvedId = statePlugin.resolveId(VIRTUAL_STATE_MODULE_ID);
+	const code = statePlugin.load(resolvedId ?? "");
+	const match = /^export default (.*);$/.exec(code ?? "");
+	return JSON.parse(match?.[1] ?? "{}") as LilypondState;
+}
+
 beforeEach(() => {
-	resetRenderStateForTests();
+	resetLoggerForTests();
+	mockGetLilypondState.mockReset();
 	mockLowLevelRender.mockClear();
 	mockEmitLilypondAsset.mockClear();
 	mockEmitLilypondPdfAsset.mockClear();
@@ -171,7 +215,7 @@ describe("lilypond integration", () => {
 		);
 	});
 
-	it("populates renderState with the resolved binary path, so the public render() can reach it", async () => {
+	it("publishes the resolved binary path in the state vite plugin, so the public render() can reach it", async () => {
 		mockResolveLilypondBinary.mockResolvedValue(
 			"/cache/lilypond-2.26.0/bin/lilypond",
 		);
@@ -180,18 +224,19 @@ describe("lilypond integration", () => {
 			isSatteriProcessor: vi.fn(() => true),
 		}));
 
+		const updateConfig = vi.fn();
 		const integration = lilypond();
 		await integration.hooks["astro:config:setup"]?.({
 			command: "build",
 			config: baseConfig({
 				markdown: { processor: { name: "satteri", options: {} } },
 			}),
-			updateConfig: vi.fn(),
+			updateConfig,
 			logger: { info: vi.fn(), warn: vi.fn() },
 		} as never);
 		vi.doUnmock("@astrojs/markdown-satteri");
 
-		expect(getRenderState().binaryPath).toBe(
+		expect(extractLilypondState(updateConfig).binaryPath).toBe(
 			"/cache/lilypond-2.26.0/bin/lilypond",
 		);
 	});
@@ -202,29 +247,30 @@ describe("lilypond integration", () => {
 		["preview", false],
 		["sync", false],
 	] as const)(
-		'command: "%s" sets renderState.isDev to %s',
+		'command: "%s" publishes isDev: %s in the state vite plugin',
 		async (command, expectedIsDev) => {
 			vi.doMock("@astrojs/markdown-satteri", () => ({
 				satteri: vi.fn((o: unknown) => ({ name: "satteri", options: o })),
 				isSatteriProcessor: vi.fn(() => true),
 			}));
 
+			const updateConfig = vi.fn();
 			const integration = lilypond();
 			await integration.hooks["astro:config:setup"]?.({
 				command,
 				config: baseConfig({
 					markdown: { processor: { name: "satteri", options: {} } },
 				}),
-				updateConfig: vi.fn(),
+				updateConfig,
 				logger: { info: vi.fn(), warn: vi.fn() },
 			} as never);
 			vi.doUnmock("@astrojs/markdown-satteri");
 
-			expect(getRenderState().isDev).toBe(expectedIsDev);
+			expect(extractLilypondState(updateConfig).isDev).toBe(expectedIsDev);
 		},
 	);
 
-	it("registers the astro-emit-asset integration and the .ly vite plugin", async () => {
+	it("registers the astro-emit-asset integration and the .ly + state vite plugins", async () => {
 		vi.doMock("@astrojs/markdown-satteri", () => ({
 			satteri: vi.fn((o: unknown) => ({ name: "satteri", options: o })),
 			isSatteriProcessor: vi.fn(() => true),
@@ -247,7 +293,7 @@ describe("lilypond integration", () => {
 			vite: { plugins: unknown[] };
 		};
 		expect(firstCall.integrations).toHaveLength(1);
-		expect(firstCall.vite.plugins).toHaveLength(1);
+		expect(firstCall.vite.plugins).toHaveLength(2);
 	});
 
 	describe("vite plugin transform", () => {
@@ -636,13 +682,8 @@ describe("render()", () => {
 	};
 
 	beforeEach(() => {
-		setRenderState({
-			binaryPath: "lilypond",
-			defaults: undefined,
-			timeout: undefined,
-			isDev: false,
-			logger: FAKE_LOGGER,
-		});
+		mockGetLilypondState.mockResolvedValue(fakeLilypondState());
+		setLogger(FAKE_LOGGER);
 	});
 
 	it("always returns a Score component, defaulting to svg", async () => {
@@ -781,7 +822,11 @@ describe("render()", () => {
 	});
 
 	it("throws a clear, actionable error when the lilypond() integration hasn't run", async () => {
-		resetRenderStateForTests();
+		mockGetLilypondState.mockRejectedValue(
+			new Error(
+				"astro-lilypond: please add the `lilypond()` integration to your Astro config.",
+			),
+		);
 		await expect(publicRender(SCORE)).rejects.toThrow(
 			/lilypond\(\).*Astro config/s,
 		);
@@ -795,13 +840,7 @@ describe("render()", () => {
 	});
 
 	it("renders an inline error Score instead of throwing when isDev is true", async () => {
-		setRenderState({
-			binaryPath: "lilypond",
-			defaults: undefined,
-			timeout: undefined,
-			isDev: true,
-			logger: FAKE_LOGGER,
-		});
+		mockGetLilypondState.mockResolvedValue(fakeLilypondState({ isDev: true }));
 		mockEmitLilypondAsset.mockRejectedValueOnce(
 			new Error("fatal error: bad input"),
 		);
@@ -827,13 +866,8 @@ describe("Score component", () => {
 	};
 
 	beforeEach(() => {
-		setRenderState({
-			binaryPath: "lilypond",
-			defaults: undefined,
-			timeout: undefined,
-			isDev: false,
-			logger: FAKE_LOGGER,
-		});
+		mockGetLilypondState.mockResolvedValue(fakeLilypondState());
+		setLogger(FAKE_LOGGER);
 	});
 
 	it("renders an <img> directly from content, with no render() call needed", async () => {
@@ -925,7 +959,11 @@ describe("Score component", () => {
 	});
 
 	it("throws the same actionable error as render() when the lilypond() integration hasn't run", async () => {
-		resetRenderStateForTests();
+		mockGetLilypondState.mockRejectedValue(
+			new Error(
+				"astro-lilypond: please add the `lilypond()` integration to your Astro config.",
+			),
+		);
 		const container = await AstroContainer.create();
 		await expect(
 			container.renderToString(PublicScore, { props: { content: SCORE } }),
@@ -943,13 +981,7 @@ describe("Score component", () => {
 	});
 
 	it("renders an inline error instead of throwing when isDev is true, ignoring props like class", async () => {
-		setRenderState({
-			binaryPath: "lilypond",
-			defaults: undefined,
-			timeout: undefined,
-			isDev: true,
-			logger: FAKE_LOGGER,
-		});
+		mockGetLilypondState.mockResolvedValue(fakeLilypondState({ isDev: true }));
 		mockEmitLilypondAsset.mockRejectedValueOnce(
 			new Error("fatal error: bad input"),
 		);
@@ -982,13 +1014,8 @@ describe("renderAll()", () => {
 	};
 
 	beforeEach(() => {
-		setRenderState({
-			binaryPath: "lilypond",
-			defaults: undefined,
-			timeout: undefined,
-			isDev: false,
-			logger: FAKE_LOGGER,
-		});
+		mockGetLilypondState.mockResolvedValue(fakeLilypondState());
+		setLogger(FAKE_LOGGER);
 	});
 
 	it("renders every score and returns results in the same order", async () => {

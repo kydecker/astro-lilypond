@@ -1,0 +1,12 @@
+---
+import { render } from "astro-lilypond";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import multiPage from "../scores/multi-page.ly";
+
+const { Score, pdf } = await render(multiPage, { pdf: true });
+---
+
+<BaseLayout title="Score: pdf">
+	<Score />
+	<a data-testid="pdf-link" href={pdf?.src}>Download PDF</a>
+</BaseLayout>

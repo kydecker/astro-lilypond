@@ -8,14 +8,18 @@ import {
 } from "astro/runtime/server/index.js";
 import emitAssetIntegration from "astro-emit-asset";
 import type { Plugin } from "vite";
-import type { AutoInstallOptions } from "./binary/index.js";
+import {
+	type AutoInstallOptions,
+	resolveAutoInstallOption,
+	resolveLilypondBinary,
+} from "./binary/index.js";
+import { getLogger, setLogger } from "./logger.js";
 import {
 	type PluginOptions,
 	remarkPlugin,
 	satteriPlugin,
 } from "./plugins/index.js";
 import { type LilypondDefaults, render as renderScore } from "./render.js";
-import { getRenderState, resolveAndSetRenderState } from "./renderState.js";
 import {
 	altTextFor,
 	emitLilypondAsset,
@@ -32,6 +36,7 @@ import {
 	titleFor,
 	toLilypondMetadata,
 } from "./utils/index.js";
+import { getLilypondState, lilypondStatePlugin } from "./virtualState.js";
 
 export const LY_EXTENSIONS = [".ly", ".lilypond", ".ily"] as const;
 
@@ -141,7 +146,8 @@ export async function render(
 	score: LilypondScore,
 	options: RenderOptions = {},
 ): Promise<RenderResult> {
-	const state = getRenderState();
+	const state = await getLilypondState();
+	const logger = getLogger();
 	const { resolution, cropScale } = resolveDefaults(state.defaults);
 	const format = options.format ?? "svg";
 	const crop = options.crop ?? false;
@@ -169,7 +175,7 @@ export async function render(
 							binaryPath: state.binaryPath,
 							includePaths: score.includePaths,
 							sourceName: score.sourceName,
-							logger: state.logger,
+							logger,
 						}),
 				});
 				return {
@@ -191,7 +197,7 @@ export async function render(
 								binaryPath: state.binaryPath,
 								includePaths: score.includePaths,
 								sourceName: score.sourceName,
-								logger: state.logger,
+								logger,
 							}),
 					})
 				: Promise.resolve(undefined),
@@ -319,17 +325,28 @@ export default function lilypond(
 				const isDev = command === "dev";
 				options.isDev = isDev;
 				options.logger = logger;
-				options.binaryPath = await resolveAndSetRenderState({
-					autoInstall: options.autoInstall,
-					defaults: options.defaults,
-					timeout: options.timeout,
-					isDev,
-					logger,
+				setLogger(logger);
+
+				const binaryPath = await resolveLilypondBinary({
+					...resolveAutoInstallOption(options.autoInstall),
+					log: (message) => logger.info(message),
+					warn: (message) => logger.warn(message),
 				});
+				options.binaryPath = binaryPath;
 
 				updateConfig({
 					integrations: [emitAssetIntegration()],
-					vite: { plugins: [lyFilePlugin(options)] },
+					vite: {
+						plugins: [
+							lyFilePlugin(options),
+							lilypondStatePlugin({
+								binaryPath,
+								defaults: options.defaults,
+								timeout: options.timeout,
+								isDev,
+							}),
+						],
+					},
 				});
 
 				const existingProcessor = config.markdown?.processor;

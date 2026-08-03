@@ -13,10 +13,25 @@ test("default format is svg, single page renders a bare <img>", async ({
 	await expect(img).toHaveAttribute("src", /\.svg$/);
 });
 
-test("format: png changes the asset extension", async ({ page }) => {
+test("format: png changes the asset extension and produces valid, non-empty PNG bytes", async ({
+	page,
+	request,
+}) => {
 	await page.goto("/score-png");
 	const img = page.locator("[data-lilypond-image]");
 	await expect(img).toHaveAttribute("src", /\.png$/);
+
+	const src = await img.getAttribute("src");
+	const response = await request.get(src as string);
+	expect(response.ok()).toBe(true);
+	const bytes = await response.body();
+
+	// https://www.w3.org/TR/png/#5PNG-file-signature
+	expect(bytes.subarray(0, 8).toString("hex")).toBe("89504e470d0a1a0a");
+	const width = bytes.readUInt32BE(16);
+	const height = bytes.readUInt32BE(20);
+	expect(width).toBeGreaterThan(0);
+	expect(height).toBeGreaterThan(0);
 });
 
 test("uncropped multi-page scores render an <ol> of <li><img>", async ({
