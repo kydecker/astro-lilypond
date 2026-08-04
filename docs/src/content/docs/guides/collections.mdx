@@ -23,9 +23,9 @@ export const collections = {
 
 ## Fetching a collection
 
-Read the collection with `getCollection()`, then pass each entry's `data` to `<Score>`:
+Read the collection with `getCollection()`, then pass each entry's `data` to the `content` of `<Score>`:
 
-```astro {5} title="MyScores.astro"
+```astro {5,12} title="MyScores.astro"
 ---
 import { getCollection } from "astro:content";
 import { Score } from "astro-lilypond";
@@ -47,7 +47,7 @@ const scores = await getCollection("scores");
 
 Use `getEntry()` with the collection name and an entry's id:
 
-```astro {5} title="MyScore.astro"
+```astro {5,9} title="MyScore.astro"
 ---
 import { getEntry } from "astro:content";
 import { Score } from "astro-lilypond";
@@ -87,9 +87,9 @@ const entry = await getEntry("scores", "my-score");
 <Score content={entry.data} />
 ```
 
-## Rendering a PDF download
+## PDF download links
 
-`<Score>` covers the common case of just displaying a score. When you also need a downloadable PDF alongside it, call `render()` (or `renderAll()` for multiple entries) instead, passing `pdf: true`:
+When you need a downloadable PDF, call `render()` (or `renderAll()` for multiple entries) with `pdf: true`:
 
 ```astro {6,11} title="MyScore.astro"
 ---

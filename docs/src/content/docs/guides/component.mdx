@@ -73,11 +73,21 @@ import bachInvention from "./bach-invention.ly";
 
 ## Advanced usage with `render()`
 
-`<Score>` covers the common cases. When you also need the
-score's page count, header metadata, raw source text, or a downloadable PDF
-alongside the image, call `render()` instead. It returns the
-same kind of `Score` component (accepting the same `pageLimit`, `class`,
-`style`, and `alt` props described above), plus those extras.
+When you need the score's page count, header metadata, raw source text, or a downloadable PDF, use the `render` function. Import `render` from `astro-lilypond` and pass it an imported LilyPond score as the first argument.
+
+```astro title="MyRenderComponent.astro" {2,5}
+---
+import { render } from "astro-lilypond";
+import bachInvention from "./bach-invention.ly";
+
+const { Score, meta } = await render(bachInvention);
+---
+
+<h3>{meta.title}</h3>
+<Score />
+```
+
+The result of `render` includes a `Score` component (used identically as above), `meta` object, `raw` score text, and optional `pdf`. See the [component reference](/reference/component/#render) for more info.
 
 ### Displaying score metadata
 
