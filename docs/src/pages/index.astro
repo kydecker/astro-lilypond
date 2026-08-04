@@ -9,13 +9,14 @@ import HowToUse from "#components/examples/HowToUse.astro";
     title: 'Astro LilyPond',
     description: 'Render music notation from text with Astro.',
     template: 'splash',
+    hero: {}, // Workaround to hide default Starlight page title
     head: [{
       tag: 'title',
       content: 'Astro LilyPond'
     }]
   }}
 >
-  <section class="hero">
+  <section class="lilypond-hero">
     <div>
       <h1>Astro LilyPond</h1>
       <p class="subtitle">Render music notation from text with Astro.</p>
@@ -57,8 +58,8 @@ import HowToUse from "#components/examples/HowToUse.astro";
 </StarlightPage>
 
 <style>
-  :global(.content-panel:has(h1#_top:not([data-page-title]))) {
-    display: none
+  :global(.hero) {
+    display: none;
   }
 
   h1 {
@@ -70,7 +71,7 @@ import HowToUse from "#components/examples/HowToUse.astro";
     }
   }
 
-  .hero {
+  .lilypond-hero {
     display: flex;
     flex-direction: column;
     align-items: center;
