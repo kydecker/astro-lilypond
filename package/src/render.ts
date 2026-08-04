@@ -5,6 +5,7 @@ import type { AstroIntegrationLogger } from "astro";
 import { execLilyPond } from "./execLilyPond.js";
 import { readOutputFile, safeInputFileName } from "./readOutputFile.js";
 import type { LilypondVersion } from "./types/lilypondVersion.js";
+import { resolveDefaults } from "./utils/resolveDefaults.js";
 
 export const FORMATS = ["png", "svg", "pdf"] as const;
 
@@ -137,8 +138,7 @@ export async function render(
 		logger,
 	} = options;
 
-	const resolution =
-		options.defaults?.resolution ?? defaultOptions.defaults.resolution;
+	const { resolution } = resolveDefaults(options.defaults);
 
 	if (!FORMATS.includes(format)) {
 		throw new Error(`${format} is not a supported format`);

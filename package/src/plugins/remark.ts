@@ -17,6 +17,7 @@ export const remarkPlugin: Plugin<[PluginOptions], Root> = (options) => {
 			"astro-lilypond: please add the `lilypond()` integration to your Astro config.",
 		);
 	}
+	const renderOptions = { ...options, logger };
 	return async (tree, file) => {
 		const promises: Promise<void>[] = [];
 		const includePaths = includePathsFor(file?.path);
@@ -26,10 +27,13 @@ export const remarkPlugin: Plugin<[PluginOptions], Root> = (options) => {
 		visit(tree, "code", (node, index, parent) => {
 			if (!isLilypondLang(node.lang) || index === undefined || !parent) return;
 
-			const promise = renderMarkdownBlock(
-				{ ...options, logger },
-				{ title, value: node.value, meta: node.meta, includePaths, sourceName },
-			).then((value) => {
+			const promise = renderMarkdownBlock(renderOptions, {
+				title,
+				value: node.value,
+				meta: node.meta,
+				includePaths,
+				sourceName,
+			}).then((value) => {
 				const htmlNode: Html = { type: "html", value };
 				parent.children[index] = htmlNode;
 			});

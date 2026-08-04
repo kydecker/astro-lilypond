@@ -16,6 +16,7 @@ export function satteriPlugin(options: PluginOptions): MdastPluginDefinition {
 			"astro-lilypond: please add the `lilypond()` integration to your Astro config.",
 		);
 	}
+	const renderOptions = { ...options, logger };
 	return {
 		name: "astro-lilypond",
 		async code(
@@ -24,16 +25,13 @@ export function satteriPlugin(options: PluginOptions): MdastPluginDefinition {
 		): Promise<{ rawHtml: string } | undefined> {
 			if (!isLilypondLang(node.lang)) return undefined;
 			const sourceName = sourceNameFor(ctx.fileURL);
-			const rawHtml = await renderMarkdownBlock(
-				{ ...options, logger },
-				{
-					title: titleFor(sourceName),
-					value: node.value,
-					meta: node.meta,
-					includePaths: includePathsFor(ctx.fileURL),
-					sourceName,
-				},
-			);
+			const rawHtml = await renderMarkdownBlock(renderOptions, {
+				title: titleFor(sourceName),
+				value: node.value,
+				meta: node.meta,
+				includePaths: includePathsFor(ctx.fileURL),
+				sourceName,
+			});
 			return { rawHtml };
 		},
 	};

@@ -90,3 +90,5 @@ View all docs at [lilypond.ky.fyi](https://lilypond.ky.fyi).
   +   },
     })
   ```
+
+  Previously, `format` only set the default for Markdown fences; `.ly`/`.ily` imports and `lilypondLoader()` entries always defaulted to `"svg"`. `defaults.format` now applies everywhere.
