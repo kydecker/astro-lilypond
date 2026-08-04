@@ -15,11 +15,11 @@
 		"check:fix": "biome check --write"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^2.5.3",
-		"@changesets/cli": "^2.31.0",
+		"@biomejs/biome": "^2.5.6",
+		"@changesets/cli": "^2.31.1",
 		"nano-staged": "^1.0.2",
 		"simple-git-hooks": "^2.13.1",
-		"wrangler": "^4.110.0"
+		"wrangler": "^4.118.0"
 	},
 	"simple-git-hooks": {
 		"pre-commit": "./node_modules/.bin/nano-staged"
