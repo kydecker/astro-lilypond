@@ -3,11 +3,11 @@ title: LilyPond Syntax
 description: A quick reference for LilyPond notation inside astro-lilypond code blocks.
 ---
 
-You can use any valid LilyPond syntax with `astro-lilypond`. This page covers the most common patterns.
+You can use any valid LilyPond syntax with `astro-lilypond`. This page covers common patterns. For more information, read the manuals linked in [resources](/resources).
 
 ## Pitches and octave markers
 
-Note names run from `a` to `g`. Inside `\relative`, each pitch is chosen to be as close as possible to the previous note — within a fourth above or below. Use `'` to raise by one octave and `,` to lower.
+Note names run from `a` to `g`. Inside `\relative`, each pitch is chosen to be as close as possible to the previous note. Use `'` to raise by one octave and `,` to lower.
 
 ```lilypond
 \relative c' {
@@ -22,6 +22,39 @@ Note names run from `a` to `g`. Inside `\relative`, each pitch is chosen to be a
   c' b a g | f e d c |
 }
 ```
+
+:::note
+In LilyPond, note names specify absolute pitches. An unaltered note like `c` means "C natural", regardless of the key signature or clef.
+:::
+
+## Accidentals
+
+Accidentals are written as `is` and `es` suffixes appended to the note name.
+
+| Syntax | Meaning | Example |
+|---|---|---|
+| `is` | Sharp | `cis` = C♯ |
+| `es` | Flat | `bes` = B♭ |
+| `isis` | Double sharp | `cisis` = C𝄪 |
+| `eses` | Double flat | `ceses` = C𝄫 |
+
+```lilypond
+\relative c' {
+  c4 cis d dis | e f fis g |
+  g4 ges f fes | e es d des |
+}
+```
+
+```lilypondtext
+\relative c' {
+  c4 cis d dis | e f fis g |
+  g4 ges f fes | e es d des |
+}
+```
+
+:::note
+LilyPond scores can be set to different languages, which modify both the note names and the accidentals. See [note names in other languages](https://lilypond.org/doc/v2.26/Documentation/notation/writing-pitches#note-names-in-other-languages) for a full reference.
+:::
 
 ## Rhythms and durations
 
@@ -48,7 +81,7 @@ Notes inherit the previous note's duration by default. A new duration can be set
 }
 ```
 
-Append dots to extend by half the note's value. Double-dotting adds three-quarters:
+Dotted rhythms can be created by adding `.` after the number.
 
 | Syntax | Duration |
 |---|---|
@@ -88,31 +121,6 @@ Append dots to extend by half the note's value. Double-dotting adds three-quarte
   c4 r4 c4 r4 |
   r2 c2 |
   R1 |
-}
-```
-
-## Accidentals
-
-Accidentals are written as `is` and `es` suffixes appended to the note name.
-
-| Syntax | Meaning | Example |
-|---|---|---|
-| `is` | Sharp | `cis` = C♯ |
-| `es` | Flat | `bes` = B♭ |
-| `isis` | Double sharp | `cisis` = C𝄪 |
-| `eses` | Double flat | `ceses` = C𝄫 |
-
-```lilypond
-\relative c' {
-  c4 cis d dis | e f fis g |
-  g4 ges f fes | e es d des |
-}
-```
-
-```lilypondtext
-\relative c' {
-  c4 cis d dis | e f fis g |
-  g4 ges f fes | e es d des |
 }
 ```
 
@@ -302,38 +310,24 @@ A slur spans from `(` to `)`. A tie connects two notes of the same pitch with `~
 
 ## Multiple voices
 
-Use `<<` and `>>` to stack voices on the same staff. `\voiceOne` and `\voiceTwo` set stem directions automatically. Separate voices with `\\`.
+Use `<<` and `>>` to stack voices on the same staff, separated by `\\`. Each part automatically becomes its own voice, with stem directions set for you.
 
 ```lilypond
 \new Staff <<
-  \new Voice {
-    \voiceOne
-    \relative c'' { c4 b a g }
-  }
-  \new Voice {
-    \voiceTwo
-    \relative c' { e4 d c b }
-  }
+  \relative c'' { c4 b a g }
+  \\
+  \relative c' { e4 d c b }
 >>
 ```
 
 ```lilypondtext
 \new Staff <<
-  \new Voice {
-    \voiceOne
-    \relative c'' { c4 b a g }
-  }
-  \new Voice {
-    \voiceTwo
-    \relative c' { e4 d c b }
-  }
+  \relative c'' { c4 b a g }
+  \\
+  \relative c' { e4 d c b }
 >>
 ```
 
-## Additional resources
+## More
 
-LilyPond can have a bit of a steep learning curve, but these resources can help.
-
-- [An introduction to LilyPond markup](https://lilypond.org/doc/v2.24/Documentation/web/text-input) is a handy single-page look at some of the basic syntax in LilyPond.
-- [LilyPond Notation Reference](https://lilypond.org/doc/v2.24/Documentation/notation/) is the comprehensive manual on all notation possible in LilyPond.
-  - [Notation Cheat Sheet](https://lilypond.org/doc/v2.24/Documentation/notation/cheat-sheet) is a quick reference for the most common notation.
+For more information, read the manuals linked in [resources](/resources).

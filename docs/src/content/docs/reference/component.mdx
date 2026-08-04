@@ -158,21 +158,6 @@ const { Score, pdf, meta } = await render(
 <a href={pdf.src} download>Download PDF</a>
 ```
 
-`render()`'s returned `Score` accepts the same `pageLimit`, `class`, `style`, and `alt` props as [`<Score />`](#score-) above — everything except `content`, `format`, and `crop`, since those are already fixed by the call to `render()`.
-
-You can rename `Score` however you like when destructuring:
-
-```astro
----
-import { render } from "astro-lilypond";
-import bachInvention from "./bach-invention.ly";
-
-const { Score: BachInvention } = await render(bachInvention);
----
-
-<BachInvention />
-```
-
 ## `renderAll()`
 
 The same as `render()`, but for an array of scores.

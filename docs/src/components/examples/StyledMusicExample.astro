@@ -1,11 +1,9 @@
 ---
-import { render } from "astro-lilypond";
+import { Score } from "astro-lilypond";
 import rainbowRoad from "./scores/rainbow-road.ly";
-
-const { Score } = await render(rainbowRoad, { crop: true });
 ---
 
-<Score class="styled" />
+<Score content={rainbowRoad} class="styled" crop />
 
 <style>
   @keyframes rainbow {

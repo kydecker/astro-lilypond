@@ -1,0 +1,115 @@
+---
+import { Card, LinkButton } from "@astrojs/starlight/components";
+import StarlightPage from "@astrojs/starlight/components/StarlightPage.astro";
+import HowToUse from "#components/examples/HowToUse.astro";
+---
+
+<StarlightPage
+  frontmatter={{
+    title: 'Astro LilyPond',
+    description: 'Render music notation from text with Astro.',
+    template: 'splash',
+    head: [{
+      tag: 'title',
+      content: 'Astro LilyPond'
+    }]
+  }}
+>
+  <section class="hero">
+    <div>
+      <h1>Astro LilyPond</h1>
+      <p class="subtitle">Render music notation from text with Astro.</p>
+      <div class="actions">
+        <LinkButton href="/getting-started" icon="right-arrow">
+          Get Started
+        </LinkButton>
+        <LinkButton
+          href="https://github.com/kydecker/astro-lilypond"
+          icon="external"
+          variant="minimal"
+        >
+          View on GitHub
+        </LinkButton>
+      </div>
+    </div>
+    <HowToUse />
+  </section>
+  <section class="grid">
+    <Card title="Text to .svg, .png, and .pdf">
+      Render musical scores via <a href="/guides/markdown">Markdown</a> or with an Astro <a href="/guides/component">component</a>.
+    </Card>
+    <Card title="Easy setup">
+      Works with <code>remark</code> and <code>satteri</code> Markdown processors out-of-the-box.
+    </Card>
+    <Card title="Zero client-side JavaScript">
+      Built for static sites. Images are compiled at build time, keeping your site fast.
+    </Card>
+    <Card title="Accessible">
+      Automatic <code>alt</code> text from the score's title and composer. (Or supply your own.)
+    </Card>
+    <Card title="Built-in content loader">
+      Pass in a folder full of <code>.ly</code> files, get back an Astro <a href="/guides/collections/">content collection</a> with extracted metadata.
+    </Card>
+    <Card title="Full LilyPond support">
+      Works with all LilyPond syntax. Check out the <a href="/examples">examples</a> to see what's possible!
+    </Card>
+  </section>
+</StarlightPage>
+
+<style>
+  :global(.content-panel:has(h1#_top:not([data-page-title]))) {
+    display: none
+  }
+
+  h1 {
+    font-size: 3rem;
+    margin: 0;
+
+    @media (width > 600px) {
+      font-size: 4rem;
+    }
+  }
+
+  .hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    padding-block: 4rem;
+    text-align: center;
+  }
+
+  .subtitle {
+    font-size: var(--sl-text-2xl);
+    line-height: var(--sl-line-height-headings);
+    margin-block-start: 0.5rem;
+    text-wrap: balance;
+  }
+
+  .actions {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .grid {
+    margin-inline: auto;
+    display: grid;
+    gap: 1rem;
+
+    > :global(*) {
+			margin-top: 0 !important;
+		}
+
+		@media (width > 560px) {
+			grid-template-columns: 1fr 1fr;
+
+		}
+
+		@media (width > 700px) {
+		  grid-template-columns: 1fr 1fr 1fr;
+			gap: 1.5rem;
+		}
+  }
+</style>

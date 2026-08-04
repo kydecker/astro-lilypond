@@ -31,27 +31,36 @@ export default defineConfig({
 
 Download a prebuilt release of the `lilypond` binary when none is found on `PATH`.
 
-```js
-// astro.config.mjs
-lilypond({
-  autoInstall: false // only ever use a PATH install
-})
-```
-
 To install a specific version, pass an object to pin the version downloaded:
 
 ```js
 // astro.config.mjs
 lilypond({
-  autoInstall: {
-    version: "2.27.1"
-  }
+  autoInstall: { version: "2.27.1" }
 })
 ```
 
 A `lilypond` installation already on `PATH` always takes priority over a downloaded one.
 
-Downloads are cached per OS (e.g. `~/.cache/astro-lilypond` on Linux). The cache directory can be overridden with the `ASTRO_LILYPOND_CACHE_DIR` environment variable.
+:::tip
+LilyPond uses even numbers (like `2.26.0`) for stable releases and odd numbers (like `2.27.0`) for development releases. [View all LilyPond releases on GitLab.](https://gitlab.com/lilypond/lilypond/-/releases)
+:::
+
+```js
+// astro.config.mjs
+lilypond({
+  // Only ever use a PATH install
+  autoInstall: false
+})
+```
+
+Downloads are cached per OS. The cache directory can be overridden with the `ASTRO_LILYPOND_CACHE_DIR` environment variable.
+
+| OS | Cache location |
+| --- | --- |
+| Linux | `$XDG_CACHE_HOME/astro-lilypond` (falls back to `~/.cache/astro-lilypond`) |
+| macOS | `~/Library/Caches/astro-lilypond` |
+| Windows | `%LOCALAPPDATA%\astro-lilypond\Cache` |
 
 ### `defaults`
 

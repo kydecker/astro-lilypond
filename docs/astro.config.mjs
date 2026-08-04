@@ -20,6 +20,11 @@ export default defineConfig({
 		starlight({
 			title: "Astro LilyPond",
 			description: "Render LilyPond music notation to images with Astro.",
+			logo: {
+				light: "./src/assets/logo-light.svg",
+				dark: "./src/assets/logo-dark.svg",
+				replacesTitle: true,
+			},
 			plugins: [
 				starlightThemeFlexoki({
 					accentColor: "green",
@@ -89,12 +94,13 @@ export default defineConfig({
 				{
 					label: "Resources",
 					items: [
+						"about",
 						{
 							label: "Changelog",
 							link: "/changelog/",
 						},
 						"resources/syntax",
-						"resources/extensions",
+						"resources",
 					],
 				},
 			],
@@ -113,7 +119,7 @@ export default defineConfig({
 		"/markdown": "/guides/markdown",
 		"/styling": "/guides/styling",
 		"/lilypond-syntax": "/resources/syntax",
-		"/resources": "/resources/syntax",
+		"/resources/extensions": "/resources",
 		"/configuration": "/reference/configuration",
 		"/reference/render": "/reference/component",
 	},

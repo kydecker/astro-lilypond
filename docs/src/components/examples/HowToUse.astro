@@ -22,13 +22,22 @@ import exampleRaw from "./scores/example.ly?raw";
   section {
     padding-block: 0.5em;
     display: grid;
+    width: 100%;
+    max-width: 340px;
+    flex-direction: row;
     gap: 1.5rem;
+    text-align: left;
 
     > div {
       margin: 0;
+
+      &:last-child p {
+        text-align: right;
+      }
     }
 
-    @media (width > 1000px) {
+    @media (width > 620px) {
+      max-width: 680px;
       grid-template-columns: 1fr 1fr;
     }
   }
