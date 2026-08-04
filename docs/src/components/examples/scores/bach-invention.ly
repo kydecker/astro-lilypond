@@ -9,7 +9,6 @@
 }
 
 \paper {
-  %annotate-spacing = ##t
   system-system-spacing.padding = #5
   markup-system-spacing.padding = #6
 }
