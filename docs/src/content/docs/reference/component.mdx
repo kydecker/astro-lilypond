@@ -1,22 +1,19 @@
 ---
 title: Component Reference
-description: Signature and types for the exported Score component and render() function.
+description: Signature and types for the exported Score component and getScore() function.
 ---
 
-`astro-lilypond` exports two ways to turn LilyPond code into rendered markup:
+This page documents the options accepted and values returned from the [`<Score>`](#score) component and [`getScore()`](#getscore) function.
 
-- **[`<Score />`](#score-)** — a component for the common case: just display a score.
-- **[`render()`](#render)** — a function for when you also need `pageCount`, `meta`, `raw`, or a `pdf` link alongside the image.
-
-## `<Score />`
+## `<Score>`
 
 ```ts
 import { Score } from "astro-lilypond";
 
 interface ScoreProps {
   content: LilypondScore;
-  format?: "svg" | "png"; // default "svg"
-  crop?: boolean; // default false
+  format?: "svg" | "png";
+  crop?: boolean;
   pageLimit?: number;
   class?: string;
   style?: string;
@@ -33,10 +30,6 @@ import bachInvention from "./bach-invention.ly";
 <Score content={bachInvention} />
 ```
 
-:::caution
-Only use `<Score />` from prerendered pages and components. `astro-lilypond` doesn't currently support on-demand rendering.
-:::
-
 ### `content`
 
 **Type:** `LilypondScore`
@@ -49,7 +42,7 @@ The score's source text and derived metadata. You get one from:
 ### `format`
 
 **Type:** `"svg" | "png"`  
-**Default:** `"svg"`
+**Default:** the integration's [`defaults.format`](/reference/configuration/#defaultsformat) (`"svg"` unless configured otherwise)
 
 Output format for the rendered image.
 
@@ -84,32 +77,16 @@ Inline styles applied directly to the rendered element.
 
 Overrides the automatically-derived alt text. Takes precedence over any `title`/`composer` found in the `.ly` file's `\header` block. See also: [alt text](/guides/component/#alt-text).
 
-## `render()`
+## `getScore()`
 
 ```ts
-import { render } from "astro-lilypond";
+import { getScore } from "astro-lilypond";
 
-function render(
+function getScore(
   score: LilypondScore,
-  options?: RenderOptions,
-): Promise<RenderResult>;
-
-interface RenderResult {
-  Score: AstroComponentFactory;
-  pageCount: number;
-  pdf?: LilypondPdfResult; // when options.pdf is true
-  meta: LilypondMetadata;
-  raw: string;
-}
-
-interface LilypondPdfResult {
-  src: string;
-}
+  options?: GetScoreOptions,
+): Promise<GetScoreResult>;
 ```
-
-:::caution
-Only call `render()` from prerendered pages and components. `astro-lilypond` doesn't currently support on-demand rendering.
-:::
 
 ### `score`
 
@@ -119,12 +96,12 @@ Same as [`<Score />`'s `content`](#content) above.
 
 ### `options`
 
-**Type:** `RenderOptions`
+**Type:** `GetScoreOptions`
 
 #### `options.format`
 
 **Type:** `"svg" | "png"`  
-**Default:** `"svg"`
+**Default:** the integration's [`defaults.format`](/reference/configuration/#defaultsformat) (`"svg"` unless configured otherwise)
 
 Output format for `Score`.
 
@@ -133,7 +110,7 @@ Output format for `Score`.
 **Type:** `boolean`  
 **Default:** `false`
 
-Crops `Score` to a single tightly-fit image instead of full pages — see the [component guide](/guides/component/#cropping).
+Crops `Score` to a single tightly-fit image instead of returning full pages. See the [component guide](/guides/component/#cropping).
 
 #### `options.pdf`
 
@@ -144,10 +121,10 @@ When `true`, also renders a downloadable PDF of the same score, returned as `pdf
 
 ```astro title="ScoreWithPdf.astro"
 ---
-import { render } from "astro-lilypond";
+import { getScore } from "astro-lilypond";
 import bachInvention from "./bach-invention.ly";
 
-const { Score, pdf, meta } = await render(
+const { Score, pdf, meta } = await getScore(
   bachInvention,
   { crop: true, pdf: true }
 );
@@ -158,45 +135,67 @@ const { Score, pdf, meta } = await render(
 <a href={pdf.src} download>Download PDF</a>
 ```
 
-## `renderAll()`
+### Return value
 
-The same as `render()`, but for an array of scores.
+**Type:** `GetScoreResult`
 
 ```ts
-import { renderAll } from "astro-lilypond";
-
-function renderAll(
-  scores: LilypondScore[],
-  options?: RenderOptions,
-): Promise<RenderResult[]>;
+interface GetScoreResult {
+  Score: AstroComponentFactory;
+  pages: LilypondPage[];
+  meta: LilypondMetadata;
+  raw: string;
+  pdf?: LilypondPdfResult;
+}
 ```
 
-It only takes plain `LilypondScore` values, not content collection entries, so pull `.data` out yourself first:
+#### `Score`
 
-```astro title="MyScores.astro"
----
-import { getCollection } from "astro:content";
-import { renderAll } from "astro-lilypond";
+**Type:** `AstroComponentFactory`
 
-const scores = await getCollection("scores");
-const rendered = await renderAll(scores.map((score) => score.data));
----
+Accepts all the same props as [`<Score>`](#score), except for `format` and `crop`; pass those to the `options` argument of `getScore()`.
 
-<ul>
-  {rendered.map(({ Score, meta }) => (
-    <li>
-      <h3>{meta.title}</h3>
-      <Score />
-    </li>
-  ))}
-</ul>
+#### `pages`
+
+**Type:** `LilypondPage[]`
+
+```ts
+interface LilypondPage {
+  src: string;
+  width?: number;
+  height?: number;
+}
 ```
 
-See the [component guide](/guides/component/) for more usage patterns. See the [collections guide](/guides/collections/#rendering-a-pdf-download) for using `render()` with content collections.
+Every rendered page's `src`/`width`/`height`, exposed so you can compose your own markup instead of using the markup from `Score`.
+
+#### `meta`
+
+**Type:** `LilypondMetadata`
+
+Fields parsed from the score's `\header` block(s) — see the [`LilypondMetadata` type](#lilypondmetadata-type) below.
+
+#### `raw`
+
+**Type:** `string`
+
+Your LilyPond source code as a string, exactly as passed to `getScore()` (including any `\version` prepended via [`defaults.version`](/reference/configuration/#defaultsversion)). Use it wherever you need to show the text itself, rather than the rendered image.
+
+#### `pdf`
+
+**Type:** `LilypondPdfResult | undefined`
+
+```ts
+interface LilypondPdfResult {
+  src: string;
+}
+```
+
+Present only when [`options.pdf`](#optionspdf) is `true`.
 
 ## `LilypondMetadata` type
 
-Fields parsed from the score's `\header` block(s) — the shape of `meta` on both `render()` and `renderAll()` results.
+Fields parsed from the score's `\header` block(s) — the shape of `meta` on `getScore()` results.
 
 ```ts
 interface LilypondMetadata {

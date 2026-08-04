@@ -1,11 +1,9 @@
 ---
-import { render } from "astro-lilypond";
+import { Score } from "astro-lilypond";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import multiPage from "../scores/multi-page.ly";
-
-const { Score } = await render(multiPage, { crop: true });
 ---
 
 <BaseLayout title="Score: cropped">
-	<Score />
+	<Score content={multiPage} crop />
 </BaseLayout>

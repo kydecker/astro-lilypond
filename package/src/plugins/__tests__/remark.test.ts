@@ -10,6 +10,7 @@ vi.mock("../../render", () => ({
 		binaryPath: "lilypond",
 		timeout: 60_000,
 		defaults: {
+			format: "svg",
 			resolution: 144,
 		},
 	},
@@ -260,10 +261,10 @@ describe("remarkLilypondPlugin", () => {
 		);
 	});
 
-	it("passes format: png through to render and emitLilypondAsset", async () => {
+	it("passes defaults.format: png through to render and emitLilypondAsset", async () => {
 		const fakePng = Buffer.from([0x89, 0x50, 0x4e, 0x47]);
 		mockRender.mockResolvedValue([fakePng]);
-		const options = { ...BASE_OPTIONS, format: "png" as const };
+		const options = { ...BASE_OPTIONS, defaults: { format: "png" as const } };
 		const plugin = remarkLilypondPlugin(
 			options,
 		) as unknown as SimpleTransformer;
@@ -276,7 +277,7 @@ describe("remarkLilypondPlugin", () => {
 		expect(mockRender).toHaveBeenCalledWith("\\score { }", {
 			format: "png",
 			crop: true,
-			defaults: undefined,
+			defaults: { format: "png" },
 			includePaths: ["."],
 			sourceName: "test.md",
 			logger: FAKE_LOGGER,
@@ -291,8 +292,7 @@ describe("remarkLilypondPlugin", () => {
 		mockRender.mockResolvedValue([fakePng]);
 		const options = {
 			...BASE_OPTIONS,
-			format: "png" as const,
-			defaults: { resolution: 300 },
+			defaults: { format: "png" as const, resolution: 300 },
 		};
 		const plugin = remarkLilypondPlugin(
 			options,
@@ -306,7 +306,7 @@ describe("remarkLilypondPlugin", () => {
 		expect(mockRender).toHaveBeenCalledWith("\\score { }", {
 			format: "png",
 			crop: true,
-			defaults: { resolution: 300 },
+			defaults: { format: "png", resolution: 300 },
 			includePaths: ["."],
 			sourceName: "test.md",
 			logger: FAKE_LOGGER,

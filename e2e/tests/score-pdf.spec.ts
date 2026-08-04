@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test("render()'s pdf: true option produces a downloadable, valid PDF file alongside the Score", async ({
+test("getScore()'s pdf: true option produces a downloadable, valid PDF file alongside the Score", async ({
 	page,
 	request,
 }) => {

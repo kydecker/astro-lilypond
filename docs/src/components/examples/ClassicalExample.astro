@@ -1,9 +1,9 @@
 ---
-import { render } from "astro-lilypond";
+import { getScore } from "astro-lilypond";
 import LilyPondExample from "#components/LilyPondExample.astro";
 import score from "./scores/bach-bwv610.ly";
 
-const result = await render(score);
+const result = await getScore(score);
 ---
 
 <LilyPondExample {...result} title="bach-bwv610.ly" />

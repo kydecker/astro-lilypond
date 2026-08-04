@@ -66,7 +66,7 @@ Downloads are cached per OS. The cache directory can be overridden with the `AST
 
 **Type:** `object`
 
-Default settings applied when rendering each score. An individual `.ly` file can override `defaults` with its own settings.
+Default settings applied to every score, across Markdown fences, `.ly`/`.ily` imports, and [`lilypondLoader()`](/guides/collections/) entries alike. `version` can also be overridden per file with an explicit `\version` declaration; `format` can be overridden per call via [`getScore()`/`<Score>`](/reference/component/).
 
 #### `defaults.cropScale`
 
@@ -83,6 +83,24 @@ lilypond({
   }
 })
 ```
+
+#### `defaults.format`
+
+**Type:** `"svg" | "png"`  
+**Default:** `"svg"`
+
+The output format used for every score — Markdown fences, `.ly`/`.ily` imports, and `lilypondLoader()` entries alike.
+
+```js
+// astro.config.mjs
+lilypond({
+  defaults: {
+    format: "png"
+  }
+})
+```
+
+Individual `.ly`/`.ily` imports and `lilypondLoader()` entries can override this per call via `getScore()`'s or `<Score>`'s own `format` option; Markdown fences always use this default.
 
 #### `defaults.resolution`
 
@@ -113,20 +131,8 @@ lilypond({
 })
 ```
 
-Blocks with an explicit `\version` declaration always use that version, regardless of the global config.
+LilyPond code with an explicit `\version` declaration will always use that version, regardless of the global default configured here.
 
-Information about the latest releases can be found on the [LilyPond news](https://lilypond.org/news.html) page.
-
-### `format`
-
-**Type:** `"svg" | "png"`  
-**Default:** `"svg"`
-
-The output format used by [Markdown](/guides/markdown/) fences. Does not affect `.ly`/`.ily` imports or [`lilypondLoader()`](/guides/collections/) entries.
-
-```js {3}
-// astro.config.mjs
-lilypond({
-  format: "png"
-})
-```
+:::tip
+LilyPond uses even numbers (like `2.26.0`) for stable releases and odd numbers (like `2.27.0`) for development releases. [View all LilyPond releases on GitLab.](https://gitlab.com/lilypond/lilypond/-/releases)
+:::

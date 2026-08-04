@@ -1,8 +1,8 @@
 ---
 import { Code } from "@astrojs/starlight/components";
-import type { RenderResult } from "astro-lilypond";
+import type { GetScoreResult } from "astro-lilypond";
 
-interface Props extends Pick<RenderResult, "Score" | "raw"> {
+interface Props extends Pick<GetScoreResult, "Score" | "raw"> {
 	/** `<Code>` frame title, e.g. the source filename. */
 	title: string;
 	summary?: string;

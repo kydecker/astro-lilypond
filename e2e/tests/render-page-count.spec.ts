@@ -1,18 +1,18 @@
 import { expect, test } from "@playwright/test";
 
-test("render()'s pageCount reflects the emitted page count, not just the source's", async ({
+test("getScore()'s pages reflects the emitted page count, not just the source's", async ({
 	page,
 }) => {
 	await page.goto("/render-page-count");
 
 	await expect(page.getByTestId("single-page-count")).toHaveText("1");
 	await expect(page.getByTestId("uncropped-page-count")).toHaveText("2");
-	// crop: true merges pages into a single image, so pageCount drops to 1
+	// crop: true merges pages into a single image, so pages.length drops to 1
 	// even though the source itself has 2 pages.
 	await expect(page.getByTestId("cropped-page-count")).toHaveText("1");
 });
 
-test("page shapes match pageCount: bare <img> for single/cropped, <ol><li> for uncropped multi-page", async ({
+test("page shapes match pages.length: bare <img> for single/cropped, <ol><li> for uncropped multi-page", async ({
 	page,
 }) => {
 	await page.goto("/render-page-count");
