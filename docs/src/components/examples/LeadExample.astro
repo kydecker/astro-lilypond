@@ -1,9 +1,9 @@
 ---
-import { render } from "astro-lilypond";
+import { getScore } from "astro-lilypond";
 import LilyPondExample from "#components/LilyPondExample.astro";
 import score from "./scores/chart.ly";
 
-const result = await render(score, { crop: true });
+const result = await getScore(score, { crop: true });
 ---
 
 <LilyPondExample {...result} title="chart.ly" />

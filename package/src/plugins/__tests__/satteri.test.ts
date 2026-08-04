@@ -10,6 +10,7 @@ vi.mock("../../render.js", () => ({
 		binaryPath: "lilypond",
 		timeout: 60_000,
 		defaults: {
+			format: "svg",
 			resolution: 144,
 		},
 	},
@@ -206,10 +207,13 @@ describe("satteriPlugin", () => {
 		expect(rawHtml(result)).toContain('src="/_lilypond/score.svg"');
 	});
 
-	it("passes format: png through to render and emitLilypondAsset", async () => {
+	it("passes defaults.format: png through to render and emitLilypondAsset", async () => {
 		const fakePng = Buffer.from([0x89, 0x50, 0x4e, 0x47]);
 		mockRender.mockResolvedValue([fakePng]);
-		const plugin = satteriPlugin({ ...BASE_OPTIONS, format: "png" });
+		const plugin = satteriPlugin({
+			...BASE_OPTIONS,
+			defaults: { format: "png" },
+		});
 		const node: Code = { type: "code", lang: "lilypond", value: "\\score { }" };
 
 		const result = await plugin.code?.(node, {} as never);
@@ -217,7 +221,7 @@ describe("satteriPlugin", () => {
 		expect(mockRender).toHaveBeenCalledWith("\\score { }", {
 			format: "png",
 			crop: true,
-			defaults: undefined,
+			defaults: { format: "png" },
 			includePaths: [],
 			logger: FAKE_LOGGER,
 		});
@@ -231,8 +235,7 @@ describe("satteriPlugin", () => {
 		mockRender.mockResolvedValue([fakePng]);
 		const plugin = satteriPlugin({
 			...BASE_OPTIONS,
-			format: "png",
-			defaults: { resolution: 300 },
+			defaults: { format: "png", resolution: 300 },
 		});
 		const node: Code = { type: "code", lang: "lilypond", value: "\\score { }" };
 
@@ -241,7 +244,7 @@ describe("satteriPlugin", () => {
 		expect(mockRender).toHaveBeenCalledWith("\\score { }", {
 			format: "png",
 			crop: true,
-			defaults: { resolution: 300 },
+			defaults: { format: "png", resolution: 300 },
 			includePaths: [],
 			logger: FAKE_LOGGER,
 		});

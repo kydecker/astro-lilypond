@@ -71,34 +71,34 @@ import bachInvention from "./bach-invention.ly";
 />
 ```
 
-## Advanced usage with `render()`
+## Advanced usage with `getScore()`
 
-When you need the score's page count, header metadata, raw source text, or a downloadable PDF, use the `render` function. Import `render` from `astro-lilypond` and pass it an imported LilyPond score as the first argument.
+When you need the score's pages, header metadata, raw source text, or a downloadable PDF, use the `getScore` function. Import `getScore` from `astro-lilypond` and pass it an imported LilyPond score as the first argument.
 
 ```astro title="MyRenderComponent.astro" {2,5}
 ---
-import { render } from "astro-lilypond";
+import { getScore } from "astro-lilypond";
 import bachInvention from "./bach-invention.ly";
 
-const { Score, meta } = await render(bachInvention);
+const { Score, meta } = await getScore(bachInvention);
 ---
 
 <h3>{meta.title}</h3>
 <Score />
 ```
 
-The result of `render` includes a `Score` component (used identically as above), `meta` object, `raw` score text, and optional `pdf`. See the [component reference](/reference/component/#render) for more info.
+The result of `getScore` includes a `Score` component (used identically as above), `meta` object, `raw` score text, per-page image data (`pages`), and optional `pdf`. See the [component reference](/reference/component/#getscore) for more info.
 
 ### Displaying score metadata
 
-`render()`'s `meta` carries the fields parsed from the score's `\header` block, such as `title`, `composer`, and `opus`.
+`getScore()`'s `meta` carries the fields parsed from the score's `\header` block, such as `title`, `composer`, and `opus`.
 
 ```astro title="ScoreWithTitle.astro" {5,8-9}
 ---
-import { render } from "astro-lilypond";
+import { getScore } from "astro-lilypond";
 import bachInvention from "./bach-invention.ly";
 
-const { Score, meta } = await render(bachInvention);
+const { Score, meta } = await getScore(bachInvention);
 ---
 
 <h3>{meta.title}</h3>
@@ -114,10 +114,10 @@ Pass `pdf: true` to generate a PDF file in addition to the `<Score>` images. The
 
 ```astro title="ScoreWithDownload.astro" {5-8,12}
 ---
-import { render } from "astro-lilypond";
+import { getScore } from "astro-lilypond";
 import bachInvention from "./bach-invention.ly";
 
-const { Score, pdf } = await render(
+const { Score, pdf } = await getScore(
   bachInvention,
   { pdf: true }
 );
@@ -127,33 +127,40 @@ const { Score, pdf } = await render(
 <a href={pdf.src} download>Download PDF</a>
 ```
 
-### Showing page counts
+### Composing custom markup
 
-Display a rendered score's page count with `pageCount`, alongside `Score`:
+`getScore()` returns a `pages` array of rendered page images (`src`/`width`/`height`). You can use it directly to build your own markup instead of `Score`:
 
-```astro title="ScoreWithPageCount.astro" {5,9}
+```astro title="CustomGallery.astro" {5,8-11}
 ---
-import { render } from "astro-lilypond";
+import { getScore } from "astro-lilypond";
 import bachInvention from "./bach-invention.ly";
 
-const { Score, pageCount } = await render(bachInvention);
+const { pages } = await getScore(bachInvention);
 ---
 
-<Score />
-<p>{pageCount} {pageCount === 1 ? "page" : "pages"}</p>
+<div class="gallery">
+  {pages.map((page) => <img src={page.src} width={page.width} height={page.height} />)}
+</div>
+```
+
+Page count can be displayed with `pages.length`:
+
+```astro title="ScoreWithPageCount.astro"
+<p>{pages.length} {pages.length === 1 ? "page" : "pages"}</p>
 ```
 
 ### Outputting raw text
 
-`render()`'s `raw` returns your LilyPond source code as a string. Use it wherever you need to show the text itself, rather than the rendered image.
+`getScore()`'s `raw` returns your LilyPond source code as a string. Use it wherever you need to show the text itself, rather than the rendered image.
 
 ```astro title="ScoreWithSource.astro" {6,10}
 ---
-import { render } from "astro-lilypond";
+import { getScore } from "astro-lilypond";
 import { Code } from "@astrojs/starlight/components";
 import bachInvention from "./bach-invention.ly";
 
-const { Score, raw } = await render(bachInvention);
+const { Score, raw } = await getScore(bachInvention);
 ---
 
 <Score />

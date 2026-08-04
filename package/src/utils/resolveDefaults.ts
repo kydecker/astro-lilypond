@@ -4,10 +4,11 @@ import { defaultOptions, type LilypondDefaults } from "../render.js";
 export function resolveDefaults(
 	defaults: LilypondDefaults | undefined,
 ): Required<LilypondDefaults> {
-	const { version, resolution, cropScale } = defaultOptions.defaults;
+	const { version, format, resolution, cropScale } = defaultOptions.defaults;
 
 	return {
 		version: defaults?.version ?? version,
+		format: defaults?.format ?? format,
 		resolution: defaults?.resolution ?? resolution,
 		cropScale: defaults?.cropScale ?? cropScale,
 	};

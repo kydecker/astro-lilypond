@@ -1,11 +1,9 @@
 ---
-import { render } from "astro-lilypond";
+import { Score } from "astro-lilypond";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import simple from "../scores/simple.ly";
-
-const { Score } = await render(simple, { format: "png" });
 ---
 
 <BaseLayout title="Score: png">
-	<Score />
+	<Score content={simple} format="png" />
 </BaseLayout>

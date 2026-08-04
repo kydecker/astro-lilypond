@@ -8,6 +8,7 @@ vi.mock("../render.js", () => ({
 		binaryPath: "lilypond",
 		timeout: 60_000,
 		defaults: {
+			format: "svg",
 			resolution: 144,
 			cropScale: 1.5,
 		},
@@ -35,8 +36,7 @@ import { resolveLilypondBinary } from "../binary/index.js";
 import lilypond, {
 	type LilypondScore,
 	Score as PublicScore,
-	render as publicRender,
-	renderAll as publicRenderAll,
+	getScore as publicGetScore,
 } from "../index.js";
 import { render as lowLevelRender } from "../render.js";
 import {
@@ -213,7 +213,7 @@ describe("lilypond integration", () => {
 		expect(logger.warn).toHaveBeenCalledWith("not found on PATH");
 	});
 
-	it("populates state with the resolved binary path, so the public render() can reach it", async () => {
+	it("populates state with the resolved binary path, so the public getScore() can reach it", async () => {
 		mockResolveLilypondBinary.mockResolvedValue(
 			"/cache/lilypond-2.26.0/bin/lilypond",
 		);
@@ -667,7 +667,7 @@ describe("lilypond integration", () => {
 	});
 });
 
-describe("render()", () => {
+describe("getScore()", () => {
 	const SCORE: LilypondScore = {
 		source: "\\score { }",
 		alt: "Sonata, by Beethoven",
@@ -682,7 +682,7 @@ describe("render()", () => {
 	});
 
 	it("always returns a Score component, defaulting to svg", async () => {
-		const { Score } = await publicRender(SCORE);
+		const { Score } = await publicGetScore(SCORE);
 		expect(Score.isAstroComponentFactory).toBe(true);
 		expect(mockEmitLilypondAsset.mock.calls[0][0]).toMatchObject({
 			format: "svg",
@@ -690,27 +690,27 @@ describe("render()", () => {
 	});
 
 	it("passes the score's meta straight through, alongside Score", async () => {
-		const { meta } = await publicRender(SCORE);
+		const { meta } = await publicGetScore(SCORE);
 		expect(meta).toEqual(SCORE.meta);
 	});
 
 	it("returns the score's source as raw, alongside Score", async () => {
-		const { raw } = await publicRender(SCORE);
+		const { raw } = await publicGetScore(SCORE);
 		expect(raw).toBe(SCORE.source);
 	});
 
-	it("returns pageCount alongside Score", async () => {
+	it("returns pages alongside Score", async () => {
 		mockEmitLilypondAsset.mockResolvedValueOnce([
 			{ src: "/_astro/a.svg" },
 			{ src: "/_astro/b.svg" },
 		]);
-		const { pageCount } = await publicRender(SCORE);
-		expect(pageCount).toBe(2);
+		const { pages } = await publicGetScore(SCORE);
+		expect(pages).toEqual([{ src: "/_astro/a.svg" }, { src: "/_astro/b.svg" }]);
 	});
 
 	it("renders Score to the expected <img> markup", async () => {
 		mockEmitLilypondAsset.mockResolvedValueOnce([{ src: "/_astro/a.svg" }]);
-		const { Score } = await publicRender(SCORE);
+		const { Score } = await publicGetScore(SCORE);
 		const container = await AstroContainer.create();
 		const html = await container.renderToString(Score, { props: {} });
 		expect(html).toContain('src="/_astro/a.svg"');
@@ -720,7 +720,7 @@ describe("render()", () => {
 
 	it("falls back to an empty alt when neither the score nor the props provide one", async () => {
 		mockEmitLilypondAsset.mockResolvedValueOnce([{ src: "/_astro/a.svg" }]);
-		const { Score } = await publicRender({
+		const { Score } = await publicGetScore({
 			...SCORE,
 			alt: undefined as unknown as string,
 		});
@@ -732,7 +732,7 @@ describe("render()", () => {
 
 	it("forwards props like class through Score to the rendered markup", async () => {
 		mockEmitLilypondAsset.mockResolvedValueOnce([{ src: "/_astro/a.svg" }]);
-		const { Score } = await publicRender(SCORE);
+		const { Score } = await publicGetScore(SCORE);
 		const container = await AstroContainer.create();
 		const html = await container.renderToString(Score, {
 			props: { class: "extra" },
@@ -742,7 +742,7 @@ describe("render()", () => {
 
 	it("forwards style through Score to the rendered markup", async () => {
 		mockEmitLilypondAsset.mockResolvedValueOnce([{ src: "/_astro/a.svg" }]);
-		const { Score } = await publicRender(SCORE);
+		const { Score } = await publicGetScore(SCORE);
 		const container = await AstroContainer.create();
 		const html = await container.renderToString(Score, {
 			props: { style: "width: 50%" },
@@ -755,7 +755,7 @@ describe("render()", () => {
 			{ src: "/_astro/a.svg" },
 			{ src: "/_astro/b.svg" },
 		]);
-		const { Score } = await publicRender(SCORE);
+		const { Score } = await publicGetScore(SCORE);
 		const container = await AstroContainer.create();
 		const html = await container.renderToString(Score, { props: {} });
 		expect(html).toContain("data-lilypond-group");
@@ -768,7 +768,7 @@ describe("render()", () => {
 			{ src: "/_astro/a.svg" },
 			{ src: "/_astro/b.svg" },
 		]);
-		const { Score } = await publicRender(SCORE);
+		const { Score } = await publicGetScore(SCORE);
 		const container = await AstroContainer.create();
 		const html = await container.renderToString(Score, {
 			props: { pageLimit: 1 },
@@ -778,20 +778,20 @@ describe("render()", () => {
 	});
 
 	it("uses the requested format", async () => {
-		await publicRender(SCORE, { format: "png" });
+		await publicGetScore(SCORE, { format: "png" });
 		expect(mockEmitLilypondAsset.mock.calls[0][0]).toMatchObject({
 			format: "png",
 		});
 	});
 
 	it("omits pdf from the result when not requested", async () => {
-		const result = await publicRender(SCORE);
+		const result = await publicGetScore(SCORE);
 		expect(result.pdf).toBeUndefined();
 		expect(mockEmitLilypondPdfAsset).not.toHaveBeenCalled();
 	});
 
 	it("includes a pdf result when requested, alongside Score, rendered concurrently", async () => {
-		const { Score, pdf } = await publicRender(SCORE, { pdf: true });
+		const { Score, pdf } = await publicGetScore(SCORE, { pdf: true });
 		expect(Score.isAstroComponentFactory).toBe(true);
 		expect(pdf?.src).toEqual(expect.any(String));
 		expect(mockEmitLilypondAsset).toHaveBeenCalledTimes(1);
@@ -799,7 +799,7 @@ describe("render()", () => {
 	});
 
 	it("always renders the pdf uncropped, regardless of defaults.crop", async () => {
-		await publicRender(SCORE, { pdf: true });
+		await publicGetScore(SCORE, { pdf: true });
 		const { render: renderThunk } = mockEmitLilypondPdfAsset.mock.calls[0][0];
 		mockLowLevelRender.mockClear();
 		await renderThunk();
@@ -810,7 +810,7 @@ describe("render()", () => {
 	});
 
 	it("honors an explicit crop:true override", async () => {
-		await publicRender(SCORE, { crop: true });
+		await publicGetScore(SCORE, { crop: true });
 		expect(mockEmitLilypondAsset.mock.calls[0][0]).toMatchObject({
 			crop: true,
 		});
@@ -818,7 +818,7 @@ describe("render()", () => {
 
 	it("throws a clear, actionable error when the lilypond() integration hasn't run", async () => {
 		resetLilypondStateForTests();
-		await expect(publicRender(SCORE)).rejects.toThrow(
+		await expect(publicGetScore(SCORE)).rejects.toThrow(
 			/lilypond\(\).*Astro config/s,
 		);
 	});
@@ -827,7 +827,9 @@ describe("render()", () => {
 		mockEmitLilypondAsset.mockRejectedValueOnce(
 			new Error("fatal error: bad input"),
 		);
-		await expect(publicRender(SCORE)).rejects.toThrow("fatal error: bad input");
+		await expect(publicGetScore(SCORE)).rejects.toThrow(
+			"fatal error: bad input",
+		);
 	});
 
 	it("renders an inline error Score instead of throwing when isDev is true", async () => {
@@ -836,8 +838,8 @@ describe("render()", () => {
 			new Error("fatal error: bad input"),
 		);
 
-		const { Score, pageCount, pdf } = await publicRender(SCORE);
-		expect(pageCount).toBe(0);
+		const { Score, pages, pdf } = await publicGetScore(SCORE);
+		expect(pages).toEqual([]);
 		expect(pdf).toBeUndefined();
 
 		const container = await AstroContainer.create();
@@ -948,7 +950,7 @@ describe("Score component", () => {
 		expect(html).not.toContain('src="/_astro/b.svg"');
 	});
 
-	it("throws the same actionable error as render() when the lilypond() integration hasn't run", async () => {
+	it("throws the same actionable error as getScore() when the lilypond() integration hasn't run", async () => {
 		resetLilypondStateForTests();
 		const container = await AstroContainer.create();
 		await expect(
@@ -978,49 +980,5 @@ describe("Score component", () => {
 		});
 		expect(html).toContain("fatal error: bad input");
 		expect(html).not.toContain('class="extra"');
-	});
-});
-
-describe("renderAll()", () => {
-	const SONATA: LilypondScore = {
-		source: "\\score { }",
-		alt: "Sonata, by Beethoven",
-		sourceName: "sonata.ly",
-		includePaths: ["/docs/src"],
-		assetTitle: "sonata",
-		meta: { title: "Sonata", composer: "Beethoven" },
-	};
-	const PRELUDE: LilypondScore = {
-		source: "\\score { }",
-		alt: "Prelude",
-		sourceName: "prelude.ly",
-		includePaths: ["/docs/src"],
-		assetTitle: "prelude",
-		meta: { title: "Prelude" },
-	};
-
-	beforeEach(() => {
-		setLilypondState(fakeLilypondState());
-	});
-
-	it("renders every score and returns results in the same order", async () => {
-		const results = await publicRenderAll([SONATA, PRELUDE]);
-		expect(results).toHaveLength(2);
-		expect(results[0].meta).toEqual(SONATA.meta);
-		expect(results[1].meta).toEqual(PRELUDE.meta);
-		expect(results[0].Score.isAstroComponentFactory).toBe(true);
-		expect(results[1].Score.isAstroComponentFactory).toBe(true);
-	});
-
-	it("applies the same options to every score", async () => {
-		await publicRenderAll([SONATA, PRELUDE], { format: "png" });
-		expect(mockEmitLilypondAsset).toHaveBeenCalledTimes(2);
-		for (const call of mockEmitLilypondAsset.mock.calls) {
-			expect(call[0]).toMatchObject({ format: "png" });
-		}
-	});
-
-	it("returns an empty array for an empty input", async () => {
-		await expect(publicRenderAll([])).resolves.toEqual([]);
 	});
 });

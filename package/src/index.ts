@@ -18,7 +18,7 @@ import {
 	remarkPlugin,
 	satteriPlugin,
 } from "./plugins/index.js";
-import { type LilypondDefaults, render as renderScore } from "./render.js";
+import { type LilypondDefaults, render } from "./render.js";
 import { getLilypondState, setLilypondState } from "./state.js";
 import {
 	altTextFor,
@@ -66,10 +66,10 @@ export interface LilypondScore {
 	meta: LilypondMetadata;
 }
 
-export interface RenderOptions {
+export interface GetScoreOptions {
 	/**
 	 * Output format for `Score`.
-	 * @default "svg"
+	 * @default the `defaults.format` configured on the integration ("svg" unless overridden)
 	 */
 	format?: "svg" | "png";
 
@@ -95,9 +95,9 @@ export interface LilypondPdfResult {
 	src: string;
 }
 
-export interface RenderResult {
+export interface GetScoreResult {
 	Score: AstroComponentFactory;
-	pageCount: number;
+	pages: LilypondPage[];
 	pdf?: LilypondPdfResult;
 	meta: LilypondMetadata;
 	raw: string;
@@ -125,7 +125,7 @@ function createScoreComponent(
 }
 
 /**
- * Dev-only fallback for `render()`: renders an inline error block
+ * Dev-only fallback for `getScore()`: renders an inline error block
  * instead of the score.
  */
 function createErrorScoreComponent(
@@ -141,21 +141,25 @@ function createErrorScoreComponent(
  * Renders a `LilypondScore` (from a `.ly`/`.ily`/`.lilypond` import,
  * or a `lilypondLoader()` entry) to a renderable `<Score />` component.
  */
-export async function render(
+export async function getScore(
 	score: LilypondScore,
-	options: RenderOptions = {},
-): Promise<RenderResult> {
+	options: GetScoreOptions = {},
+): Promise<GetScoreResult> {
 	const state = getLilypondState();
 	const { logger } = state;
-	const { resolution, cropScale } = resolveDefaults(state.defaults);
-	const format = options.format ?? "svg";
+	const {
+		resolution,
+		cropScale,
+		format: defaultFormat,
+	} = resolveDefaults(state.defaults);
+	const format = options.format ?? defaultFormat;
 	const crop = options.crop ?? false;
 
 	try {
-		const [{ Score, pageCount }, pdf] = await Promise.all([
+		const [{ Score, pages }, pdf] = await Promise.all([
 			(async (): Promise<{
 				Score: AstroComponentFactory;
-				pageCount: number;
+				pages: LilypondPage[];
 			}> => {
 				const pages = await emitLilypondAsset({
 					title: score.assetTitle,
@@ -166,7 +170,7 @@ export async function render(
 					sizeScale: crop ? cropScale : 1,
 					binaryPath: state.binaryPath,
 					render: () =>
-						renderScore(score.source, {
+						render(score.source, {
 							format,
 							crop,
 							defaults: state.defaults,
@@ -179,7 +183,7 @@ export async function render(
 				});
 				return {
 					Score: createScoreComponent({ pages, alt: score.alt }),
-					pageCount: pages.length,
+					pages,
 				};
 			})(),
 			options.pdf
@@ -188,7 +192,7 @@ export async function render(
 						source: score.source,
 						binaryPath: state.binaryPath,
 						render: () =>
-							renderScore(score.source, {
+							render(score.source, {
 								format: "pdf",
 								crop: false,
 								defaults: state.defaults,
@@ -202,12 +206,12 @@ export async function render(
 				: Promise.resolve(undefined),
 		]);
 
-		return { Score, pageCount, pdf, meta: score.meta, raw: score.source };
+		return { Score, pages, pdf, meta: score.meta, raw: score.source };
 	} catch (err) {
 		if (!state.isDev) throw err;
 		return {
 			Score: createErrorScoreComponent(err, score.assetTitle),
-			pageCount: 0,
+			pages: [],
 			pdf: undefined,
 			meta: score.meta,
 			raw: score.source,
@@ -215,51 +219,30 @@ export async function render(
 	}
 }
 
-export interface ScoreProps extends ScoreImageProps {
+export interface ScoreProps
+	extends ScoreImageProps,
+		Pick<GetScoreOptions, "format" | "crop"> {
 	/**
 	 * A `LilypondScore` from a `.ly`/`.ily`/`.lilypond` import
 	 * or a `lilypondLoader()` entry.
 	 */
 	content: LilypondScore;
-
-	/**
-	 * @default "svg"
-	 */
-	format?: "svg" | "png";
-
-	/**
-	 * @default false
-	 */
-	crop?: boolean;
 }
 
 /**
  * Renders a `LilypondScore` directly, for the common case where none of
- * `render()`'s `pageCount`, `meta`, `raw`, or `pdf` are needed. Use
- * `render()` instead when you need those.
+ * `getScore()`'s `pages`, `meta`, `raw`, or `pdf` are needed. Use
+ * `getScore()` instead when you need those.
  */
 export const Score: AstroComponentFactory = createComponent(
 	async (result, props: ScoreProps) => {
 		const { content, format, crop, ...imageProps } = props;
-		const { Score: ContentScore } = await render(content, { format, crop });
+		const { Score: ContentScore } = await getScore(content, { format, crop });
 		return renderTemplate`${renderComponent(result, "Score", ContentScore, imageProps)}`;
 	},
 );
 
-export async function renderAll(
-	scores: LilypondScore[],
-	options: RenderOptions = {},
-): Promise<RenderResult[]> {
-	return Promise.all(scores.map((score) => render(score, options)));
-}
-
 export interface LilypondOptions extends PluginOptions {
-	/**
-	 * Output format used by Markdown fences and `lilypondLoader()` entries.
-	 * @default "svg"
-	 */
-	format?: "svg" | "png";
-
 	/**
 	 * Defaults passed to each score; can be overridden at render time.
 	 */

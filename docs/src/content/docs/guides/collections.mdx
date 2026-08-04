@@ -89,15 +89,15 @@ const entry = await getEntry("scores", "my-score");
 
 ## PDF download links
 
-When you need a downloadable PDF, call `render()` (or `renderAll()` for multiple entries) with `pdf: true`:
+When you need a downloadable PDF, call `getScore()` with `pdf: true`. For multiple entries, call it once per entry with `Promise.all`:
 
 ```astro {6,11} title="MyScore.astro"
 ---
 import { getEntry } from "astro:content";
-import { render } from "astro-lilypond";
+import { getScore } from "astro-lilypond";
 
 const sonata = await getEntry("scores", "sonata");
-const { Score, pdf } = await render(sonata.data, { pdf: true });
+const { Score, pdf } = await getScore(sonata.data, { pdf: true });
 ---
 
 <h3>{sonata.data.meta.title}</h3>
@@ -105,4 +105,4 @@ const { Score, pdf } = await render(sonata.data, { pdf: true });
 <a href={pdf.src} download>Download PDF</a>
 ```
 
-See the [component reference](/reference/component/#render) for `render()`'s other return values, like `pageCount` and `raw`.
+See the [component reference](/reference/component/#getscore) for `getScore()`'s other return values, like `pages` and `raw`.

@@ -5,7 +5,6 @@ import type { AstroIntegrationLogger } from "astro";
 import { execLilyPond } from "./execLilyPond.js";
 import { readOutputFile, safeInputFileName } from "./readOutputFile.js";
 import type { LilypondVersion } from "./types/lilypondVersion.js";
-import { resolveDefaults } from "./utils/resolveDefaults.js";
 
 export const FORMATS = ["png", "svg", "pdf"] as const;
 
@@ -21,6 +20,12 @@ export interface LilypondDefaults {
 	 * @default "2.26.0"
 	 */
 	version?: LilypondVersion;
+
+	/**
+	 * Output format.
+	 * @default "svg"
+	 */
+	format?: "svg" | "png";
 
 	/**
 	 * Resolution in DPI (only applies to PNG).
@@ -41,10 +46,9 @@ export interface LilypondDefaults {
 
 /**
  * The subset of `LilypondDefaults` that `render()` itself reads. `version`
- * is resolved by the caller before reaching `render()`, by prepending it to
- * source text.
+ * and `format` are resolved by the caller before reaching `render()`.
  */
-export type RenderDefaults = Omit<LilypondDefaults, "version">;
+export type RenderDefaults = Omit<LilypondDefaults, "version" | "format">;
 
 export interface InternalRenderOptions {
 	/**
@@ -99,21 +103,24 @@ export interface InternalRenderOptions {
 	logger: Pick<AstroIntegrationLogger, "warn" | "error">;
 }
 
+const defaultLilypondDefaults: Required<LilypondDefaults> = {
+	version: "2.26.0",
+	format: "svg",
+	resolution: 144,
+	cropScale: 1.5,
+};
+
 export const defaultOptions: Required<
 	Omit<
 		InternalRenderOptions,
 		"includePaths" | "sourceName" | "defaults" | "logger"
 	>
 > & { defaults: Required<LilypondDefaults> } = {
-	format: "svg",
+	format: defaultLilypondDefaults.format,
 	crop: true,
 	binaryPath: "lilypond",
 	timeout: 60_000,
-	defaults: {
-		version: "2.26.0",
-		resolution: 144,
-		cropScale: 1.5,
-	},
+	defaults: defaultLilypondDefaults,
 };
 
 export async function render(
@@ -130,7 +137,8 @@ export async function render(
 		logger,
 	} = options;
 
-	const { resolution } = resolveDefaults(options.defaults);
+	const resolution =
+		options.defaults?.resolution ?? defaultOptions.defaults.resolution;
 
 	if (!FORMATS.includes(format)) {
 		throw new Error(`${format} is not a supported format`);
