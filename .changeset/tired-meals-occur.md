@@ -21,6 +21,7 @@ Features:
 - Generates automatic alt text from the score's title and composer. (Or supply your own.)
 - Includes a `lilypondLoader()` for creating an Astro [content collection](https://lilypond.ky.fyi/guides/collections) from a folder of `.ly` files. Automatically extracts metadata.
 - Works with all LilyPond syntax. Check out the [examples](https://lilypond.ky.fyi/examples) to see what's possible!
+- 100% unit test coverage and full end-to-end tests.
 
 View all docs at [lilypond.ky.fyi](https://lilypond.ky.fyi).
 
