@@ -1,4 +1,5 @@
 ---
+import { Code } from "@astrojs/starlight/components";
 import { Score } from "astro-lilypond";
 import FencedLilyPond from "#components/FencedLilypond.astro";
 import score from "./scores/example.ly";
@@ -12,9 +13,14 @@ import exampleRaw from "./scores/example.ly?raw";
     </p>
     <FencedLilyPond code={exampleRaw} title="example.md" />
   </div>
-  <div>
-    <p>&hellip;and it renders as music notation.</p>
-    <Score content={score} crop class="responsive" />
+  <div class="result">
+    <div>
+      <p>&hellip;and it renders as music notation.</p>
+      <Score content={score} crop class="responsive" />
+    </div>
+    <div class="quick-start not-content">
+      <Code lang="sh" code="pnpm astro add astro-lilypond" title="Quick start" />
+    </div>
   </div>
 </section>
 
@@ -28,16 +34,8 @@ import exampleRaw from "./scores/example.ly?raw";
     gap: 1.5rem;
     text-align: left;
 
-    > div {
-      margin: 0;
-
-      &:last-child p {
-        text-align: right;
-      }
-    }
-
     @media (width > 620px) {
-      max-width: 680px;
+      max-width: 100%;
       grid-template-columns: 1fr 1fr;
     }
   }
@@ -47,7 +45,22 @@ import exampleRaw from "./scores/example.ly?raw";
     font-style: italic;
   }
 
+  .result {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    margin: 0;
+
+    p {
+      text-align: right;
+    }
+
+    .expressive-code {
+      margin-block-start: 1rem;
+    }
+  }
+
   .responsive {
-    width: min(400px, 100%);
+    width: 100%;
   }
 </style>
