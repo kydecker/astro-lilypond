@@ -8,6 +8,11 @@
   tagline = ##f
 }
 
+\paper {
+  system-system-spacing.padding = #5
+  markup-system-spacing.padding = #6
+}
+
 global = {
   \time 4/4
   \key c \major
