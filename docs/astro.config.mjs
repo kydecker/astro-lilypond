@@ -51,6 +51,13 @@ export default defineConfig({
 					},
 				},
 				{
+					tag: "meta",
+					attrs: {
+						name: "author",
+						content: "Ky Decker",
+					},
+				},
+				{
 					tag: "script",
 					attrs: {
 						src: "https://cdn.usefathom.com/script.js",
