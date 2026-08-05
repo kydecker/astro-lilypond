@@ -11,6 +11,10 @@ export default defineConfig({
 		prerenderEnvironment: "node",
 		imageService: "passthrough",
 	}),
+	build: {
+		format: "file",
+	},
+	trailingSlash: "never",
 	integrations: [
 		lilypond({
 			defaults: {
@@ -44,6 +48,13 @@ export default defineConfig({
 					attrs: {
 						property: "og:image",
 						content: "/preview.png",
+					},
+				},
+				{
+					tag: "meta",
+					attrs: {
+						name: "author",
+						content: "Ky Decker",
 					},
 				},
 				{
@@ -97,7 +108,7 @@ export default defineConfig({
 						"about",
 						{
 							label: "Changelog",
-							link: "/changelog/",
+							link: "/changelog",
 						},
 						"resources/syntax",
 						"resources",
