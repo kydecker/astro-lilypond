@@ -11,6 +11,10 @@ export default defineConfig({
 		prerenderEnvironment: "node",
 		imageService: "passthrough",
 	}),
+	build: {
+		format: "file",
+	},
+	trailingSlash: "never",
 	integrations: [
 		lilypond({
 			defaults: {
@@ -97,7 +101,7 @@ export default defineConfig({
 						"about",
 						{
 							label: "Changelog",
-							link: "/changelog/",
+							link: "/changelog",
 						},
 						"resources/syntax",
 						"resources",
