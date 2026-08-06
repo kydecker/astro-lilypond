@@ -150,3 +150,9 @@ lilypond({
   includePaths: ["./src/snippets"],
 })
 ```
+
+Once configured, content from `includesPaths` can be referenced in your `.ly` files:
+
+```lilypondtext title="my-score.ly"
+\include "my-snippet.ly"
+```

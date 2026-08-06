@@ -1,5 +1,5 @@
-% e2e fixture: validates that the includePaths config option resolves
-% \include from ../snippets, a directory other than this file's own.
+% validate that the `includePaths` config option resolves
+% \include from ../snippets
 \include "horn-music.ly"
 
 \header {
