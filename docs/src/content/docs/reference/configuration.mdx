@@ -151,8 +151,12 @@ lilypond({
 })
 ```
 
-Once configured, content from `includePaths` can be referenced in your `.ly` files:
+Once configured, content from `includePaths` can be referenced elsewhere:
 
 ```lilypondtext title="my-score.ly"
-\include "my-snippet.ly"
+\include "my-snippet.ily"
 ```
+
+:::tip
+It's customary to use the `.ily` file extension for _included_ snippets and the `.ly` extension for your scores.
+:::
