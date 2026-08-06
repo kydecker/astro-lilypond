@@ -105,6 +105,7 @@ beforeEach(async () => {
 		timeout: undefined,
 		isDev: false,
 		logger: { warn: vi.fn(), error: vi.fn() },
+		includePaths: [],
 	});
 });
 
@@ -133,6 +134,27 @@ describe("lilypondLoader", () => {
 				composer: "Beethoven",
 				mutopiacomposer: "BeethovenLV",
 			},
+		});
+	});
+
+	it("appends state.includePaths (the integration's configured includePaths) after the file's own directory", async () => {
+		setLilypondState({
+			binaryPath: "lilypond",
+			defaults: undefined,
+			timeout: undefined,
+			isDev: false,
+			logger: { warn: vi.fn(), error: vi.fn() },
+			includePaths: ["/snippets"],
+		});
+		await writeFile(join(scoresDir, "sonata.ly"), "\\score { { c4 } }");
+
+		const loader = lilypondLoader({ base: "./src/scores" });
+		const { context, store } = createFakeContext({ root, publicDir });
+		await loader.load(context);
+
+		const entry = store.get("sonata");
+		expect(entry?.data).toMatchObject({
+			includePaths: [scoresDir, "/snippets"],
 		});
 	});
 

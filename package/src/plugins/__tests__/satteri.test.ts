@@ -87,6 +87,27 @@ describe("satteriPlugin", () => {
 		);
 	});
 
+	it("appends the integration's configured includePaths after the file's own directory", async () => {
+		const plugin = satteriPlugin({
+			...BASE_OPTIONS,
+			includePaths: ["/snippets"],
+		});
+		const node: Code = { type: "code", lang: "lilypond", value: "\\score { }" };
+		const ctx = {
+			fileURL: new URL("file:///project/docs/syntax.md"),
+			indexOf: vi.fn().mockReturnValue(0),
+		};
+
+		await plugin.code?.(node, ctx as never);
+
+		expect(mockRender).toHaveBeenCalledWith(
+			"\\score { }",
+			expect.objectContaining({
+				includePaths: ["/project/docs", "/snippets"],
+			}),
+		);
+	});
+
 	it("returns undefined for non-lilypond code nodes", async () => {
 		const plugin = satteriPlugin(BASE_OPTIONS);
 		const node: Code = { type: "code", lang: "js", value: "console.log(1)" };

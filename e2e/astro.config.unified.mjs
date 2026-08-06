@@ -15,6 +15,7 @@ export default defineConfig({
 				version: "2.26.0",
 				cropScale: 2,
 			},
+			includePaths: ["./src/snippets"],
 		}),
 		mdx(),
 	],

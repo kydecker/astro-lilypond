@@ -7,6 +7,7 @@ export interface LilypondState {
 	timeout: number | undefined;
 	isDev: boolean;
 	logger: Pick<AstroIntegrationLogger, "warn" | "error">;
+	includePaths: string[];
 }
 
 const KEY = "astro-lilypond:state";

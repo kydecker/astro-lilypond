@@ -1,0 +1,9 @@
+---
+import { Score } from "astro-lilypond";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import hornPart from "../scores/horn-part.ly";
+---
+
+<BaseLayout title="Score: includePaths">
+	<Score content={hornPart} />
+</BaseLayout>

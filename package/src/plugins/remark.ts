@@ -20,7 +20,7 @@ export const remarkPlugin: Plugin<[PluginOptions], Root> = (options) => {
 	const renderOptions = { ...options, logger };
 	return async (tree, file) => {
 		const promises: Promise<void>[] = [];
-		const includePaths = includePathsFor(file?.path);
+		const includePaths = includePathsFor(file?.path, options.includePaths);
 		const sourceName = sourceNameFor(file?.path);
 		const title = titleFor(sourceName);
 

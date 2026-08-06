@@ -1,3 +1,4 @@
+import { fileURLToPath } from "node:url";
 import type { AstroIntegration } from "astro";
 import {
 	type AstroComponentFactory,
@@ -260,6 +261,13 @@ export interface LilypondOptions extends PluginOptions {
 	 * @default true
 	 */
 	autoInstall?: boolean | AutoInstallOptions;
+
+	/**
+	 * Extra directories to search for `\include`d files, in addition to each
+	 * score's own directory. Relative paths resolve against the project root.
+	 * @default []
+	 */
+	includePaths?: string[];
 }
 
 function lyFilePlugin(options: PluginOptions): Plugin {
@@ -271,7 +279,7 @@ function lyFilePlugin(options: PluginOptions): Plugin {
 
 			const { version } = resolveDefaults(options.defaults);
 			const src = version ? prependVersion(source, version) : source;
-			const includePaths = includePathsFor(id);
+			const includePaths = includePathsFor(id, options.includePaths);
 			const sourceName = sourceNameFor(id);
 			const assetTitle = titleFor(sourceName);
 			const meta = toLilypondMetadata(parseLyHeaderFields(source));
@@ -314,12 +322,17 @@ export default function lilypond(
 					warn: (message) => logger.warn(message),
 				});
 				options.binaryPath = binaryPath;
+				const includePaths = (options.includePaths ?? []).map((path) =>
+					fileURLToPath(new URL(path, config.root)),
+				);
+				options.includePaths = includePaths;
 				setLilypondState({
 					binaryPath,
 					defaults: options.defaults,
 					timeout: options.timeout,
 					isDev,
 					logger,
+					includePaths,
 				});
 
 				updateConfig({

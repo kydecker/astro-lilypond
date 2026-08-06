@@ -29,4 +29,18 @@ describe("includePathsFor", () => {
 	it("returns '.' for a bare filename with no directory component", () => {
 		expect(includePathsFor("bach.ly")).toEqual(["."]);
 	});
+
+	it("appends extra paths after the source's directory", () => {
+		expect(
+			includePathsFor("/docs/src/examples/bach.ly", ["/other/dir"]),
+		).toEqual(["/docs/src/examples", "/other/dir"]);
+	});
+
+	it("returns extra paths as-is when the source is unknown", () => {
+		expect(includePathsFor(undefined, ["/other/dir"])).toEqual(["/other/dir"]);
+	});
+
+	it("defaults extra to [] when omitted", () => {
+		expect(includePathsFor("/docs/bach.ly")).toEqual(["/docs"]);
+	});
 });

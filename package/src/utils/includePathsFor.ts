@@ -2,14 +2,16 @@ import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 /**
- * Derives `render()`'s `includePaths` from the source file's path or URL, so
- * `\include`d sibling files resolve even though rendering happens in a temp
- * directory. Returns `[]` when the source location is unknown.
+ * Make sure that any `\include` definitions resolve correctly when
+ * LilyPond compiles the score. `source` is the current directory or URL
+ * of the .ly file; `extra` is for user-defined locations from the
+ * config setting `includePaths`.
  */
 export function includePathsFor(
 	source: string | URL | null | undefined,
+	extra: string[] = [],
 ): string[] {
-	if (!source) return [];
+	if (!source) return extra;
 	const path = typeof source === "string" ? source : fileURLToPath(source);
-	return [dirname(path)];
+	return [dirname(path), ...extra];
 }

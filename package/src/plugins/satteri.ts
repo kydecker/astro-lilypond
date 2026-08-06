@@ -29,7 +29,7 @@ export function satteriPlugin(options: PluginOptions): MdastPluginDefinition {
 				title: titleFor(sourceName),
 				value: node.value,
 				meta: node.meta,
-				includePaths: includePathsFor(ctx.fileURL),
+				includePaths: includePathsFor(ctx.fileURL, options.includePaths),
 				sourceName,
 			});
 			return { rawHtml };

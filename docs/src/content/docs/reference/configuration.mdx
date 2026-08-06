@@ -66,7 +66,7 @@ Downloads are cached per OS. The cache directory can be overridden with the `AST
 
 **Type:** `object`
 
-Default settings applied to every score, across Markdown fences, `.ly`/`.ily` imports, and [`lilypondLoader()`](/guides/collections) entries alike. `version` can also be overridden per file with an explicit `\version` declaration; `format` can be overridden per call via [`getScore()`/`<Score>`](/reference/component).
+Default settings applied to every score. `version` can also be overridden per file with an explicit `\version` declaration; `format` can be overridden per call via [`getScore()`/`<Score>`](/reference/component).
 
 #### `defaults.cropScale`
 
@@ -89,7 +89,7 @@ lilypond({
 **Type:** `"svg" | "png"`  
 **Default:** `"svg"`
 
-The output format used for every score — Markdown fences, `.ly`/`.ily` imports, and `lilypondLoader()` entries alike.
+The output format used for every score.
 
 ```js
 // astro.config.mjs
@@ -136,3 +136,17 @@ LilyPond code with an explicit `\version` declaration will always use that versi
 :::tip
 LilyPond uses even numbers (like `2.26.0`) for stable releases and odd numbers (like `2.27.0`) for development releases. [View all LilyPond releases on GitLab.](https://gitlab.com/lilypond/lilypond/-/releases)
 :::
+
+### `includePaths`
+
+**Type:** `string[]`  
+**Default:** `[]`
+
+Extra directories LilyPond should search for files, in addition to each score's own directory (which is always searched automatically). Relative paths resolve against the project root. This setting is useful if you store shared styles, layouts, and helper definitions separately from your main scores.
+
+```js
+// astro.config.mjs
+lilypond({
+  includePaths: ["./src/snippets"],
+})
+```
