@@ -13,6 +13,12 @@ An [Astro](https://astro.build) integration for rendering [LilyPond](https://lil
 
 Read the docs: https://lilypond.ky.fyi
 
+## Quick start
+
+```sh
+npx astro add astro-lilypond
+```
+
 ## In this repo
 
 | Directory | For |

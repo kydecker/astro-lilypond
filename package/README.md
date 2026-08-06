@@ -9,41 +9,11 @@ An [Astro](https://astro.build) integration for rendering [LilyPond](https://lil
 - Use the content loader to pass in a folder full of `.ly` files and get back an Astro content collection.
 - Works with all LilyPond syntax.
 
-Read the docs: https://lilypond.ky.fyi
-
-## Quick Start
-
-### 1. Install `astro-lilypond`
+## Quick start
 
 ```sh
-pnpm add astro-lilypond
+npx astro add astro-lilypond
 ```
-
-### 2. Add the integration to your Astro config
-
-```js
-// astro.config.mjs
-import { defineConfig } from 'astro/config';
-import lilypond from 'astro-lilypond';
-
-export default defineConfig({
-  integrations: [lilypond()]
-});
-```
-
-### 3. Write your music
-
-Write LilyPond code within fenced code blocks with the `lilypond`, `ly`, or `ily` language tag.
-
-````md
-```lilypond
-  \\score ...
-```
-````
-
-Your score will be built to `.svg` or `.png` and display alongside the rest of your content.
-
----
 
 For more info, refer to the docs: https://lilypond.ky.fyi
 
