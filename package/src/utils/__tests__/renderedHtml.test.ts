@@ -204,4 +204,91 @@ describe("renderedHtml", () => {
 			).toBe("");
 		});
 	});
+
+	describe("loading/decoding/fetchpriority hints", () => {
+		it("omits loading/decoding/fetchpriority by default (non-breaking)", () => {
+			expect(
+				renderedHtml(
+					[{ src: "/a.svg", width: undefined, height: undefined }],
+					"",
+				),
+			).toBe('<img data-lilypond-image src="/a.svg" alt>');
+		});
+
+		it("forwards loading onto a single-page <img>", () => {
+			expect(
+				renderedHtml(
+					[{ src: "/a.svg", width: undefined, height: undefined }],
+					"",
+					{ loading: "lazy" },
+				),
+			).toBe('<img data-lilypond-image src="/a.svg" alt loading="lazy">');
+		});
+
+		it("forwards decoding onto a single-page <img>", () => {
+			expect(
+				renderedHtml(
+					[{ src: "/a.svg", width: undefined, height: undefined }],
+					"",
+					{ decoding: "async" },
+				),
+			).toBe('<img data-lilypond-image src="/a.svg" alt decoding="async">');
+		});
+
+		it("forwards fetchpriority onto a single-page <img>", () => {
+			expect(
+				renderedHtml(
+					[{ src: "/a.svg", width: undefined, height: undefined }],
+					"",
+					{ fetchpriority: "high" },
+				),
+			).toBe('<img data-lilypond-image src="/a.svg" alt fetchpriority="high">');
+		});
+
+		it("forwards all three onto a single-page <img> with class/style preserved", () => {
+			expect(
+				renderedHtml(
+					[{ src: "/a.svg", width: undefined, height: undefined }],
+					"",
+					{
+						class: "hero",
+						style: "width: 50%",
+						loading: "lazy",
+						decoding: "async",
+						fetchpriority: "high",
+					},
+				),
+			).toBe(
+				'<img data-lilypond-image class="hero" src="/a.svg" alt loading="lazy" decoding="async" fetchpriority="high" style="width: 50%">',
+			);
+		});
+
+		it("forwards loading/decoding/fetchpriority onto every <img> in a multi-page group", () => {
+			expect(
+				renderedHtml(
+					[
+						{ src: "/a.svg", width: 100, height: 50 },
+						{ src: "/b.svg", width: 100, height: 60 },
+					],
+					"Sonata",
+					{ loading: "lazy", decoding: "async", fetchpriority: "low" },
+				),
+			).toBe(
+				"<ol data-lilypond-group>" +
+					'<li><img data-lilypond-image src="/a.svg" width="100" height="50" alt="Sonata" loading="lazy" decoding="async" fetchpriority="low"></li>' +
+					'<li><img data-lilypond-image src="/b.svg" width="100" height="60" alt="Sonata" loading="lazy" decoding="async" fetchpriority="low"></li>' +
+					"</ol>",
+			);
+		});
+
+		it("only adds the hints that are provided", () => {
+			expect(
+				renderedHtml(
+					[{ src: "/a.svg", width: undefined, height: undefined }],
+					"",
+					{ decoding: "async" },
+				),
+			).toBe('<img data-lilypond-image src="/a.svg" alt decoding="async">');
+		});
+	});
 });

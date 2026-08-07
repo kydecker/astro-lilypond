@@ -17,6 +17,9 @@ interface ScoreProps {
   pageLimit?: number;
   class?: string;
   style?: string;
+  loading?: "lazy" | "eager";
+  decoding?: "async" | "sync" | "auto";
+  fetchpriority?: "high" | "low" | "auto";
   alt?: string;
 }
 ```
@@ -70,6 +73,37 @@ Class name(s) applied to the rendered `<img>` (or `<ol>`, for multi-page scores)
 **Type:** `string`
 
 Inline styles applied directly to the rendered element.
+
+### `loading`
+
+**Type:** `"lazy" | "eager"`
+
+`loading` hint forwarded onto every rendered `<img>`. Set `loading="lazy"` so off-screen scores in a long list don't fetch until scrolled near; for an above-the-fold or LCP score, use `loading="eager"` with [`fetchpriority="high"`](#fetchpriority).
+
+```astro title="LazyGallery.astro"
+<Score content={sonata} loading="lazy" decoding="async" />
+```
+
+### `decoding`
+
+**Type:** `"async" | "sync" | "auto"`
+
+`decoding` hint forwarded onto every rendered `<img>`. `decoding="async"` keeps image decoding off the main thread.
+
+### `fetchpriority`
+
+**Type:** `"high" | "low" | "auto"`
+
+`fetchpriority` hint forwarded onto every rendered `<img>`. Set `fetchpriority="high"` for an above-the-fold or LCP score so the browser fetches it on the critical path; `"low"` deprioritizes a below-the-fold score behind more urgent work. With `loading="lazy"` the fetch is already deferred, so `fetchpriority` matters most for an eager LCP score.
+
+```astro title="LcpScore.astro"
+<Score
+  content={heroSonata}
+  loading="eager"
+  decoding="async"
+  fetchpriority="high"
+/>
+```
 
 ### `alt`
 
