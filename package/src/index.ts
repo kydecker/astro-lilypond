@@ -61,7 +61,7 @@ export interface LilypondPage {
 export interface LilypondScore {
 	source: string;
 	alt: string;
-	sourceName: string | undefined;
+	sourceName?: string;
 	includePaths: string[];
 	assetTitle: string;
 	meta: LilypondMetadata;
