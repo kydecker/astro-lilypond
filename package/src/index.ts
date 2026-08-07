@@ -372,7 +372,7 @@ export default function lilypond(
 
 				if (existingProcessor?.name === "unified") {
 					const { unified, isUnifiedProcessor } = await import(
-						"@astrojs/markdown-remark"
+						/* @vite-ignore */ "@astrojs/markdown-remark"
 					);
 
 					if (!isUnifiedProcessor(existingProcessor)) {
