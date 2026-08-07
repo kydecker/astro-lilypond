@@ -1,5 +1,11 @@
 # astro-lilypond
 
+## 1.1.1
+
+### Patch Changes
+
+- 7bbdb2c: Fixes a type error on `LilypondScore` where `sourceName` was being treated as a required prop.
+
 ## 1.1.0
 
 ### Minor Changes
