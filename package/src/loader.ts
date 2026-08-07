@@ -135,7 +135,10 @@ export function lilypondLoader({
 				const digest = generateDigest(source);
 
 				const src = prependVersion(source, version);
-				const includePaths = includePathsFor(filePath);
+				const includePaths = includePathsFor(
+					filePath,
+					getLilypondState().includePaths,
+				);
 				const sourceName = sourceNameFor(filePath);
 				const assetTitle = titleFor(sourceName);
 				const meta = toLilypondMetadata(headerFields);

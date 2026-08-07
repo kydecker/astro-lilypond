@@ -103,6 +103,22 @@ describe("remarkLilypondPlugin", () => {
 		);
 	});
 
+	it("appends the integration's configured includePaths after the file's own directory", async () => {
+		const tree = makeTree([
+			{ type: "code", lang: "lilypond", value: "\\score { }" } as Code,
+		]);
+
+		await runPlugin(tree, {
+			...BASE_OPTIONS,
+			includePaths: ["/snippets"],
+		});
+
+		expect(mockRender).toHaveBeenCalledWith(
+			"\\score { }",
+			expect.objectContaining({ includePaths: [".", "/snippets"] }),
+		);
+	});
+
 	it("leaves non-lilypond code blocks untouched", async () => {
 		const jsNode: Code = { type: "code", lang: "js", value: "const x = 1" };
 		const tree = makeTree([jsNode]);

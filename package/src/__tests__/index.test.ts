@@ -66,10 +66,13 @@ interface SetupHookArgs {
 		};
 		publicDir?: URL;
 		base?: string;
+		root?: URL;
 	};
 	updateConfig: ReturnType<typeof vi.fn>;
 	logger: { info: ReturnType<typeof vi.fn>; warn: ReturnType<typeof vi.fn> };
 }
+
+const FAKE_ROOT = new URL("file:///project/");
 
 function baseConfig(
 	overrides: Partial<SetupHookArgs["config"]> = {},
@@ -77,6 +80,7 @@ function baseConfig(
 	return {
 		publicDir: FAKE_PUBLIC_DIR,
 		base: "/",
+		root: FAKE_ROOT,
 		...overrides,
 	};
 }
@@ -90,6 +94,7 @@ function fakeLilypondState(
 		timeout: undefined,
 		isDev: false,
 		logger: FAKE_LOGGER,
+		includePaths: [],
 		...overrides,
 	};
 }
@@ -238,6 +243,51 @@ describe("lilypond integration", () => {
 		);
 	});
 
+	it("resolves configured includePaths against config.root and stores them in state", async () => {
+		vi.doMock("@astrojs/markdown-satteri", () => ({
+			satteri: vi.fn((o: unknown) => ({ name: "satteri", options: o })),
+			isSatteriProcessor: vi.fn(() => true),
+		}));
+
+		const integration = lilypond({
+			includePaths: ["./src/snippets", "/absolute/snippets"],
+		});
+		await integration.hooks["astro:config:setup"]?.({
+			command: "build",
+			config: baseConfig({
+				markdown: { processor: { name: "satteri", options: {} } },
+			}),
+			updateConfig: vi.fn(),
+			logger: { info: vi.fn(), warn: vi.fn() },
+		} as never);
+		vi.doUnmock("@astrojs/markdown-satteri");
+
+		expect(getLilypondState().includePaths).toEqual([
+			"/project/src/snippets",
+			"/absolute/snippets",
+		]);
+	});
+
+	it("defaults state.includePaths to [] when no includePaths are configured", async () => {
+		vi.doMock("@astrojs/markdown-satteri", () => ({
+			satteri: vi.fn((o: unknown) => ({ name: "satteri", options: o })),
+			isSatteriProcessor: vi.fn(() => true),
+		}));
+
+		const integration = lilypond();
+		await integration.hooks["astro:config:setup"]?.({
+			command: "build",
+			config: baseConfig({
+				markdown: { processor: { name: "satteri", options: {} } },
+			}),
+			updateConfig: vi.fn(),
+			logger: { info: vi.fn(), warn: vi.fn() },
+		} as never);
+		vi.doUnmock("@astrojs/markdown-satteri");
+
+		expect(getLilypondState().includePaths).toEqual([]);
+	});
+
 	it.each([
 		["dev", true],
 		["build", false],
@@ -373,6 +423,21 @@ describe("lilypond integration", () => {
 			const score = scoreFrom(result);
 			expect(score.sourceName).toBe("score.ly");
 			expect(score.includePaths).toEqual(["/docs/src"]);
+		});
+
+		it("appends configured includePaths after the file's own directory", async () => {
+			const plugin = await getVitePlugin({
+				includePaths: ["./src/snippets"],
+			});
+			const result = await plugin.transform(
+				"\\score { }",
+				"/docs/src/score.ly",
+			);
+			const score = scoreFrom(result);
+			expect(score.includePaths).toEqual([
+				"/docs/src",
+				"/project/src/snippets",
+			]);
 		});
 
 		describe("alt text", () => {

@@ -7,4 +7,5 @@ export interface PluginOptions {
 	binaryPath?: string;
 	isDev?: boolean;
 	logger?: Pick<AstroIntegrationLogger, "warn" | "error">;
+	includePaths?: string[];
 }

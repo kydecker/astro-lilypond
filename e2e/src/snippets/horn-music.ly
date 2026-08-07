@@ -1,0 +1,4 @@
+hornNotes = \relative {
+  \time 2/4
+  r4 f8 a | cis4 f | e4 d |
+}
