@@ -343,27 +343,11 @@ export default function lilypond(
 				const existingProcessor = config.markdown?.processor;
 
 				if (existingProcessor?.name === "satteri") {
-					const { satteri, isSatteriProcessor } = await import(
-						"@astrojs/markdown-satteri"
-					);
-
-					if (!isSatteriProcessor(existingProcessor)) {
-						throw new Error(
-							"astro-lilypond: the active markdown processor reports the name " +
-								'"satteri" but failed the isSatteriProcessor check.',
-						);
-					}
-
-					const existingOptions = existingProcessor.options ?? {};
 					updateConfig({
 						markdown: {
-							processor: satteri({
-								...existingOptions,
-								mdastPlugins: [
-									...(existingOptions.mdastPlugins ?? []),
-									satteriPlugin(options),
-								],
-							}),
+							processor: {
+								options: { mdastPlugins: [satteriPlugin(options)] },
+							},
 						},
 					});
 					logger?.info("Registered Sätteri mdast plugin");
@@ -371,27 +355,11 @@ export default function lilypond(
 				}
 
 				if (existingProcessor?.name === "unified") {
-					const { unified, isUnifiedProcessor } = await import(
-						"@astrojs/markdown-remark"
-					);
-
-					if (!isUnifiedProcessor(existingProcessor)) {
-						throw new Error(
-							"astro-lilypond: the active markdown processor reports the name " +
-								'"unified" but failed the isUnifiedProcessor check.',
-						);
-					}
-
-					const existingOptions = existingProcessor.options ?? {};
 					updateConfig({
 						markdown: {
-							processor: unified({
-								...existingOptions,
-								remarkPlugins: [
-									...(existingOptions.remarkPlugins ?? []),
-									[remarkPlugin, options],
-								],
-							}),
+							processor: {
+								options: { remarkPlugins: [[remarkPlugin, options]] },
+							},
 						},
 					});
 					logger?.info("Registered unified remark plugin");

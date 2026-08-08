@@ -125,11 +125,6 @@ describe("lilypond integration", () => {
 	});
 
 	it("resolves the lilypond binary with the configured autoInstall.version, defaulting autoInstall to true", async () => {
-		vi.doMock("@astrojs/markdown-satteri", () => ({
-			satteri: vi.fn((o: unknown) => ({ name: "satteri", options: o })),
-			isSatteriProcessor: vi.fn(() => true),
-		}));
-
 		const integration = lilypond({ autoInstall: { version: "2.24.4" } });
 		await integration.hooks["astro:config:setup"]?.({
 			command: "build",
@@ -139,7 +134,6 @@ describe("lilypond integration", () => {
 			updateConfig: vi.fn(),
 			logger: { info: vi.fn(), warn: vi.fn() },
 		} as never);
-		vi.doUnmock("@astrojs/markdown-satteri");
 
 		expect(mockResolveLilypondBinary).toHaveBeenCalledWith(
 			expect.objectContaining({ version: "2.24.4", autoInstall: true }),
@@ -147,11 +141,6 @@ describe("lilypond integration", () => {
 	});
 
 	it("does not derive the download version from defaults.version", async () => {
-		vi.doMock("@astrojs/markdown-satteri", () => ({
-			satteri: vi.fn((o: unknown) => ({ name: "satteri", options: o })),
-			isSatteriProcessor: vi.fn(() => true),
-		}));
-
 		const integration = lilypond({ defaults: { version: "2.24.4" } });
 		await integration.hooks["astro:config:setup"]?.({
 			command: "build",
@@ -161,7 +150,6 @@ describe("lilypond integration", () => {
 			updateConfig: vi.fn(),
 			logger: { info: vi.fn(), warn: vi.fn() },
 		} as never);
-		vi.doUnmock("@astrojs/markdown-satteri");
 
 		expect(mockResolveLilypondBinary).toHaveBeenCalledWith(
 			expect.objectContaining({ version: undefined }),
@@ -169,11 +157,6 @@ describe("lilypond integration", () => {
 	});
 
 	it("respects autoInstall: false", async () => {
-		vi.doMock("@astrojs/markdown-satteri", () => ({
-			satteri: vi.fn((o: unknown) => ({ name: "satteri", options: o })),
-			isSatteriProcessor: vi.fn(() => true),
-		}));
-
 		const integration = lilypond({ autoInstall: false });
 		await integration.hooks["astro:config:setup"]?.({
 			command: "build",
@@ -183,7 +166,6 @@ describe("lilypond integration", () => {
 			updateConfig: vi.fn(),
 			logger: { info: vi.fn(), warn: vi.fn() },
 		} as never);
-		vi.doUnmock("@astrojs/markdown-satteri");
 
 		expect(mockResolveLilypondBinary).toHaveBeenCalledWith(
 			expect.objectContaining({ autoInstall: false }),
@@ -191,11 +173,6 @@ describe("lilypond integration", () => {
 	});
 
 	it("forwards resolveLilypondBinary's log/warn callbacks to the integration logger", async () => {
-		vi.doMock("@astrojs/markdown-satteri", () => ({
-			satteri: vi.fn((o: unknown) => ({ name: "satteri", options: o })),
-			isSatteriProcessor: vi.fn(() => true),
-		}));
-
 		const logger = { info: vi.fn(), warn: vi.fn() };
 		const integration = lilypond();
 		await integration.hooks["astro:config:setup"]?.({
@@ -206,7 +183,6 @@ describe("lilypond integration", () => {
 			updateConfig: vi.fn(),
 			logger,
 		} as never);
-		vi.doUnmock("@astrojs/markdown-satteri");
 
 		const { log, warn } = mockResolveLilypondBinary.mock.calls[0][0] as {
 			log: (message: string) => void;
@@ -222,10 +198,6 @@ describe("lilypond integration", () => {
 		mockResolveLilypondBinary.mockResolvedValue(
 			"/cache/lilypond-2.26.0/bin/lilypond",
 		);
-		vi.doMock("@astrojs/markdown-satteri", () => ({
-			satteri: vi.fn((o: unknown) => ({ name: "satteri", options: o })),
-			isSatteriProcessor: vi.fn(() => true),
-		}));
 
 		const integration = lilypond();
 		await integration.hooks["astro:config:setup"]?.({
@@ -236,7 +208,6 @@ describe("lilypond integration", () => {
 			updateConfig: vi.fn(),
 			logger: { info: vi.fn(), warn: vi.fn() },
 		} as never);
-		vi.doUnmock("@astrojs/markdown-satteri");
 
 		expect(getLilypondState().binaryPath).toBe(
 			"/cache/lilypond-2.26.0/bin/lilypond",
@@ -244,11 +215,6 @@ describe("lilypond integration", () => {
 	});
 
 	it("resolves configured includePaths against config.root and stores them in state", async () => {
-		vi.doMock("@astrojs/markdown-satteri", () => ({
-			satteri: vi.fn((o: unknown) => ({ name: "satteri", options: o })),
-			isSatteriProcessor: vi.fn(() => true),
-		}));
-
 		const integration = lilypond({
 			includePaths: ["./src/snippets", "/absolute/snippets"],
 		});
@@ -260,7 +226,6 @@ describe("lilypond integration", () => {
 			updateConfig: vi.fn(),
 			logger: { info: vi.fn(), warn: vi.fn() },
 		} as never);
-		vi.doUnmock("@astrojs/markdown-satteri");
 
 		expect(getLilypondState().includePaths).toEqual([
 			"/project/src/snippets",
@@ -269,11 +234,6 @@ describe("lilypond integration", () => {
 	});
 
 	it("defaults state.includePaths to [] when no includePaths are configured", async () => {
-		vi.doMock("@astrojs/markdown-satteri", () => ({
-			satteri: vi.fn((o: unknown) => ({ name: "satteri", options: o })),
-			isSatteriProcessor: vi.fn(() => true),
-		}));
-
 		const integration = lilypond();
 		await integration.hooks["astro:config:setup"]?.({
 			command: "build",
@@ -283,7 +243,6 @@ describe("lilypond integration", () => {
 			updateConfig: vi.fn(),
 			logger: { info: vi.fn(), warn: vi.fn() },
 		} as never);
-		vi.doUnmock("@astrojs/markdown-satteri");
 
 		expect(getLilypondState().includePaths).toEqual([]);
 	});
@@ -296,11 +255,6 @@ describe("lilypond integration", () => {
 	] as const)(
 		'command: "%s" sets state.isDev to %s',
 		async (command, expectedIsDev) => {
-			vi.doMock("@astrojs/markdown-satteri", () => ({
-				satteri: vi.fn((o: unknown) => ({ name: "satteri", options: o })),
-				isSatteriProcessor: vi.fn(() => true),
-			}));
-
 			const integration = lilypond();
 			await integration.hooks["astro:config:setup"]?.({
 				command,
@@ -310,18 +264,12 @@ describe("lilypond integration", () => {
 				updateConfig: vi.fn(),
 				logger: { info: vi.fn(), warn: vi.fn() },
 			} as never);
-			vi.doUnmock("@astrojs/markdown-satteri");
 
 			expect(getLilypondState().isDev).toBe(expectedIsDev);
 		},
 	);
 
 	it("registers the astro-emit-asset integration and the .ly vite plugin", async () => {
-		vi.doMock("@astrojs/markdown-satteri", () => ({
-			satteri: vi.fn((o: unknown) => ({ name: "satteri", options: o })),
-			isSatteriProcessor: vi.fn(() => true),
-		}));
-
 		const updateConfig = vi.fn();
 		const integration = lilypond();
 		await integration.hooks["astro:config:setup"]?.({
@@ -332,7 +280,6 @@ describe("lilypond integration", () => {
 			updateConfig,
 			logger: { info: vi.fn(), warn: vi.fn() },
 		} as never);
-		vi.doUnmock("@astrojs/markdown-satteri");
 
 		const firstCall = updateConfig.mock.calls[0][0] as {
 			integrations: unknown[];
@@ -345,10 +292,6 @@ describe("lilypond integration", () => {
 	describe("vite plugin transform", () => {
 		async function getVitePlugin(opts = {}) {
 			const updateConfig = vi.fn();
-			vi.doMock("@astrojs/markdown-satteri", () => ({
-				satteri: vi.fn((o: unknown) => ({ name: "satteri", options: o })),
-				isSatteriProcessor: vi.fn(() => true),
-			}));
 			const integration = lilypond(opts);
 			await integration.hooks["astro:config:setup"]?.({
 				command: "build",
@@ -358,7 +301,6 @@ describe("lilypond integration", () => {
 				updateConfig,
 				logger: { info: vi.fn(), warn: vi.fn() },
 			} as never);
-			vi.doUnmock("@astrojs/markdown-satteri");
 			const { plugins } = (
 				updateConfig.mock.calls[0][0] as { vite: { plugins: unknown[] } }
 			).vite;
@@ -486,16 +428,8 @@ describe("lilypond integration", () => {
 	});
 
 	it("registers the Sätteri mdast plugin when processor is satteri", async () => {
-		const { updateConfig, logger }: SetupHookArgs = {
-			config: baseConfig(),
-			updateConfig: vi.fn(),
-			logger: { info: vi.fn(), warn: vi.fn() },
-		};
-
-		vi.doMock("@astrojs/markdown-satteri", () => ({
-			satteri: vi.fn((opts: unknown) => ({ name: "satteri", options: opts })),
-			isSatteriProcessor: vi.fn(() => true),
-		}));
+		const updateConfig = vi.fn();
+		const logger = { info: vi.fn(), warn: vi.fn() };
 
 		const config = baseConfig({
 			markdown: { processor: { name: "satteri", options: {} } },
@@ -510,54 +444,18 @@ describe("lilypond integration", () => {
 		} as never);
 
 		expect(updateConfig).toHaveBeenCalledTimes(2);
-		// First call registers Vite plugins; second call sets the markdown processor.
-		expect(
-			(updateConfig.mock.calls[1][0] as { markdown?: { processor?: unknown } })
-				.markdown?.processor,
-		).toBeDefined();
-
-		vi.doUnmock("@astrojs/markdown-satteri");
-	});
-
-	it("defaults to an empty options object when the satteri processor reports none", async () => {
-		const updateConfig = vi.fn();
-		const logger = { info: vi.fn(), warn: vi.fn() };
-
-		vi.doMock("@astrojs/markdown-satteri", () => ({
-			satteri: vi.fn((opts: unknown) => ({ name: "satteri", options: opts })),
-			isSatteriProcessor: vi.fn(() => true),
-		}));
-
-		const config = baseConfig({
-			markdown: { processor: { name: "satteri" } },
-		});
-
-		const integration = lilypond();
-		await integration.hooks["astro:config:setup"]?.({
-			command: "build",
-			config,
-			updateConfig,
-			logger,
-		} as never);
-
+		// First call registers Vite plugins; second call extends the processor.
 		const { mdastPlugins } = (
 			updateConfig.mock.calls[1][0] as {
 				markdown: { processor: { options: { mdastPlugins: unknown[] } } };
 			}
 		).markdown.processor.options;
 		expect(mdastPlugins).toHaveLength(1);
-
-		vi.doUnmock("@astrojs/markdown-satteri");
 	});
 
-	it("registers remark plugin when processor is unified", async () => {
+	it("registers the unified remark plugin when processor is unified", async () => {
 		const updateConfig = vi.fn();
 		const logger = { info: vi.fn(), warn: vi.fn() };
-
-		vi.doMock("@astrojs/markdown-remark", () => ({
-			unified: vi.fn((opts: unknown) => ({ name: "unified", options: opts })),
-			isUnifiedProcessor: vi.fn(() => true),
-		}));
 
 		const config = baseConfig({
 			markdown: { processor: { name: "unified", options: {} } },
@@ -572,98 +470,12 @@ describe("lilypond integration", () => {
 		} as never);
 
 		expect(updateConfig).toHaveBeenCalledTimes(2);
-		// First call registers Vite plugins; second call sets the markdown processor.
-		const { remarkPlugins } = (
-			updateConfig.mock.calls[1][0] as {
-				markdown: { processor: { options: { remarkPlugins: unknown[] } } };
-			}
-		).markdown.processor.options;
-		expect(remarkPlugins.length).toBeGreaterThan(0);
-
-		vi.doUnmock("@astrojs/markdown-remark");
-	});
-
-	it("defaults to an empty options object when the unified processor reports none", async () => {
-		const updateConfig = vi.fn();
-		const logger = { info: vi.fn(), warn: vi.fn() };
-
-		vi.doMock("@astrojs/markdown-remark", () => ({
-			unified: vi.fn((opts: unknown) => ({ name: "unified", options: opts })),
-			isUnifiedProcessor: vi.fn(() => true),
-		}));
-
-		const config = baseConfig({
-			markdown: { processor: { name: "unified" } },
-		});
-
-		const integration = lilypond();
-		await integration.hooks["astro:config:setup"]?.({
-			command: "build",
-			config,
-			updateConfig,
-			logger,
-		} as never);
-
 		const { remarkPlugins } = (
 			updateConfig.mock.calls[1][0] as {
 				markdown: { processor: { options: { remarkPlugins: unknown[] } } };
 			}
 		).markdown.processor.options;
 		expect(remarkPlugins).toHaveLength(1);
-
-		vi.doUnmock("@astrojs/markdown-remark");
-	});
-
-	it('throws when the processor reports name "satteri" but fails the isSatteriProcessor check', async () => {
-		const updateConfig = vi.fn();
-		const logger = { info: vi.fn(), warn: vi.fn() };
-
-		vi.doMock("@astrojs/markdown-satteri", () => ({
-			satteri: vi.fn((opts: unknown) => ({ name: "satteri", options: opts })),
-			isSatteriProcessor: vi.fn(() => false),
-		}));
-
-		const config = baseConfig({
-			markdown: { processor: { name: "satteri", options: {} } },
-		});
-
-		const integration = lilypond();
-		await expect(
-			integration.hooks["astro:config:setup"]?.({
-				command: "build",
-				config,
-				updateConfig,
-				logger,
-			} as never),
-		).rejects.toThrow("failed the isSatteriProcessor check");
-
-		vi.doUnmock("@astrojs/markdown-satteri");
-	});
-
-	it('throws when the processor reports name "unified" but fails the isUnifiedProcessor check', async () => {
-		const updateConfig = vi.fn();
-		const logger = { info: vi.fn(), warn: vi.fn() };
-
-		vi.doMock("@astrojs/markdown-remark", () => ({
-			unified: vi.fn((opts: unknown) => ({ name: "unified", options: opts })),
-			isUnifiedProcessor: vi.fn(() => false),
-		}));
-
-		const config = baseConfig({
-			markdown: { processor: { name: "unified", options: {} } },
-		});
-
-		const integration = lilypond();
-		await expect(
-			integration.hooks["astro:config:setup"]?.({
-				command: "build",
-				config,
-				updateConfig,
-				logger,
-			} as never),
-		).rejects.toThrow("failed the isUnifiedProcessor check");
-
-		vi.doUnmock("@astrojs/markdown-remark");
 	});
 
 	it("throws when no processor-based config is present", async () => {
