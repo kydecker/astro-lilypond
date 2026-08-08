@@ -51,7 +51,13 @@
 		"utils"
 	],
 	"peerDependencies": {
-		"astro": ">=7.0.0"
+		"astro": ">=7.0.0",
+		"@astrojs/markdown-remark": ">=7.0.0"
+	},
+	"peerDependenciesMeta": {
+		"@astrojs/markdown-remark": {
+			"optional": true
+		}
 	},
 	"dependencies": {
 		"astro-emit-asset": "^0.1.4",

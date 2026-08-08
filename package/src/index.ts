@@ -270,6 +270,18 @@ export interface LilypondOptions extends PluginOptions {
 	includePaths?: string[];
 }
 
+function injectMarkdownPlugin(
+	processor: { options: object },
+	key: string,
+	plugin: unknown,
+): void {
+	if (!processor.options) {
+		processor.options = {};
+	}
+	const options = processor.options as Record<string, unknown[]>;
+	options[key] = [...(options[key] ?? []), plugin];
+}
+
 function lyFilePlugin(options: PluginOptions): Plugin {
 	return {
 		name: "vite-plugin-astro-lilypond-ly",
@@ -343,57 +355,22 @@ export default function lilypond(
 				const existingProcessor = config.markdown?.processor;
 
 				if (existingProcessor?.name === "satteri") {
-					const { satteri, isSatteriProcessor } = await import(
-						"@astrojs/markdown-satteri"
+					injectMarkdownPlugin(
+						existingProcessor,
+						"mdastPlugins",
+						satteriPlugin(options),
 					);
-
-					if (!isSatteriProcessor(existingProcessor)) {
-						throw new Error(
-							"astro-lilypond: the active markdown processor reports the name " +
-								'"satteri" but failed the isSatteriProcessor check.',
-						);
-					}
-
-					const existingOptions = existingProcessor.options ?? {};
-					updateConfig({
-						markdown: {
-							processor: satteri({
-								...existingOptions,
-								mdastPlugins: [
-									...(existingOptions.mdastPlugins ?? []),
-									satteriPlugin(options),
-								],
-							}),
-						},
-					});
+					updateConfig({ markdown: { processor: existingProcessor } });
 					logger?.info("Registered Sätteri mdast plugin");
 					return;
 				}
 
 				if (existingProcessor?.name === "unified") {
-					const { unified, isUnifiedProcessor } = await import(
-						"@astrojs/markdown-remark"
-					);
-
-					if (!isUnifiedProcessor(existingProcessor)) {
-						throw new Error(
-							"astro-lilypond: the active markdown processor reports the name " +
-								'"unified" but failed the isUnifiedProcessor check.',
-						);
-					}
-
-					const existingOptions = existingProcessor.options ?? {};
-					updateConfig({
-						markdown: {
-							processor: unified({
-								...existingOptions,
-								remarkPlugins: [
-									...(existingOptions.remarkPlugins ?? []),
-									[remarkPlugin, options],
-								],
-							}),
-						},
-					});
+					injectMarkdownPlugin(existingProcessor, "remarkPlugins", [
+						remarkPlugin,
+						options,
+					]);
+					updateConfig({ markdown: { processor: existingProcessor } });
 					logger?.info("Registered unified remark plugin");
 					return;
 				}
