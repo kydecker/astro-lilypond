@@ -478,6 +478,30 @@ describe("lilypond integration", () => {
 		expect(remarkPlugins).toHaveLength(1);
 	});
 
+	it("initializes options when the processor reports none", async () => {
+		const updateConfig = vi.fn();
+		const logger = { info: vi.fn(), warn: vi.fn() };
+
+		const config = baseConfig({
+			markdown: { processor: { name: "satteri" } },
+		});
+
+		const integration = lilypond();
+		await integration.hooks["astro:config:setup"]?.({
+			command: "build",
+			config,
+			updateConfig,
+			logger,
+		} as never);
+
+		const { mdastPlugins } = (
+			updateConfig.mock.calls[1][0] as {
+				markdown: { processor: { options: { mdastPlugins: unknown[] } } };
+			}
+		).markdown.processor.options;
+		expect(mdastPlugins).toHaveLength(1);
+	});
+
 	it("throws when no processor-based config is present", async () => {
 		const updateConfig = vi.fn();
 		const logger = { info: vi.fn(), warn: vi.fn() };
