@@ -310,6 +310,40 @@ describe("satteriPlugin", () => {
 		});
 	});
 
+	describe("image loading hints from fence meta", () => {
+		it("forwards loading onto the rendered <img>", async () => {
+			const plugin = satteriPlugin(BASE_OPTIONS);
+			const node: Code = {
+				type: "code",
+				lang: "lilypond",
+				meta: 'loading="lazy"',
+				value: "\\score { }",
+			};
+
+			const result = await plugin.code?.(node, {} as never);
+
+			expect(rawHtml(result)).toBe(
+				'<img data-lilypond-image src="/_lilypond/score.svg" alt loading="lazy">',
+			);
+		});
+
+		it('priority="true" sets loading=eager, decoding=sync, fetchpriority=high', async () => {
+			const plugin = satteriPlugin(BASE_OPTIONS);
+			const node: Code = {
+				type: "code",
+				lang: "lilypond",
+				meta: 'priority="true"',
+				value: "\\score { }",
+			};
+
+			const result = await plugin.code?.(node, {} as never);
+
+			expect(rawHtml(result)).toBe(
+				'<img data-lilypond-image src="/_lilypond/score.svg" alt loading="eager" decoding="sync" fetchpriority="high">',
+			);
+		});
+	});
+
 	describe("alt text", () => {
 		it("derives alt text from \\header title/composer when there's no meta override", async () => {
 			const plugin = satteriPlugin(BASE_OPTIONS);

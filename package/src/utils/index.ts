@@ -17,6 +17,7 @@ export { isLilypondLang } from "./isLilypondLang.js";
 export type { LilypondMetadata } from "./lilypondMetadata.js";
 export { toLilypondMetadata } from "./lilypondMetadata.js";
 export { lyTypeDeclarationsFor } from "./lyTypeDeclarationsFor.js";
+export { parseFenceImageHints } from "./parseFenceImageHints.js";
 export { parseFenceMeta } from "./parseFenceMeta.js";
 export type { LyHeaderFields } from "./parseLyHeader.js";
 export {

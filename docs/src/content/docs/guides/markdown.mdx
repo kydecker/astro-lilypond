@@ -31,3 +31,25 @@ This produces `alt="Sonata No. 14, by Ludwig van Beethoven"`. If only one of `ti
 Override the automatic alt text by setting `alt="..."` after the language tag in your fenced code block:
 
 <FencedLilypond code={altOverrideExample} meta='alt="Moonlight Sonata"' />
+
+## Image loading hints
+
+Score images are plain `<img>` tags, so the browser fetches them eagerly by default. You can control that with the standard `loading`, `decoding`, and `fetchpriority` attributes, set the same way as [`alt`](#alt-text) — as `key="value"` pairs after the language tag.
+
+Mark an off-screen score lazy so it doesn't fetch until it's about to scroll into view:
+
+<FencedLilypond
+	code={headerExample}
+	meta='loading="lazy" decoding="async"'
+	title="A score later in a long list"
+/>
+
+Prioritise an above-the-fold score on the critical path. `priority="true"` is a shorthand for `loading="eager" decoding="sync" fetchpriority="high"` — the same defaults Astro's `<Image>` component derives from its `priority` prop. Pass any of the three explicitly to override part of it.
+
+<FencedLilypond
+	code={headerExample}
+	meta='priority="true"'
+	title="An above-the-fold score"
+/>
+
+The hints apply to every page in a multi-page score. Unrecognised values are ignored, so a typo falls back to the default rather than writing a bad attribute onto the `<img>`.
