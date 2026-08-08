@@ -1,5 +1,11 @@
 # astro-lilypond
 
+## 1.1.2
+
+### Patch Changes
+
+- 667c8b2: Fixes attempts to import a missing `@astrojs/markdown-remark` package even when Remark is unused.
+
 ## 1.1.1
 
 ### Patch Changes
