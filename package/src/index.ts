@@ -270,6 +270,18 @@ export interface LilypondOptions extends PluginOptions {
 	includePaths?: string[];
 }
 
+function injectMarkdownPlugin(
+	processor: { options: object },
+	key: string,
+	plugin: unknown,
+): void {
+	if (!processor.options) {
+		processor.options = {};
+	}
+	const options = processor.options as Record<string, unknown[]>;
+	options[key] = [...(options[key] ?? []), plugin];
+}
+
 function lyFilePlugin(options: PluginOptions): Plugin {
 	return {
 		name: "vite-plugin-astro-lilypond-ly",
@@ -343,25 +355,22 @@ export default function lilypond(
 				const existingProcessor = config.markdown?.processor;
 
 				if (existingProcessor?.name === "satteri") {
-					updateConfig({
-						markdown: {
-							processor: {
-								options: { mdastPlugins: [satteriPlugin(options)] },
-							},
-						},
-					});
+					injectMarkdownPlugin(
+						existingProcessor,
+						"mdastPlugins",
+						satteriPlugin(options),
+					);
+					updateConfig({ markdown: { processor: existingProcessor } });
 					logger?.info("Registered Sätteri mdast plugin");
 					return;
 				}
 
 				if (existingProcessor?.name === "unified") {
-					updateConfig({
-						markdown: {
-							processor: {
-								options: { remarkPlugins: [[remarkPlugin, options]] },
-							},
-						},
-					});
+					injectMarkdownPlugin(existingProcessor, "remarkPlugins", [
+						remarkPlugin,
+						options,
+					]);
+					updateConfig({ markdown: { processor: existingProcessor } });
 					logger?.info("Registered unified remark plugin");
 					return;
 				}
