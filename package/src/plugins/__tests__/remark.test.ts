@@ -368,6 +368,115 @@ describe("remarkLilypondPlugin", () => {
 		});
 	});
 
+	describe("image loading hints from fence meta", () => {
+		it("forwards loading onto the rendered <img>", async () => {
+			const tree = makeTree([
+				{
+					type: "code",
+					lang: "lilypond",
+					meta: 'loading="lazy"',
+					value: "\\score { }",
+				} as Code,
+			]);
+
+			await runPlugin(tree);
+
+			expect((tree.children[0] as Html).value).toBe(
+				'<img data-lilypond-image src="/_lilypond/test.svg" alt loading="lazy">',
+			);
+		});
+
+		it("keeps loading/decoding/fetchpriority alongside an alt override", async () => {
+			const tree = makeTree([
+				{
+					type: "code",
+					lang: "lilypond",
+					meta: 'alt="Sonata" loading="eager" decoding="async" fetchpriority="high"',
+					value: "\\score { }",
+				} as Code,
+			]);
+
+			await runPlugin(tree);
+
+			expect((tree.children[0] as Html).value).toBe(
+				'<img data-lilypond-image src="/_lilypond/test.svg" alt="Sonata" loading="eager" decoding="async" fetchpriority="high">',
+			);
+		});
+
+		it('priority="true" sets loading=eager, decoding=sync, fetchpriority=high', async () => {
+			const tree = makeTree([
+				{
+					type: "code",
+					lang: "lilypond",
+					meta: 'priority="true"',
+					value: "\\score { }",
+				} as Code,
+			]);
+
+			await runPlugin(tree);
+
+			expect((tree.children[0] as Html).value).toBe(
+				'<img data-lilypond-image src="/_lilypond/test.svg" alt loading="eager" decoding="sync" fetchpriority="high">',
+			);
+		});
+
+		it('lets an explicit hint override priority="true" for that attribute', async () => {
+			const tree = makeTree([
+				{
+					type: "code",
+					lang: "lilypond",
+					meta: 'priority="true" loading="lazy"',
+					value: "\\score { }",
+				} as Code,
+			]);
+
+			await runPlugin(tree);
+
+			expect((tree.children[0] as Html).value).toContain(
+				'alt loading="lazy" decoding="sync" fetchpriority="high"',
+			);
+		});
+
+		it("applies the same hints to every <img> in a multi-page group", async () => {
+			mockRender.mockResolvedValue([
+				Buffer.from("page1"),
+				Buffer.from("page2"),
+			]);
+			const tree = makeTree([
+				{
+					type: "code",
+					lang: "lilypond",
+					meta: 'priority="true"',
+					value: "\\score { }",
+				} as Code,
+			]);
+
+			await runPlugin(tree);
+
+			const html = (tree.children[0] as Html).value;
+			expect(html.match(/loading="eager"/g)).toHaveLength(2);
+			expect(html.match(/decoding="sync"/g)).toHaveLength(2);
+			expect(html.match(/fetchpriority="high"/g)).toHaveLength(2);
+		});
+
+		it("ignores an unrecognised meta value and renders the default img", async () => {
+			const tree = makeTree([
+				{
+					type: "code",
+					lang: "lilypond",
+					meta: 'loading="garbage"',
+					value: "\\score { }",
+				} as Code,
+			]);
+
+			await runPlugin(tree);
+
+			expect((tree.children[0] as Html).value).toBe(
+				'<img data-lilypond-image src="/_lilypond/test.svg" alt>',
+			);
+		});
+	});
+
 	describe("alt text", () => {
 		it("derives alt text from \\header title/composer when there's no meta override", async () => {
 			const tree = makeTree([
