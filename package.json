@@ -19,7 +19,7 @@
 		"@changesets/cli": "^2.31.0",
 		"nano-staged": "^1.0.2",
 		"simple-git-hooks": "^2.13.1",
-		"wrangler": "^4.110.0"
+		"wrangler": "^4.119.0"
 	},
 	"simple-git-hooks": {
 		"pre-commit": "./node_modules/.bin/nano-staged"
