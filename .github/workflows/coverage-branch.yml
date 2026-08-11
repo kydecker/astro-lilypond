@@ -23,19 +23,19 @@ jobs:
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v6.0.10
+        uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
         with:
           run_install: false
 
       - name: Setup Node
-        uses: actions/setup-node@v7.0.0
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: "24.x"
+          node-version: "24.19.0"
           cache: "pnpm"
 
       - name: Install dependencies
@@ -45,7 +45,7 @@ jobs:
         run: pnpm --filter astro-lilypond test:coverage
 
       - name: Upload coverage
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: coverage-branch
           path: package/coverage
@@ -61,19 +61,19 @@ jobs:
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
       - name: Download coverage (branch)
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: coverage-branch
           path: coverage
 
       - name: Restore coverage (main)
         id: download-main
-        uses: actions/cache/restore@v6.1.0
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: package/coverage
           key: coverage-main-${{ github.sha }}
@@ -85,7 +85,7 @@ jobs:
 
       - name: Report coverage and comparison
         if: always() && hashFiles('coverage-main/coverage-summary.json') != ''
-        uses: davelosert/vitest-coverage-report-action@v2.12.2
+        uses: davelosert/vitest-coverage-report-action@8b157684c6a6b259b97d45e72b44242865c0f6a5 # v2.12.2
         with:
           vite-config-path: package/vitest.config.ts
           json-summary-compare-path: coverage-main/coverage-summary.json
@@ -94,6 +94,6 @@ jobs:
         # if coverage from main is not available
       - name: Report coverage
         if: always() && hashFiles('coverage-main/coverage-summary.json') == ''
-        uses: davelosert/vitest-coverage-report-action@v2.12.2
+        uses: davelosert/vitest-coverage-report-action@8b157684c6a6b259b97d45e72b44242865c0f6a5 # v2.12.2
         with:
           vite-config-path: package/vitest.config.ts
