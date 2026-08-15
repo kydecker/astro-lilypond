@@ -26,7 +26,7 @@ export default defineConfig({
 		...(dev ? { testMatch: DEV_ERRORS_SPEC } : { testIgnore: DEV_ERRORS_SPEC }),
 	})),
 	webServer: SITES.map(({ name, port, dev }) => ({
-		command: `pnpm exec astro ${dev ? "dev" : "preview"} --config astro.config.${name}.mjs --port ${port}`,
+		command: `pnpm exec astro ${dev ? "dev" : "preview"} --ignore-lock --config astro.config.${name}.mjs --port ${port}`,
 		url: `http://localhost:${port}`,
 		reuseExistingServer: !process.env.CI,
 		timeout: 30_000,
