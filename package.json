@@ -15,7 +15,7 @@
 		"check:fix": "biome check --write"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^2.5.7",
+		"@biomejs/biome": "^2.5.8",
 		"@changesets/cli": "^3.0.0",
 		"nano-staged": "^1.0.2",
 		"simple-git-hooks": "^2.13.1",
