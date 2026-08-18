@@ -651,6 +651,69 @@ describe("getScore()", () => {
 		expect(html).toContain('style="width: 50%"');
 	});
 
+	it("forwards loading through Score onto the rendered <img>", async () => {
+		mockEmitLilypondAsset.mockResolvedValueOnce([{ src: "/_astro/a.svg" }]);
+		const { Score } = await publicGetScore(SCORE);
+		const container = await AstroContainer.create();
+		const html = await container.renderToString(Score, {
+			props: { loading: "lazy" },
+		});
+		expect(html).toContain('loading="lazy"');
+		expect(html).toContain("data-lilypond-image");
+	});
+
+	it("forwards decoding through Score onto the rendered <img>", async () => {
+		mockEmitLilypondAsset.mockResolvedValueOnce([{ src: "/_astro/a.svg" }]);
+		const { Score } = await publicGetScore(SCORE);
+		const container = await AstroContainer.create();
+		const html = await container.renderToString(Score, {
+			props: { decoding: "async" },
+		});
+		expect(html).toContain('decoding="async"');
+	});
+
+	it("forwards fetchpriority through Score onto the rendered <img>", async () => {
+		mockEmitLilypondAsset.mockResolvedValueOnce([{ src: "/_astro/a.svg" }]);
+		const { Score } = await publicGetScore(SCORE);
+		const container = await AstroContainer.create();
+		const html = await container.renderToString(Score, {
+			props: { fetchpriority: "high" },
+		});
+		expect(html).toContain('fetchpriority="high"');
+	});
+
+	it("priority=true sets loading/decoding/fetchpriority for an above-the-fold score", async () => {
+		mockEmitLilypondAsset.mockResolvedValueOnce([{ src: "/_astro/a.svg" }]);
+		const { Score } = await publicGetScore(SCORE);
+		const container = await AstroContainer.create();
+		const html = await container.renderToString(Score, {
+			props: { priority: true },
+		});
+		expect(html).toContain('loading="eager"');
+		expect(html).toContain('decoding="sync"');
+		expect(html).toContain('fetchpriority="high"');
+	});
+
+	it("forwards loading/decoding/fetchpriority onto every <img> in a multi-page group", async () => {
+		mockEmitLilypondAsset.mockResolvedValueOnce([
+			{ src: "/_astro/a.svg" },
+			{ src: "/_astro/b.svg" },
+		]);
+		const { Score } = await publicGetScore(SCORE);
+		const container = await AstroContainer.create();
+		const html = await container.renderToString(Score, {
+			props: {
+				loading: "lazy",
+				decoding: "async",
+				fetchpriority: "low",
+			},
+		});
+		expect(html).toContain("data-lilypond-group");
+		expect(html.match(/loading="lazy"/g)).toHaveLength(2);
+		expect(html.match(/decoding="async"/g)).toHaveLength(2);
+		expect(html.match(/fetchpriority="low"/g)).toHaveLength(2);
+	});
+
 	it("renders multiple pages as an <ol data-lilypond-group> of <li><img>s", async () => {
 		mockEmitLilypondAsset.mockResolvedValueOnce([
 			{ src: "/_astro/a.svg" },
@@ -822,6 +885,34 @@ describe("Score component", () => {
 		});
 		expect(html).toContain('class="extra"');
 		expect(html).toContain('style="width: 50%"');
+	});
+
+	it("forwards loading/decoding/fetchpriority from <Score /> onto the rendered <img>", async () => {
+		mockEmitLilypondAsset.mockResolvedValueOnce([{ src: "/_astro/a.svg" }]);
+		const container = await AstroContainer.create();
+		const html = await container.renderToString(PublicScore, {
+			props: {
+				content: SCORE,
+				loading: "lazy",
+				decoding: "async",
+				fetchpriority: "high",
+			},
+		});
+		expect(html).toContain('loading="lazy"');
+		expect(html).toContain('decoding="async"');
+		expect(html).toContain('fetchpriority="high"');
+		expect(html).toContain("data-lilypond-image");
+	});
+
+	it("priority=true on <Score /> sets loading/decoding/fetchpriority for an above-the-fold score", async () => {
+		mockEmitLilypondAsset.mockResolvedValueOnce([{ src: "/_astro/a.svg" }]);
+		const container = await AstroContainer.create();
+		const html = await container.renderToString(PublicScore, {
+			props: { content: SCORE, priority: true },
+		});
+		expect(html).toContain('loading="eager"');
+		expect(html).toContain('decoding="sync"');
+		expect(html).toContain('fetchpriority="high"');
 	});
 
 	it("renders multiple pages as an <ol data-lilypond-group> of <li><img>s", async () => {

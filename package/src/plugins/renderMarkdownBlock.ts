@@ -2,6 +2,7 @@ import { render } from "../render.js";
 import {
 	altTextForBlock,
 	emitLilypondAsset,
+	parseFenceImageHints,
 	prependVersion,
 	renderedErrorHtml,
 	renderedHtml,
@@ -58,7 +59,7 @@ export async function renderMarkdownBlock(
 					logger,
 				}),
 		});
-		return renderedHtml(pages, alt);
+		return renderedHtml(pages, alt, parseFenceImageHints(block.meta));
 	} catch (err) {
 		if (!options.isDev) throw err;
 		return renderedErrorHtml(err, title);
