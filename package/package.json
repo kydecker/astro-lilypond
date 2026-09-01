@@ -70,7 +70,7 @@
 		"@types/node": "^26.2.0",
 		"@vitest/coverage-v8": "^4.1.11",
 		"astro": "^7.1.6",
-		"satteri": "^0.9.5",
+		"satteri": "^0.10.5",
 		"typescript": "^7.0.2",
 		"unified": "^11.0.5",
 		"vite": "^8.2.1",
