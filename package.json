@@ -18,7 +18,7 @@
 		"@biomejs/biome": "^2.5.8",
 		"@changesets/cli": "^3.0.1",
 		"nano-staged": "^1.0.2",
-		"simple-git-hooks": "^2.13.1",
+		"simple-git-hooks": "^2.14.0",
 		"wrangler": "^4.122.0"
 	},
 	"simple-git-hooks": {
