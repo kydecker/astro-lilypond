@@ -22,6 +22,6 @@
 		"astro-embed": "^0.14.0",
 		"astro-lilypond": "workspace:*",
 		"starlight-theme-flexoki": "^0.2.3",
-		"wrangler": "^4.122.0"
+		"wrangler": "^4.127.1"
 	}
 }
