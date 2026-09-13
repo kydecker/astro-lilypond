@@ -30,6 +30,7 @@ import {
 	lyTypeDeclarationsFor,
 	parseLyHeaderFields,
 	prependVersion,
+	type RenderedHtmlOptions,
 	renderedErrorHtml,
 	renderedHtml,
 	resolveDefaults,
@@ -104,23 +105,14 @@ export interface GetScoreResult {
 	raw: string;
 }
 
-interface ScoreImageProps {
-	pageLimit?: number;
-	class?: string;
-	style?: string;
-	alt?: string;
-}
+type ScoreImageProps = RenderedHtmlOptions;
 
 function createScoreComponent(
 	content: LilypondImageResult,
 ): AstroComponentFactory {
 	return createComponent((_result, props: ScoreImageProps) => {
 		const alt = props.alt ?? content.alt ?? "";
-		const html = renderedHtml(content.pages, alt, {
-			class: props.class,
-			style: props.style,
-			pageLimit: props.pageLimit,
-		});
+		const html = renderedHtml(content.pages, { ...props, alt });
 		return renderTemplate`${unescapeHTML(html)}`;
 	});
 }

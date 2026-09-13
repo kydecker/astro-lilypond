@@ -26,7 +26,7 @@ export {
 } from "./parseLyHeader.js";
 export { prependVersion } from "./prependVersion.js";
 export { renderedErrorHtml } from "./renderedErrorHtml.js";
-export { renderedHtml } from "./renderedHtml.js";
+export { type RenderedHtmlOptions, renderedHtml } from "./renderedHtml.js";
 export { resolveDefaults } from "./resolveDefaults.js";
 export { sourceNameFor } from "./sourceNameFor.js";
 export { titleFor } from "./titleFor.js";

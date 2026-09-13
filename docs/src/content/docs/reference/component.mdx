@@ -17,6 +17,9 @@ interface ScoreProps {
   pageLimit?: number;
   class?: string;
   style?: string;
+  loading?: "lazy" | "eager";
+  decoding?: "async" | "sync" | "auto";
+  fetchpriority?: "high" | "low" | "auto";
   alt?: string;
 }
 ```
@@ -70,6 +73,37 @@ Class name(s) applied to the rendered `<img>` (or `<ol>`, for multi-page scores)
 **Type:** `string`
 
 Inline styles applied directly to the rendered element.
+
+### `loading`
+
+**Type:** `"lazy" | "eager"`
+
+`loading` hint forwarded onto every rendered `<img>`. For more info, see [MDN](https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement/loading).
+
+```astro title="LazyGallery.astro"
+<Score content={sonata} loading="lazy" decoding="async" />
+```
+
+### `decoding`
+
+**Type:** `"async" | "sync" | "auto"`
+
+`decoding` hint forwarded onto every rendered `<img>`. For more info, see [MDN](https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement/decoding).
+
+### `fetchpriority`
+
+**Type:** `"high" | "low" | "auto"`
+
+`fetchpriority` hint forwarded onto every rendered `<img>`. For more info, see [MDN](https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement/fetchPriority).
+
+```astro title="LcpScore.astro"
+<Score
+  content={heroSonata}
+  loading="eager"
+  decoding="async"
+  fetchpriority="high"
+/>
+```
 
 ### `alt`
 

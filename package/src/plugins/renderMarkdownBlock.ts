@@ -58,7 +58,7 @@ export async function renderMarkdownBlock(
 					logger,
 				}),
 		});
-		return renderedHtml(pages, alt);
+		return renderedHtml(pages, { alt });
 	} catch (err) {
 		if (!options.isDev) throw err;
 		return renderedErrorHtml(err, title);
