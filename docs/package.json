@@ -16,12 +16,12 @@
 		"generate-types": "wrangler types"
 	},
 	"dependencies": {
-		"@astrojs/cloudflare": "^14.2.0",
-		"@astrojs/starlight": "^0.41.7",
-		"astro": "^7.2.0",
-		"astro-embed": "^0.13.1",
+		"@astrojs/cloudflare": "^14.3.1",
+		"@astrojs/starlight": "^0.42.0",
+		"astro": "^7.3.2",
+		"astro-embed": "^0.14.0",
 		"astro-lilypond": "workspace:*",
 		"starlight-theme-flexoki": "^0.2.3",
-		"wrangler": "^4.120.1"
+		"wrangler": "^4.127.1"
 	}
 }
