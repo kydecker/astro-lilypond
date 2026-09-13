@@ -134,6 +134,7 @@ export default defineConfig({
 		"/configuration": "/reference/configuration",
 		"/reference/render": "/reference/component",
 	},
+	session: false,
 	devToolbar: {
 		enabled: false,
 	},
