@@ -16,9 +16,9 @@
 		"generate-types": "wrangler types"
 	},
 	"dependencies": {
-		"@astrojs/cloudflare": "^14.3.1",
-		"@astrojs/starlight": "^0.42.0",
-		"astro": "^7.3.2",
+		"@astrojs/cloudflare": "^14.3.3",
+		"@astrojs/starlight": "^0.42.4",
+		"astro": "^7.3.5",
 		"astro-embed": "^0.14.0",
 		"astro-lilypond": "workspace:*",
 		"starlight-theme-flexoki": "^0.3.0",
