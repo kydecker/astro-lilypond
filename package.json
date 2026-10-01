@@ -16,7 +16,7 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.5.13",
-		"@changesets/cli": "^3.0.2",
+		"@changesets/cli": "^3.0.3",
 		"nano-staged": "^1.0.2",
 		"simple-git-hooks": "^2.14.0",
 		"wrangler": "^4.131.1"
