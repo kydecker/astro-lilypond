@@ -19,7 +19,7 @@ import {
 	remarkPlugin,
 	satteriPlugin,
 } from "./plugins/index.js";
-import { type LilypondDefaults, render } from "./render.js";
+import { type Backend, type LilypondDefaults, render } from "./render.js";
 import { getLilypondState, setLilypondState } from "./state.js";
 import {
 	altTextFor,
@@ -74,6 +74,12 @@ export interface GetScoreOptions {
 	 * @default the `defaults.format` configured on the integration ("svg" unless overridden)
 	 */
 	format?: "svg" | "png";
+
+	/**
+	 * Graphics backend for `Score` and `pdf`.
+	 * @default the `defaults.backend` configured on the integration ("cairo" unless overridden)
+	 */
+	backend?: Backend;
 
 	/**
 	 * Crop `Score` to a single tightly-fit image instead of full pages.
@@ -143,9 +149,12 @@ export async function getScore(
 	const {
 		resolution,
 		cropScale,
+		backend: defaultBackend,
 		format: defaultFormat,
 	} = resolveDefaults(state.defaults);
 	const format = options.format ?? defaultFormat;
+	const backend = options.backend ?? defaultBackend;
+	const defaults = { ...state.defaults, backend };
 	const crop = options.crop ?? false;
 
 	try {
@@ -157,6 +166,7 @@ export async function getScore(
 				const pages = await emitLilypondAsset({
 					title: score.assetTitle,
 					format,
+					backend,
 					source: score.source,
 					resolution,
 					crop,
@@ -166,7 +176,7 @@ export async function getScore(
 						render(score.source, {
 							format,
 							crop,
-							defaults: state.defaults,
+							defaults,
 							timeout: state.timeout,
 							binaryPath: state.binaryPath,
 							includePaths: score.includePaths,
@@ -183,12 +193,13 @@ export async function getScore(
 				? emitLilypondPdfAsset({
 						title: score.assetTitle,
 						source: score.source,
+						backend,
 						binaryPath: state.binaryPath,
 						render: () =>
 							render(score.source, {
 								format: "pdf",
 								crop: false,
-								defaults: state.defaults,
+								defaults,
 								timeout: state.timeout,
 								binaryPath: state.binaryPath,
 								includePaths: score.includePaths,
@@ -214,7 +225,7 @@ export async function getScore(
 
 export interface ScoreProps
 	extends ScoreImageProps,
-		Pick<GetScoreOptions, "format" | "crop"> {
+		Pick<GetScoreOptions, "format" | "backend" | "crop"> {
 	/**
 	 * A `LilypondScore` from a `.ly`/`.ily`/`.lilypond` import
 	 * or a `lilypondLoader()` entry.
@@ -229,8 +240,12 @@ export interface ScoreProps
  */
 export const Score: AstroComponentFactory = createComponent(
 	async (result, props: ScoreProps) => {
-		const { content, format, crop, ...imageProps } = props;
-		const { Score: ContentScore } = await getScore(content, { format, crop });
+		const { content, format, backend, crop, ...imageProps } = props;
+		const { Score: ContentScore } = await getScore(content, {
+			format,
+			backend,
+			crop,
+		});
 		return renderTemplate`${renderComponent(result, "Score", ContentScore, imageProps)}`;
 	},
 );

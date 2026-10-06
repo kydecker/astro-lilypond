@@ -31,7 +31,7 @@ export async function renderMarkdownBlock(
 ): Promise<string> {
 	const { logger } = options;
 	const { title } = block;
-	const { version, format, resolution, cropScale } = resolveDefaults(
+	const { version, format, backend, resolution, cropScale } = resolveDefaults(
 		options.defaults,
 	);
 	const source = version ? prependVersion(block.value, version) : block.value;
@@ -41,6 +41,7 @@ export async function renderMarkdownBlock(
 		const pages = await emitLilypondAsset({
 			title,
 			format,
+			backend,
 			source,
 			resolution,
 			crop: true,

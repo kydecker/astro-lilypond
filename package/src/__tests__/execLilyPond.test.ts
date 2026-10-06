@@ -32,6 +32,7 @@ function mockExecFileResult(handler: (cb: ExecFileCb) => void) {
 const baseOptions = {
 	binaryPath: "lilypond",
 	format: "svg" as const,
+	backend: "cairo" as const,
 	crop: true,
 	resolution: 144,
 	includePaths: [] as string[],
@@ -74,15 +75,26 @@ describe("execLilyPond", () => {
 		expect(args).toContain("--format=png");
 	});
 
-	it("always passes no-point-and-click and the cairo backend", async () => {
+	it("always passes no-point-and-click", async () => {
 		await execLilyPond(baseOptions);
 		const [, args] = mockExecFile.mock.calls[0] as unknown as [
 			string,
 			string[],
 		];
 		expect(args).toContain("--define-default=no-point-and-click");
-		expect(args).toContain("--define-default=backend=cairo");
 	});
+
+	it.each(["cairo", "ps"] as const)(
+		"passes backend=%s as a define",
+		async (backend) => {
+			await execLilyPond({ ...baseOptions, backend });
+			const [, args] = mockExecFile.mock.calls[0] as unknown as [
+				string,
+				string[],
+			];
+			expect(args).toContain(`--define-default=backend=${backend}`);
+		},
+	);
 
 	it("suppresses lilypond's progress trace via --loglevel=WARN", async () => {
 		await execLilyPond(baseOptions);
