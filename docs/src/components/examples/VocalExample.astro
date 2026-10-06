@@ -3,7 +3,11 @@ import { getScore } from "astro-lilypond";
 import LilyPondExample from "#components/LilyPondExample.astro";
 import score from "./scores/aucun-snippet.ly";
 
-const result = await getScore(score, { crop: true });
+const result = await getScore(score, {
+	backend: "ps",
+	format: "png",
+	crop: true,
+});
 ---
 
 <LilyPondExample {...result} title="aucun-snippet.ly" />

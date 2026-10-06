@@ -19,6 +19,7 @@ export default defineConfig({
 		lilypond({
 			defaults: {
 				version: "2.26.0",
+				resolution: 300,
 			},
 		}),
 		starlight({
