@@ -104,13 +104,65 @@ describe("render", () => {
 		expect(args).toContain("--format=svg");
 	});
 
-	it("passes the cairo backend", async () => {
+	it("passes the cairo backend by default", async () => {
 		await render("\\score { }", { logger: FAKE_LOGGER });
 		const [, args] = mockExecFile.mock.calls[0] as unknown as [
 			string,
 			string[],
 		];
 		expect(args).toContain("--define-default=backend=cairo");
+	});
+
+	it("passes the ps backend when set in defaults", async () => {
+		mockReaddir.mockResolvedValue(["output.png"]);
+		await render("\\score { }", {
+			format: "png",
+			defaults: { backend: "ps" },
+			logger: FAKE_LOGGER,
+		});
+		const [, args] = mockExecFile.mock.calls[0] as unknown as [
+			string,
+			string[],
+		];
+		expect(args).toContain("--define-default=backend=ps");
+		expect(args).toContain("--format=png");
+	});
+
+	it("allows the ps backend with pdf output", async () => {
+		mockReaddir.mockResolvedValue(["output.pdf"]);
+		await expect(
+			render("\\score { }", {
+				format: "pdf",
+				crop: false,
+				defaults: { backend: "ps" },
+				logger: FAKE_LOGGER,
+			}),
+		).resolves.toHaveLength(1);
+	});
+
+	it("rejects the ps backend with svg output without invoking lilypond", async () => {
+		await expect(
+			render("\\score { }", {
+				format: "svg",
+				defaults: { backend: "ps" },
+				logger: FAKE_LOGGER,
+			}),
+		).rejects.toThrow('The "ps" backend can\'t render SVG');
+		expect(mockExecFile).not.toHaveBeenCalled();
+	});
+
+	it("rejects an unsupported backend", async () => {
+		await expect(
+			render("\\score { }", {
+				defaults: { backend: "svg" as never },
+				logger: FAKE_LOGGER,
+			}),
+		).rejects.toThrow("svg is not a supported backend");
+		expect(mockExecFile).not.toHaveBeenCalled();
+	});
+
+	it("backend defaults to cairo", () => {
+		expect(defaultOptions.defaults.backend).toBe("cairo");
 	});
 
 	it("passes --define-default=crop=#t when crop is true", async () => {

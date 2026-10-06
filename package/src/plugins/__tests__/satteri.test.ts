@@ -251,6 +251,21 @@ describe("satteriPlugin", () => {
 		);
 	});
 
+	it("passes defaults.backend through to emitLilypondAsset", async () => {
+		mockRender.mockResolvedValue([Buffer.from([0x89, 0x50, 0x4e, 0x47])]);
+		const plugin = satteriPlugin({
+			...BASE_OPTIONS,
+			defaults: { format: "png", backend: "ps" },
+		});
+		const node: Code = { type: "code", lang: "lilypond", value: "\\score { }" };
+
+		await plugin.code?.(node, {} as never);
+
+		expect(mockEmitLilypondAsset).toHaveBeenCalledWith(
+			expect.objectContaining({ format: "png", backend: "ps" }),
+		);
+	});
+
 	it("passes resolution DPI when resolution is set", async () => {
 		const fakePng = Buffer.from([0x89, 0x50, 0x4e, 0x47]);
 		mockRender.mockResolvedValue([fakePng]);

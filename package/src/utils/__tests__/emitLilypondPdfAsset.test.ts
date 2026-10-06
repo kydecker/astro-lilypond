@@ -8,6 +8,7 @@ const { emitLilypondPdfAsset } = await import("../emitLilypondPdfAsset.js");
 const BASE = {
 	title: "score",
 	source: "\\relative c' { c d e }",
+	backend: "cairo" as const,
 	binaryPath: "lilypond",
 };
 
@@ -18,7 +19,7 @@ async function resolveGenerated() {
 }
 
 describe("emitLilypondPdfAsset", () => {
-	it("calls emitAsset with '<title>.[hash].pdf' as the path and [source, 'pdf'] as the cache key", async () => {
+	it("calls emitAsset with '<title>.[hash].pdf' as the path and [source, 'pdf', backend] as the cache key", async () => {
 		emitAsset.mockResolvedValue({
 			src: "/_astro/score.abc123.pdf",
 			meta: undefined,
@@ -33,7 +34,7 @@ describe("emitLilypondPdfAsset", () => {
 
 		expect(emitAsset).toHaveBeenCalledWith(
 			"bach-bwv610.[hash].pdf",
-			["\\relative c' { c d e }", "pdf"],
+			["\\relative c' { c d e }", "pdf", "cairo"],
 			expect.any(Function),
 		);
 	});

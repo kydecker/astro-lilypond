@@ -143,6 +143,7 @@ export async function getScore(
 	const {
 		resolution,
 		cropScale,
+		backend,
 		format: defaultFormat,
 	} = resolveDefaults(state.defaults);
 	const format = options.format ?? defaultFormat;
@@ -157,6 +158,7 @@ export async function getScore(
 				const pages = await emitLilypondAsset({
 					title: score.assetTitle,
 					format,
+					backend,
 					source: score.source,
 					resolution,
 					crop,
@@ -183,6 +185,7 @@ export async function getScore(
 				? emitLilypondPdfAsset({
 						title: score.assetTitle,
 						source: score.source,
+						backend,
 						binaryPath: state.binaryPath,
 						render: () =>
 							render(score.source, {

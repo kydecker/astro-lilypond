@@ -11,6 +11,10 @@ export const FORMATS = ["png", "svg", "pdf"] as const;
 
 export type Format = (typeof FORMATS)[number];
 
+export const BACKENDS = ["cairo", "ps"] as const;
+
+export type Backend = (typeof BACKENDS)[number];
+
 /**
  * Defaults passed to each score for rendering.
  */
@@ -27,6 +31,13 @@ export interface LilypondDefaults {
 	 * @default "svg"
 	 */
 	format?: "svg" | "png";
+
+	/**
+	 * Graphics backend. `"cairo"` is recommended for faster output.
+	 * `"ps"` is required for `\postscript` markup, and can't produce SVG.
+	 * @default "cairo"
+	 */
+	backend?: Backend;
 
 	/**
 	 * Resolution in DPI (only applies to PNG).
@@ -107,6 +118,7 @@ export interface InternalRenderOptions {
 const defaultLilypondDefaults: Required<LilypondDefaults> = {
 	version: "2.26.0",
 	format: "svg",
+	backend: "cairo",
 	resolution: 144,
 	cropScale: 1.5,
 };
@@ -138,10 +150,20 @@ export async function render(
 		logger,
 	} = options;
 
-	const { resolution } = resolveDefaults(options.defaults);
+	const { backend, resolution } = resolveDefaults(options.defaults);
 
 	if (!FORMATS.includes(format)) {
 		throw new Error(`${format} is not a supported format`);
+	}
+
+	if (!BACKENDS.includes(backend)) {
+		throw new Error(`${backend} is not a supported backend`);
+	}
+
+	if (backend === "ps" && format === "svg") {
+		throw new Error(
+			'The "ps" backend can\'t render SVG; use format "png" or backend "cairo"',
+		);
 	}
 
 	const dir = await mkdtemp(join(tmpdir(), "astro-lilypond-"));
@@ -154,6 +176,7 @@ export async function render(
 		await execLilyPond({
 			binaryPath,
 			format,
+			backend,
 			crop,
 			resolution,
 			includePaths,

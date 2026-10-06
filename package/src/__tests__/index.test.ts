@@ -721,6 +721,20 @@ describe("getScore()", () => {
 		});
 	});
 
+	it("passes the configured backend to both image and pdf assets", async () => {
+		setLilypondState(
+			fakeLilypondState({ defaults: { format: "png", backend: "ps" } }),
+		);
+		await publicGetScore(SCORE, { pdf: true });
+		expect(mockEmitLilypondAsset.mock.calls[0][0]).toMatchObject({
+			format: "png",
+			backend: "ps",
+		});
+		expect(mockEmitLilypondPdfAsset.mock.calls[0][0]).toMatchObject({
+			backend: "ps",
+		});
+	});
+
 	it("omits pdf from the result when not requested", async () => {
 		const result = await publicGetScore(SCORE);
 		expect(result.pdf).toBeUndefined();

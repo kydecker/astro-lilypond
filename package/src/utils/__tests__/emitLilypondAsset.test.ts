@@ -11,6 +11,7 @@ const REAL_SVG =
 const BASE = {
 	title: "score",
 	format: "svg" as const,
+	backend: "cairo" as const,
 	source: "...",
 	resolution: 144,
 	crop: true,
@@ -39,7 +40,7 @@ describe("emitLilypondAsset", () => {
 
 		expect(emitAsset).toHaveBeenCalledWith(
 			"bach-bwv610.[hash].svg",
-			["\\relative c' { c d e }", "svg", 144, true, 1],
+			["\\relative c' { c d e }", "svg", "cairo", 144, true, 1],
 			expect.any(Function),
 		);
 	});
@@ -52,6 +53,25 @@ describe("emitLilypondAsset", () => {
 
 		await emitLilypondAsset({ ...BASE, sizeScale: 1, render });
 		await emitLilypondAsset({ ...BASE, sizeScale: 2, render });
+
+		const [, firstKey] = emitAsset.mock.calls[0];
+		const [, secondKey] = emitAsset.mock.calls[1];
+		expect(firstKey).not.toEqual(secondKey);
+	});
+
+	it("busts the cache when backend changes", async () => {
+		emitAsset.mockResolvedValue([
+			{ src: "/_astro/score.abc123.png", meta: {} },
+		]);
+		const render = vi.fn().mockResolvedValue([Buffer.from("png")]);
+
+		await emitLilypondAsset({ ...BASE, format: "png", render });
+		await emitLilypondAsset({
+			...BASE,
+			format: "png",
+			backend: "ps",
+			render,
+		});
 
 		const [, firstKey] = emitAsset.mock.calls[0];
 		const [, secondKey] = emitAsset.mock.calls[1];

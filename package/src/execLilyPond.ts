@@ -1,7 +1,7 @@
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import type { AstroIntegrationLogger } from "astro";
-import type { Format } from "./render.js";
+import type { Backend, Format } from "./render.js";
 
 const execFileAsync = promisify(execFile);
 
@@ -10,6 +10,7 @@ const MAX_BUFFER = 16 * 1024 * 1024; // 16 MiB
 export interface ExecLilypondOptions {
 	binaryPath: string;
 	format: Format;
+	backend: Backend;
 	crop: boolean;
 	resolution: number;
 	includePaths: string[];
@@ -30,6 +31,7 @@ export async function execLilyPond(
 	const {
 		binaryPath,
 		format,
+		backend,
 		crop,
 		resolution,
 		includePaths,
@@ -53,9 +55,9 @@ export async function execLilyPond(
 
 		// Disable point-and-click behavior on SVGs when clicking noteheads
 		"--define-default=no-point-and-click",
-		// Use the `cairo` backend for graphics rendering; faster than the default `ps` backend
+		// `cairo` is faster, but only `ps` supports \postscript markup
 		// https://lilypond.org/doc/v2.26/Documentation/usage/advanced-command_002dline-options-for-lilypond
-		"--define-default=backend=cairo",
+		`--define-default=backend=${backend}`,
 		// Resolution for generating PNGs (set in DPI)
 		`--define-default=resolution=${resolution}`,
 		// Set cropping

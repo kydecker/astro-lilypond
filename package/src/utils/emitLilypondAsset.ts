@@ -1,11 +1,12 @@
 import { emitAsset } from "astro-emit-asset/emit";
 import type { LilypondPage } from "../index.js";
-import type { Format } from "../render.js";
+import type { Backend, Format } from "../render.js";
 import { imageDimensionsFor } from "./imageDimensions.js";
 
 export interface EmitLilypondAssetOptions {
 	title: string;
 	format: Format;
+	backend: Backend;
 	source: string;
 	resolution: number;
 	crop: boolean;
@@ -30,12 +31,20 @@ export async function emitLilypondAsset(
 		);
 	}
 
-	const { title, format, source, resolution, crop, sizeScale, render } =
-		options;
+	const {
+		title,
+		format,
+		backend,
+		source,
+		resolution,
+		crop,
+		sizeScale,
+		render,
+	} = options;
 
 	const assets = await emitAsset<PageMeta>(
 		`${title}.[hash].${format}`,
-		[source, format, resolution, crop, sizeScale],
+		[source, format, backend, resolution, crop, sizeScale],
 		async (): Promise<GeneratedPage[]> => {
 			const buffers = await render();
 			return buffers.map((data) => {

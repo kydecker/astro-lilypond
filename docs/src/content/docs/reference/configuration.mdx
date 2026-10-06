@@ -68,6 +68,41 @@ Downloads are cached per OS. The cache directory can be overridden with the `AST
 
 Default settings applied to every score.
 
+#### `defaults.backend`
+
+**Type:** `"cairo" | "ps"`  
+**Default:** `"cairo"`
+
+The [graphics backend](https://lilypond.org/doc/v2.26/Documentation/usage/advanced-command_002dline-options-for-lilypond) LilyPond uses to draw each score. `"cairo"` is faster and supports every output format, so it's the right choice for most sites.
+
+Switch to `"ps"` (PostScript) only if your scores use `\postscript` markup to draw custom graphics. The Cairo backend cannot render `\postscript` markup.
+
+The `"ps"` backend can't produce SVG, so you must also set `format` to `"png"`:
+
+```js
+// astro.config.mjs
+lilypond({
+  defaults: {
+    backend: "ps",
+    format: "png"
+  }
+})
+```
+
+```lilypondtext title="my-score.ly"
+{
+  c'1^\markup {
+    \postscript "0.2 setlinewidth 0 0 moveto 5 2 rlineto stroke"
+  }
+}
+```
+
+PDFs from `getScore(score, { pdf: true })` also use the configured backend, so they include `\postscript` graphics too.
+
+:::caution
+Using `backend: "ps"` together with SVG output throws an error, including any `getScore()` or `<Score>` call that sets `format: "svg"`.
+:::
+
 #### `defaults.cropScale`
 
 **Type:** `number`  

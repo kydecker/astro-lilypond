@@ -1,9 +1,11 @@
 import { emitAsset } from "astro-emit-asset/emit";
 import type { LilypondPdfResult } from "../index.js";
+import type { Backend } from "../render.js";
 
 export interface EmitLilypondPdfAssetOptions {
 	title: string;
 	source: string;
+	backend: Backend;
 	binaryPath: string | undefined;
 	render: () => Promise<Buffer[]>;
 }
@@ -17,11 +19,11 @@ export async function emitLilypondPdfAsset(
 		);
 	}
 
-	const { title, source, render } = options;
+	const { title, source, backend, render } = options;
 
 	const asset = await emitAsset(
 		`${title}.[hash].pdf`,
-		[source, "pdf"],
+		[source, "pdf", backend],
 		async () => {
 			const [data] = await render();
 			return { data };
