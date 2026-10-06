@@ -735,6 +735,24 @@ describe("getScore()", () => {
 		});
 	});
 
+	it("lets options.backend override the configured backend for image and pdf renders", async () => {
+		await publicGetScore(SCORE, { format: "png", backend: "ps", pdf: true });
+		expect(mockEmitLilypondAsset.mock.calls[0][0]).toMatchObject({
+			backend: "ps",
+		});
+		expect(mockEmitLilypondPdfAsset.mock.calls[0][0]).toMatchObject({
+			backend: "ps",
+		});
+
+		mockLowLevelRender.mockClear();
+		await mockEmitLilypondAsset.mock.calls[0][0].render();
+		await mockEmitLilypondPdfAsset.mock.calls[0][0].render();
+		for (const [, options] of mockLowLevelRender.mock.calls) {
+			expect(options.defaults).toMatchObject({ backend: "ps" });
+		}
+		expect(mockLowLevelRender).toHaveBeenCalledTimes(2);
+	});
+
 	it("omits pdf from the result when not requested", async () => {
 		const result = await publicGetScore(SCORE);
 		expect(result.pdf).toBeUndefined();
@@ -833,13 +851,14 @@ describe("Score component", () => {
 		});
 	});
 
-	it("honors explicit format and crop props", async () => {
+	it("honors explicit format, backend, and crop props", async () => {
 		const container = await AstroContainer.create();
 		await container.renderToString(PublicScore, {
-			props: { content: SCORE, format: "png", crop: true },
+			props: { content: SCORE, format: "png", backend: "ps", crop: true },
 		});
 		expect(mockEmitLilypondAsset.mock.calls[0][0]).toMatchObject({
 			format: "png",
+			backend: "ps",
 			crop: true,
 		});
 	});

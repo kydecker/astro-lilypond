@@ -13,6 +13,7 @@ import { Score } from "astro-lilypond";
 interface ScoreProps {
   content: LilypondScore;
   format?: "svg" | "png";
+  backend?: "cairo" | "ps";
   crop?: boolean;
   pageLimit?: number;
   class?: string;
@@ -48,6 +49,17 @@ The score's source text and derived metadata. You get one from:
 **Default:** the integration's [`defaults.format`](/reference/configuration/#defaultsformat) (`"svg"` unless configured otherwise)
 
 Output format for the rendered image.
+
+### `backend`
+
+**Type:** `"cairo" | "ps"`  
+**Default:** the integration's [`defaults.backend`](/reference/configuration/#defaultsbackend) (`"cairo"` unless configured otherwise)
+
+Graphics backend for this score. Use `"ps"` with `format="png"` to render `\postscript` markup; `"ps"` can't produce SVG.
+
+```astro
+<Score content={myScore} format="png" backend="ps" />
+```
 
 ### `crop`
 
@@ -139,6 +151,13 @@ Same as [`<Score />`'s `content`](#content) above.
 
 Output format for `Score`.
 
+#### `options.backend`
+
+**Type:** `"cairo" | "ps"`  
+**Default:** the integration's [`defaults.backend`](/reference/configuration/#defaultsbackend) (`"cairo"` unless configured otherwise)
+
+Graphics backend for `Score` and `pdf`. Use `"ps"` with `format: "png"` to render `\postscript` markup; `"ps"` can't produce SVG.
+
 #### `options.crop`
 
 **Type:** `boolean`  
@@ -187,7 +206,7 @@ interface GetScoreResult {
 
 **Type:** `AstroComponentFactory`
 
-Accepts all the same props as [`<Score>`](#score), except for `format` and `crop`; pass those to the `options` argument of `getScore()`.
+Accepts all the same props as [`<Score>`](#score), except for `format`, `backend`, and `crop`; pass those to the `options` argument of `getScore()`.
 
 #### `pages`
 

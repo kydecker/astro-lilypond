@@ -13,4 +13,10 @@ lilypond({
 })
 ```
 
-Note: the postscript backend cannot render to SVG, so when using it, `defaults.format` should be set to `"png"`.
+Individual scores can also override the backend via `getScore()` or `<Score>`:
+
+```astro
+<Score content={myScore} format="png" backend="ps" />
+```
+
+Note: the postscript backend cannot render to SVG, so when using it, `format` should be set to `"png"`.

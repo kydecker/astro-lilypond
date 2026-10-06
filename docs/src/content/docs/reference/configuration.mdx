@@ -99,6 +99,8 @@ lilypond({
 
 PDFs from `getScore(score, { pdf: true })` also use the configured backend, so they include `\postscript` graphics too.
 
+Individual `.ly`/`.ily` imports and `lilypondLoader()` entries can override this per call via `getScore()`'s or `<Score>`'s own `backend` option; Markdown fences always use this default.
+
 :::caution
 Using `backend: "ps"` together with SVG output throws an error, including any `getScore()` or `<Score>` call that sets `format: "svg"`.
 :::
