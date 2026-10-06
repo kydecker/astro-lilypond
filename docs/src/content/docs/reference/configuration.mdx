@@ -89,14 +89,6 @@ lilypond({
 })
 ```
 
-```lilypondtext title="my-score.ly"
-{
-  c'1^\markup {
-    \postscript "0.2 setlinewidth 0 0 moveto 5 2 rlineto stroke"
-  }
-}
-```
-
 PDFs from `getScore(score, { pdf: true })` also use the configured backend, so they include `\postscript` graphics too.
 
 Individual `.ly`/`.ily` imports and `lilypondLoader()` entries can override this per call via `getScore()`'s or `<Score>`'s own `backend` option; Markdown fences always use this default.
