@@ -247,7 +247,7 @@ importers:
         specifier: ^26.6.5
         version: 26.6.5
       '@vitest/coverage-v8':
-        specifier: ^5.0.2
+        specifier: ^5.0.3
         version: 5.0.3(vitest@5.0.3)
       astro:
         specifier: ^7.3.8
@@ -265,7 +265,7 @@ importers:
         specifier: ^8.3.4
         version: 8.3.4(@types/node@26.6.5)(esbuild@0.28.1)(yaml@2.9.1)
       vitest:
-        specifier: ^5.0.2
+        specifier: ^5.0.3
         version: 5.0.3(@types/node@26.6.5)(@vitest/coverage-v8@5.0.3)(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.1)(yaml@2.9.1))
 
 packages:
