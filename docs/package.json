@@ -18,7 +18,7 @@
 	"dependencies": {
 		"@astrojs/cloudflare": "^14.4.3",
 		"@astrojs/starlight": "^0.42.7",
-		"astro": "^7.4.3",
+		"astro": "^7.4.4",
 		"astro-embed": "^0.14.0",
 		"astro-lilypond": "workspace:*",
 		"starlight-theme-flexoki": "^0.3.0",
