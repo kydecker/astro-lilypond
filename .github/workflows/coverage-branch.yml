@@ -35,7 +35,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: "24.21.0"
+          node-version: "24.22.1"
           cache: "pnpm"
 
       - name: Install dependencies
@@ -85,7 +85,7 @@ jobs:
 
       - name: Report coverage and comparison
         if: always() && hashFiles('coverage-main/coverage-summary.json') != ''
-        uses: davelosert/vitest-coverage-report-action@c4bbc33a89b7ace0e63d35f1f7d4bcee31155a73 # v2.13.0
+        uses: davelosert/vitest-coverage-report-action@8f86cfb56ed6d5613ea8cdc5259f207fbfd51ece # v2.13.1
         with:
           vite-config-path: package/vitest.config.ts
           json-summary-compare-path: coverage-main/coverage-summary.json
@@ -94,6 +94,6 @@ jobs:
         # if coverage from main is not available
       - name: Report coverage
         if: always() && hashFiles('coverage-main/coverage-summary.json') == ''
-        uses: davelosert/vitest-coverage-report-action@c4bbc33a89b7ace0e63d35f1f7d4bcee31155a73 # v2.13.0
+        uses: davelosert/vitest-coverage-report-action@8f86cfb56ed6d5613ea8cdc5259f207fbfd51ece # v2.13.1
         with:
           vite-config-path: package/vitest.config.ts
