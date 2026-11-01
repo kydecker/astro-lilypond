@@ -61,7 +61,7 @@
 	},
 	"dependencies": {
 		"astro-emit-asset": "^0.1.4",
-		"unist-util-visit": "^5.1.0"
+		"unist-util-visit": "^5.2.0"
 	},
 	"devDependencies": {
 		"@astrojs/markdown-remark": "^7.3.2",
