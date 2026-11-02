@@ -1,11 +1,12 @@
 {
-	"$schema": "https://biomejs.dev/schemas/2.5.15/schema.json",
+	"$schema": "https://biomejs.dev/schemas/2.6.4/schema.json",
 	"vcs": {
 		"enabled": true,
 		"clientKind": "git",
 		"useIgnoreFile": true
 	},
 	"files": {
+		"includes": ["docs/**", "e2e/**", "package/**", "!package/CHANGELOG.md"],
 		"ignoreUnknown": false
 	},
 	"formatter": {
@@ -21,6 +22,15 @@
 	"javascript": {
 		"formatter": {
 			"quoteStyle": "double"
+		}
+	},
+	"markdown": {
+		"parser": {
+			"frontmatter": true
+		},
+		"formatter": {
+			"enabled": true,
+			"formatEmbeds": true
 		}
 	},
 	"assist": {
