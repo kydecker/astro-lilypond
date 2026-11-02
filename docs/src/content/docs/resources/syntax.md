@@ -31,12 +31,12 @@ In LilyPond, note names specify absolute pitches. An unaltered note like `c` mea
 
 Accidentals are written as `is` and `es` suffixes appended to the note name.
 
-| Syntax | Meaning | Example |
-|---|---|---|
-| `is` | Sharp | `cis` = C♯ |
-| `es` | Flat | `bes` = B♭ |
+| Syntax | Meaning      | Example      |
+| ------ | ------------ | ------------ |
+| `is`   | Sharp        | `cis` = C♯   |
+| `es`   | Flat         | `bes` = B♭   |
 | `isis` | Double sharp | `cisis` = C𝄪 |
-| `eses` | Double flat | `ceses` = C𝄫 |
+| `eses` | Double flat  | `ceses` = C𝄫 |
 
 ```lilypond
 \relative c' {
@@ -60,14 +60,14 @@ LilyPond scores can be set to different languages, which modify both the note na
 
 Notes inherit the previous note's duration by default. A new duration can be set by appending a number to the note:
 
-| Syntax | Duration | Name |
-|---|---|---|
-| `1` | Whole | Semibreve |
-| `2` | Half | Minim |
-| `4` | Quarter | Crotchet |
-| `8` | Eighth | Quaver |
-| `16` | Sixteenth | Semiquaver |
-| `32` | Thirty-second | Demisemiquaver |
+| Syntax | Duration      | Name           |
+| ------ | ------------- | -------------- |
+| `1`    | Whole         | Semibreve      |
+| `2`    | Half          | Minim          |
+| `4`    | Quarter       | Crotchet       |
+| `8`    | Eighth        | Quaver         |
+| `16`   | Sixteenth     | Semiquaver     |
+| `32`   | Thirty-second | Demisemiquaver |
 
 ```lilypond
 \relative c' {
@@ -83,9 +83,9 @@ Notes inherit the previous note's duration by default. A new duration can be set
 
 Dotted rhythms can be created by adding `.` after the number.
 
-| Syntax | Duration |
-|---|---|
-| `c4.` | Dotted quarter |
+| Syntax | Duration              |
+| ------ | --------------------- |
+| `c4.`  | Dotted quarter        |
 | `c4..` | Double-dotted quarter |
 
 ```lilypond
@@ -148,12 +148,12 @@ Set the key with `\key` and the time signature with `\time`. Both take effect fr
 
 LilyPond inserts single barlines automatically. Use `\bar` to override:
 
-| Syntax | Description |
-|---|---|
+| Syntax        | Description    |
+| ------------- | -------------- |
 | `\bar "\|\|"` | Double barline |
-| `\bar "\|."` | Final barline |
-| `\bar ".\|:"` | Start repeat |
-| `\bar ":\|."` | End repeat |
+| `\bar "\|."`  | Final barline  |
+| `\bar ".\|:"` | Start repeat   |
+| `\bar ":\|."` | End repeat     |
 
 ```lilypond
 \relative c' {
@@ -195,14 +195,14 @@ Write a chord by wrapping notes in angle brackets. All notes in the brackets sha
 
 Attach articulations after the note with a dash and a symbol:
 
-| Syntax | Shorthand | Name |
-|---|---|---|
-| `\staccato` | `-.` | Staccato |
-| `\tenuto` | `--` | Tenuto |
-| `\accent` | `->` | Accent |
-| `\marcato` | `-^` | Marcato |
-| `\staccatissimo` | `-!` | Staccatissimo |
-| `\portato` | `-_` | Portato |
+| Syntax           | Shorthand | Name          |
+| ---------------- | --------- | ------------- |
+| `\staccato`      | `-.`      | Staccato      |
+| `\tenuto`        | `--`      | Tenuto        |
+| `\accent`        | `->`      | Accent        |
+| `\marcato`       | `-^`      | Marcato       |
+| `\staccatissimo` | `-!`      | Staccatissimo |
+| `\portato`       | `-_`      | Portato       |
 
 ```lilypond
 \relative c'' {
@@ -220,17 +220,17 @@ Attach articulations after the note with a dash and a symbol:
 
 ## Dynamics
 
-| Syntax | Name |
-|---|---|
+| Syntax | Name          |
+| ------ | ------------- |
 | `\ppp` | Pianississimo |
-| `\pp` | Pianissimo |
-| `\p` | Piano |
-| `\mp` | Mezzo-piano |
-| `\mf` | Mezzo-forte |
-| `\f` | Forte |
-| `\ff` | Fortissimo |
+| `\pp`  | Pianissimo    |
+| `\p`   | Piano         |
+| `\mp`  | Mezzo-piano   |
+| `\mf`  | Mezzo-forte   |
+| `\f`   | Forte         |
+| `\ff`  | Fortissimo    |
 | `\fff` | Fortississimo |
-| `\sfz` | Sforzando |
+| `\sfz` | Sforzando     |
 
 Use `\<` to begin a crescendo hairpin and `\>` for a diminuendo; close either with `\!`.
 

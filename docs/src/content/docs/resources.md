@@ -9,7 +9,7 @@ description: These resources can help you with LilyPond!
 - The [LilyPond Learning Manual](https://lilypond.org/doc/v2.26/Documentation/learning/index.html) is a reference which covers the basics of notation and output.
 - The [LilyPond Notation Reference](https://lilypond.org/doc/v2.26/Documentation/notation/) is the comprehensive manual on all notation possible in LilyPond.
   - [Notation Cheat Sheet](https://lilypond.org/doc/v2.26/Documentation/notation/cheat-sheet) is a quick reference for the most common notation.
-- [LilyPond Snippets](https://lilypond.org/doc/v2.26/Documentation/snippets/index.html) includes a library of snippets which can help achieve specific tasks in LilyPond. 
+- [LilyPond Snippets](https://lilypond.org/doc/v2.26/Documentation/snippets/index.html) includes a library of snippets which can help achieve specific tasks in LilyPond.
 
 ## Software
 
@@ -20,7 +20,7 @@ description: These resources can help you with LilyPond!
 
 These extensions will enable syntax highlighting and other features when working with `.ly` files in your editor of choice:
 
-- [VSLilyPond](https://marketplace.visualstudio.com/items?itemName=lhl2617.vslilypond) provides syntax and error highlighting, IntelliSense and AutoComplete, compilation on save, MIDI (input and playback) support for LilyPond in VSCode. Also on [GitHub](https://github.com/lhl2617/VSLilyPond). 
+- [VSLilyPond](https://marketplace.visualstudio.com/items?itemName=lhl2617.vslilypond) provides syntax and error highlighting, IntelliSense and AutoComplete, compilation on save, MIDI (input and playback) support for LilyPond in VSCode. Also on [GitHub](https://github.com/lhl2617/VSLilyPond).
 - [Zed Extension](https://zed.dev/extensions/lilypond) offers syntax highlighting for LilyPond files in Zed. Also on [GitHub](https://github.com/nwhetsell/lilypond-zed-extension).
 
 ## Community Help
