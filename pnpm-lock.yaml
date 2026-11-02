@@ -179,7 +179,7 @@ importers:
         specifier: ^2.14.0
         version: 2.14.0
       wrangler:
-        specifier: ^4.155.0
+        specifier: ^4.156.0
         version: 4.156.0(@types/node@26.6.6)
 
   docs:
@@ -203,7 +203,7 @@ importers:
         specifier: ^0.3.0
         version: 0.3.0(@astrojs/starlight@0.42.8(@astrojs/markdown-remark@7.3.5(supports-color@10.2.2))(astro@7.4.4(@astrojs/markdown-remark@7.3.5(supports-color@10.2.2))(@types/node@26.6.6)(esbuild@0.28.2)(yaml@2.9.1))(supports-color@10.2.2)(typescript@7.0.2))
       wrangler:
-        specifier: ^4.155.0
+        specifier: ^4.156.0
         version: 4.156.0(@types/node@26.6.6)
 
   e2e:
