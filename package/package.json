@@ -64,16 +64,16 @@
 		"unist-util-visit": "^5.2.0"
 	},
 	"devDependencies": {
-		"@astrojs/markdown-remark": "^7.3.5",
-		"@astrojs/markdown-satteri": "^0.4.6",
+		"@astrojs/markdown-remark": "^7.3.7",
+		"@astrojs/markdown-satteri": "^0.4.8",
 		"@types/mdast": "^4.0.4",
 		"@types/node": "^26.6.6",
-		"@vitest/coverage-v8": "^5.0.5",
-		"astro": "^7.4.4",
-		"satteri": "^0.11.6",
+		"@vitest/coverage-v8": "^5.1.0",
+		"astro": "^7.4.10",
+		"satteri": "^0.11.7",
 		"typescript": "^7.0.2",
 		"unified": "^11.0.5",
-		"vite": "^8.3.5",
-		"vitest": "^5.0.5"
+		"vite": "^8.3.8",
+		"vitest": "^5.1.0"
 	}
 }
